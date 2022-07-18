@@ -8,7 +8,7 @@ class Doublet:
                  hit_1_position: [float, float, float],
                  hit_2_position: [float, float, float],
                  hit_1_id: int,
-                 hit_2_id: int,):
+                 hit_2_id: int):
         """Class for doublet objects, consisting of two hits on different detector layers.
         :param hit_1_particle_key: particle true number, from simulation
         :param hit_1_position:  particle position [x, y, z] on detector layer of hit 1
