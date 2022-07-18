@@ -1,4 +1,4 @@
-# Configurations for preselection and QUBO
+# Configuration file preselection
 The preselection script takes YAML configuration file. 
 It consists of the sections [doublet](#doublet), [triplet](#triplet), [binning](#binning), [qubo](#qubo) and [scaling](#scaling).
 
