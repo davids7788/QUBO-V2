@@ -4,18 +4,21 @@ from typing import List
 
 class SectorManager:
     def __init__(self,
-                 selection_criteria: dict,
+                 configuration: dict,
                  detector_layers: List[List[float]]):
         """Class for handling sectors for doublet and triplet creation
-        :param selection_criteria: selection criteria for doublet and triplet selection:
-                {doublet: {dx/x0: <value>,
-                           eps:   <value>},
-                 triplet: {angle diff x: <value>,
-                           angle diff y: <value>}}
+        :param configuration: information needed for the sectors:
+                {
+                doublet: {dx/x0: <value>,
+                          eps:   <value>},
+                triplet: {angle diff x: <value>,
+                          angle diff y: <value>}
+                binning: {num bins x: <value>}
+                }
         :param detector_geometry: list of detector layer dimensions:
                [[l0_x0, l0_y0, l0_x1, l0_y1, l0_z], [l1_x0, l1_y0, l1_x1, l1_y1, l1_z], ...]
         """
-        self.selection_criteria = selection_criteria   # Dictionary of selection criteria
+        self.configuration = configuration   # Dictionary of selection criteria
         self.detector_layers = detector_layers
         self.sector_list = []   # List of sector objects
         self.sector_mapping = {}   # Map for sectors as <sector>: [<sector_name_0>, <sector_name_1>, ...]
@@ -28,6 +31,9 @@ class SectorManager:
         """
         sector_names = [sector_name for sector_name in self.sector_mapping[name]]
         return [sector for sector in self.sector_list if sector.name in sector_names]
+
+    def get_sector_at_known_xz_value(self):
+        pass
 
     def sector_mapping_simplified_model(self):
         """Maps the sectors according to the doublet preselection criteria.
@@ -69,10 +75,10 @@ class SectorManager:
                 if x0_max > max_x_detector_dimension:
                     x0_max = max_x_detector_dimension
 
-                dx_x0_interval = pd.Interval(self.selection_criteria["doublet"]["dx/x0"] -
-                                             self.selection_criteria["doublet"]["eps"],
-                                             self.selection_criteria["doublet"]["dx/x0"] +
-                                             self.selection_criteria["doublet"]["eps"])
+                dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
+                                             self.configuration["doublet"]["eps"],
+                                             self.configuration["doublet"]["dx/x0"] +
+                                             self.configuration["doublet"]["eps"])
 
                 max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
 
@@ -94,3 +100,18 @@ class SectorManager:
         dx = x_end - x_start
         dz = z_end - z_start
         return x_end - dx * abs(z_end - self.reference_layer_z) / dz
+
+    def create_sectors_simplified_model(self):
+        """Splitting data into num bins sector to reduce the combinatorial computational costs.
+        For the simplified model only.
+        """
+        for i, layer in self.detector_layers:
+            x_max = layer[1]
+            x_min = layer[0]
+            sector_size = (x_max - x_min) / self.configuration["binning"]["num bins"]
+            for j in range(self.num_segments):
+                self.sector_list.append(Segment(f"L{i}S{j}",  # Layer i Segment j
+                                                i,
+                                                x_min + j * sector_size,
+                                                x_min + (j + 1) * sector_size,
+                                                self.reference_layer_z))
