@@ -5,7 +5,7 @@ from typing import List
 class SectorManager:
     def __init__(self,
                  selection_criteria: dict,
-                 detector_layers):
+                 detector_layers: List[List[float]]):
         """Class for handling sectors for doublet and triplet creation
         :param selection_criteria: selection criteria for doublet and triplet selection:
                 {doublet: {dx/x0: <value>,
