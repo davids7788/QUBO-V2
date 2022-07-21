@@ -5,18 +5,18 @@ import sys
 
 from doublet import Doublet
 from triplet import Triplet
-from sector import Sector
-from sector_manager import SectorManager
+from segment import Segment
+from segment_manager import SegmentManager
 
 
 class XpletCreatorLUXE:
     def __init__(self,
                  luxe_tracking_data_file_name,
                  detector_geometry,
-                 sector_manager,
+                 segment_manager,
                  configuration,
                  save_to_folder):
-        """Class for creating xplets from detector hits
+        """Class for creating x_plets from detector hits
         :param luxe_tracking_data_file_name: .csv file name with tracking data from the LUXE positron detector:
             hit_ID          : unique hit ID
             x               : x value [m]
@@ -26,7 +26,7 @@ class XpletCreatorLUXE:
             particle_ID     : number to identify particles
             particle_energy : particle energy [MeV]
         :param detector_geometry: simplified LUXE (sl) or full LUXE (fl)
-        :param sector_manager : managing sectors with hits
+        :param segment_manager : managing segments with hits
         :param configuration  : dictionary, configuration for detector setup and xplet selection
             {
             doublet: {dx/x0: <value>,
@@ -47,7 +47,8 @@ class XpletCreatorLUXE:
         self.detector_geometry = detector_geometry
         self.configuration = configuration
         self.save_to_folder = save_to_folder
-        self.sector_manager = sector_manager
+        self.segment_manager = segment_manager
+        self.mode = self.recognize_parameter_setup()
 
         # Simplified model only has 4 detector planes
         if self.detector_geometry == "sl":
@@ -76,7 +77,7 @@ class XpletCreatorLUXE:
         self.particle_energy = None
 
         # loading data and setting indices for .csv file
-        self.num_sectors = self.configuration["binning"]["num bins"]
+        self.num_segments = self.configuration["binning"]["num bins"]
         if self.detector_geometry == "sl":
             self.create_segments_simplified_model()
             self.segment_manager.map_segments_simple_model()
@@ -103,6 +104,22 @@ class XpletCreatorLUXE:
         self.add_quality_function("two norm angle standard deviation", XpletCreatorLUXE.two_norm_std_angle)
         self.add_conflict_function("two norm angle standard deviation", XpletCreatorLUXE.two_norm_std_angle)
 
+    def recognize_parameter_setup(self):
+        """Recognizes the chosen parameter setup for the QUBO
+        :return: tuple of strings with setup information"""
+        try:
+            float(self.configuration["qubo parameters"]["b_ij conflict"])
+            conflict = "constant"
+        except ValueError:
+            conflict = self.configuration["qubo parameters"]["b_ij conflict"]
+        try:
+            float(self.configuration["qubo parameters"]["b_ij match"])
+            match = "constant"
+        except ValueError:
+            match = self.configuration["qubo parameters"]["b_ij match"]
+
+        return conflict, match
+
     def load_tracking_data(self):
         """Loads data from a .csv file and stores it into a 2-dim array. Also converts values which are used for
         calculations to float from string. The file structure is displayed in the class description.
@@ -125,26 +142,21 @@ class XpletCreatorLUXE:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
-                # storing in segment     NEEDS REWORK, need to find function to adress sector directly!!
-                for sector in self.sector_manager.segment_list:
-                    if float(row[self.z]) == sector.z_position:
-                        if sector.x_start <= float(row[self.x]) <= sector.x_end:
-                            sector.data.append(row_converted)
+                    self.segment_manager.segment_list[
+                        self.segment_manager.get_segment_at_known_xz_value(row[self.x],
+                                                                         row[self.z])].data.append(row_converted)
                 particle_numbers.add(row[self.particle_id])
             self.num_particles = len(particle_numbers)
 
+    def make_x_plet_list_simplified_setup(self):
+        """Creates doublets and triplets. For the simplified model only."""
 
-
-    def make_simplified_x_plet_list(self):
-        """
-        Creates and saves true doublet list and true triplet list. For the simplified model only.
-        """
         print("\nCreating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
         for segment in self.segment_manager.segment_list:
-            if segment.layer > 2:
+            if segment.layer > 2:  # no doublets start from last layer
                 continue
-            next_segments = self.segment_manager.target_segments(segment.name)
+            next_segments = self.segment_manager.target_segments(segment.name)   # target segments
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
@@ -153,10 +165,10 @@ class XpletCreatorLUXE:
                                                        first_hit[self.z],
                                                        second_hit[self.z]):
                             doublet = Doublet(first_hit[self.particle_id],
+                                              second_hit[self.particle_id],
                                               (first_hit[self.x],
                                                first_hit[self.y],
                                                first_hit[self.z]),
-                                              second_hit[self.particle_id],
                                               (second_hit[self.x],
                                                second_hit[self.y],
                                                second_hit[self.z]),
@@ -177,7 +189,7 @@ class XpletCreatorLUXE:
         list_triplet_start = time.time()
         print("\nCreating triplet lists...\n")
         for segment in self.segment_manager.segment_list:
-            if segment.layer > 1:
+            if segment.layer > 1:   # triplets start only at first two layers
                 continue
             next_segments = self.segment_manager.target_segments(segment.name)  # target segments
             for target_segment in next_segments:
@@ -191,6 +203,7 @@ class XpletCreatorLUXE:
                             segment.triplet_data.append(triplet)
                             if triplet.is_correct_match:
                                 self.found_correct_triplets += 1
+            segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
         list_triplet_end = time.time()
 
@@ -207,8 +220,8 @@ class XpletCreatorLUXE:
         :param doublet2: second doublet, further from IP
         :return: True if criteria applies, else False
         """
-        if abs(doublet2.xz_angle() - doublet1.xz_angle()) < self.configuration["triplet criteria"]["angle diff x"]:
-            if abs(doublet2.yz_angle() - doublet1.yz_angle()) < self.configuration["triplet criteria"]["angle diff y"]:
+        if abs(doublet2.xz_angle() - doublet1.xz_angle()) < self.configuration["triplet"]["angle diff x"]:
+            if abs(doublet2.yz_angle() - doublet1.yz_angle()) < self.configuration["triplet"]["angle diff y"]:
                 return True
         return False
 
@@ -221,8 +234,8 @@ class XpletCreatorLUXE:
         :param z2: z value second hit
         :return: True if criteria applies, else False
         """
-        if abs(((x2 - x1) / self.z_at_x0(x1, x2, z1, z2) - self.configuration["doublet criteria"]["dx/x0 criteria"])) > \
-                self.configuration["doublet criteria"]["dx/x0 criteria epsilon"]:
+        if abs(((x2 - x1) / self.z_at_x0(x1, x2, z1, z2) - self.configuration["doublet"]["dx/x0"])) > \
+                self.configuration["doublet"]["eps"]:
             return False
         return True
 
@@ -238,7 +251,7 @@ class XpletCreatorLUXE:
         """
         dx = x_end - x_start
         dz = z_end - z_start
-        return x_end - dx * abs(z_end - self.configuration["doublet criteria"]["reference layer z"]) / dz
+        return x_end - dx * abs(z_end - self.segment_manager.reference_layer_z) / dz
 
     def add_quality_function(self,
                              quality_function_name,
@@ -259,25 +272,29 @@ class XpletCreatorLUXE:
         self.conflict_functions.update({conflict_function_name: conflict_function_object})
 
     def set_triplet_coefficients(self):
-        """
-        Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
+        """Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
         set it is also applied. If successful a message and the target folder location containing the triplet
         list is displayed.
         """
+        quality = None
+        try:
+            quality = float(self.configuration["qubo parameters"]["a_i"])
+            quality_mode = "constant"
+        except ValueError:
+            quality_mode = "angle function"
+
         for segment in self.segment_manager.segment_list:
-            if segment.layer > 1:
+            if segment.layer > len(self.segment_manager.detector_layers) - 3:
                 continue
             next_segments = self.segment_manager.target_segments(segment.name)  # target segments
             for t1 in segment.triplet_data:
-                for target_segment in next_segments + [segment]:
-                    if self.configuration["settings"]["constant quality"] is not None:
-                        t1.quality = self.configuration["settings"]["constant quality"]
+                if quality_mode == "constant":
+                    t1.quality = quality
+                elif quality_mode == "angle function":
+                    triplet_angles_xz, triplet_angles_yz = t1.angles_between_doublets()
+                    t1.quality = np.sqrt(triplet_angles_xz ** 2 + triplet_angles_yz ** 2)
 
-                    elif self.configuration["settings"]["quality from angles"]:
-                        triplet_angles_xz, triplet_angles_yz = t1.angles_between_doublets()
-                        t1.quality = np.sqrt(triplet_angles_xz**2 + triplet_angles_yz**2)
-
-                # checking all combinations with other triplets
+                for target_segment in next_segments + [segment]:   # checking all combinations with other triplets
                     for t2 in target_segment.triplet_data:
                         interaction_value = self.triplet_interaction(t1, t2)
                         # Only interactions != 0 are treated
@@ -290,9 +307,9 @@ class XpletCreatorLUXE:
         for segment in self.segment_manager.segment_list:
             for triplet in segment.triplet_data:
                 self.triplet_list.add(triplet)
-            segment.triplet_data = []
+            segment.triplet_data.clear()
         self.triplet_list = list(self.triplet_list)
-        self.triplet_list.sort(key=lambda t: t.triplet_id)
+        self.triplet_list.sort(key=lambda t: t.triplet_id)   # triplet id = index in triplet list
 
         for t1 in self.triplet_list:
             # keeping track of statistics
@@ -312,75 +329,70 @@ class XpletCreatorLUXE:
                     else:
                         self.connectivity_wrong_match_list.append(i_value)
 
-        # additional processing of qubo values
-        if self.configuration["settings"]["z_scores"]:
-            if self.configuration["settings"]["min_max feature scaling"] \
-                    and self.configuration["settings"]["quality scale range"] is not None:
-                print("Two standardisation methods not allowed at the same time!\n Aborting...")
-                exit()
-            else:
-                quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
-                mu = np.mean(quality_values)
-                sigma = np.std(quality_values)
-                max_z_value = max([abs((value - mu) / sigma) for value in quality_values])
-                for triplet in self.triplet_list:
-                    triplet.quality = (triplet.quality - mu) / sigma / max_z_value
+        # additional processing of qubo parameters
+        if self.configuration["scale range parameters"]["z_scores"] is not None:
+            quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
+            mu = np.mean(quality_values)
+            sigma = np.std(quality_values)
+            max_z_value = max([abs((value - mu) / sigma) for value in quality_values])
+            for triplet in self.triplet_list:
+                triplet.quality = (triplet.quality - mu) / sigma / max_z_value
 
         # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
-        elif self.configuration["settings"]["min_max feature scaling"]:
-            # scaling quality
-            if self.configuration["settings"]["quality scale range"] is not None:
-                a = self.configuration["settings"]["quality scale range"][0]
-                b = self.configuration["settings"]["quality scale range"][1]
-                quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
-                min_quality = min(quality_values)
-                max_quality = max(quality_values)
-                for triplet in self.triplet_list:
-                    triplet.quality = a + (triplet.quality - min_quality) * (b - a) / (max_quality - min_quality)
+        if self.configuration["scale range parameters"]["quality"] is not None:
+            a = self.configuration["settings"]["quality scale range"][0]
+            b = self.configuration["settings"]["quality scale range"][1]
+            quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
+            min_quality = min(quality_values)
+            max_quality = max(quality_values)
+            for triplet in self.triplet_list:
+                triplet.quality = a + (triplet.quality - min_quality) * (b - a) / (max_quality - min_quality)
 
-                # rewriting ai lists
-                for i in range(len(self.quality_correct_match_list)):
-                    self.quality_correct_match_list[i] = \
-                        a + (self.quality_correct_match_list[i] - min_quality) * (b - a) / (max_quality - min_quality)
-                for i in range(len(self.quality_wrong_match_list)):
-                    self.quality_wrong_match_list[i] = \
-                        a + (self.quality_wrong_match_list[i] - min_quality) * (b - a) / (max_quality - min_quality)
+            # rewriting a_i lists
+            for i in range(len(self.quality_correct_match_list)):
+                self.quality_correct_match_list[i] = \
+                    a + (self.quality_correct_match_list[i] - min_quality) * (b - a) / (max_quality - min_quality)
+            for i in range(len(self.quality_wrong_match_list)):
+                self.quality_wrong_match_list[i] = \
+                    a + (self.quality_wrong_match_list[i] - min_quality) * (b - a) / (max_quality - min_quality)
 
-            # scaling connectivity
-            if self.configuration["settings"]["connectivity scale range"] is not None:
-                # excluding conflict terms
-                connectivity_values = [value for value in self.connectivity_correct_match_list if value !=
-                                       self.configuration["settings"]["constant conflict param"]] + \
-                                      [value for value in self.connectivity_wrong_match_list if value !=
-                                       self.configuration["settings"]["constant conflict param"]]
-                min_connectivity = min(connectivity_values)
-                max_connectivity = max(connectivity_values)
+        # scaling connectivity
+        if self.configuration["scale range parameters"]["interaction"] is not None:
+            # excluding conflict terms
+            connectivity_values = [value for value in self.connectivity_correct_match_list if value !=
+                                   float(self.configuration["qubo parameters"]["b_ij conflict"])] + \
+                                  [value for value in self.connectivity_wrong_match_list if value !=
+                                   float(self.configuration["qubo parameters"]["b_ij conflict"])]
+            min_connectivity = min(connectivity_values)
+            max_connectivity = max(connectivity_values)
 
-                a = self.configuration["settings"]["connectivity scale range"][0]
-                b = self.configuration["settings"]["connectivity scale range"][1]
-                for triplet in self.triplet_list:
-                    for key in triplet.interactions.keys():
-                        if triplet.interactions[key] == self.configuration["settings"]["constant conflict param"]:
-                            continue
-                        triplet.interactions[key] = \
-                            a + (triplet.interactions[key] - min_connectivity) * (b - a) / (
-                                        max_connectivity - min_connectivity)
-
-                # rewriting connectivity lists
-                for i in range(len(self.connectivity_wrong_match_list)):
-                    if self.connectivity_wrong_match_list[i] == \
-                            self.configuration["settings"]["constant conflict param"]:
+            a = self.configuration["scale range parameters"]["interaction"][0]
+            b = self.configuration["scale range parameters"]["interaction"][1]
+            for triplet in self.triplet_list:
+                for key in triplet.interactions.keys():
+                    if triplet.interactions[key] == self.configuration["qubo parameters"]["b_ij conflict"]:
                         continue
-                    self.connectivity_wrong_match_list[i] = \
-                        a + (self.connectivity_wrong_match_list[i] - min_connectivity) * (b - a) / \
-                        (max_connectivity - min_connectivity)
-                for i in range(len(self.connectivity_correct_match_list)):
-                    if self.connectivity_correct_match_list[i] == \
-                            self.configuration["settings"]["constant conflict param"]:
-                        continue
-                    self.connectivity_correct_match_list[i] = \
-                        a + (self.connectivity_correct_match_list[i] - min_connectivity) * (b - a) / \
-                        (max_connectivity - min_connectivity)
+                    else:
+                        triplet.interactions[key] = a + (triplet.interactions[key] - min_connectivity) * (b - a) / \
+                                                    (max_connectivity - min_connectivity)
+
+            # rewriting connectivity lists
+            for i in range(len(self.connectivity_wrong_match_list)):
+                if self.connectivity_wrong_match_list[i] == float(self.configuration["qubo parameters"]
+                                                                  ["b_ij conflict"]):
+                    continue
+                else:
+                    self.connectivity_wrong_match_list[i] = a + (self.connectivity_wrong_match_list[i] -
+                                                                 min_connectivity) * (b - a) / \
+                                                                (max_connectivity - min_connectivity)
+            for i in range(len(self.connectivity_correct_match_list)):
+                if self.connectivity_correct_match_list[i] == float(self.configuration["qubo parameters"]
+                                                                    ["b_ij conflict"]):
+                    continue
+                else:
+                    self.connectivity_correct_match_list[i] = a + (self.connectivity_correct_match_list[i] -
+                                                                   min_connectivity) * (b - a) / \
+                                                                  (max_connectivity - min_connectivity)
 
         print("\nCoefficients set successfully")
         print(f"\nSaving triplet list to folder: {self.save_to_folder}")
@@ -389,13 +401,11 @@ class XpletCreatorLUXE:
     def triplet_interaction(self,
                             triplet,
                             other_triplet):
-        """
-        Compares two triplets and  how they match.
+        """Compares two triplets and  how they match.
         :param triplet: first triplet
         :param other_triplet: triplet to compare with the first one
         :return value based on connectivity/conflict and chosen set of parameters
         """
-
         # checking number of shared hits
         intersection = 0
 
@@ -421,45 +431,45 @@ class XpletCreatorLUXE:
             return 0
 
         # different mode types
-        if self.configuration["settings"]["qubo mode"] == "c_con c_ct":
+        if self.mode[0] == "constant" and self.mode[1] == "constant":
             if intersection == 1:
-                return self.configuration["settings"]["constant conflict param"]
+                return float(self.configuration["qubo parameters"]["b_ij conflict"])
             elif intersection == 2 and not same_layer:
-                return self.configuration["settings"]["constant connectivity param"]
+                return float(self.configuration["qubo parameters"]["b_ij match"])
             else:
-                return self.configuration["settings"]["constant conflict param"]
+                return float(self.configuration["qubo parameters"]["b_ij conflict"])
 
         # constant for conflict, quality for function
-        elif self.configuration["settings"]["qubo mode"] == "c_con f_ct":
+        elif self.mode[0] == "constant" and self.mode[1] != "constant":
             if intersection == 1:
-                return self.configuration["settings"]["constant conflict param"]
+                return float(self.configuration["qubo parameters"]["b_ij conflict"])
             elif intersection == 2 and not same_layer:
-                return - 1 + self.quality_functions[self.configuration["settings"]["function connectivity"]](
+                return - 1 + self.quality_functions[self.configuration["qubo parameters"]["b_ij match"]](
                     triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
             else:
-                return self.configuration["settings"]["constant conflict param"]
+                return float(self.configuration["qubo parameters"]["b_ij conflict"])
 
         # function for conflict, constant for quality
-        elif self.configuration["settings"]["qubo mode"] == "f_con c_ct":
+        elif self.mode[0] != "constant" and self.mode[1] == "constant":
             if intersection == 1:
-                return self.conflict_functions[self.configuration["settings"]["function conflict"]](
+                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
                     triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
             elif intersection == 2 and not same_layer:
-                return self.configuration["settings"]["constant connectivity param"]
+                return float(self.configuration["qubo parameters"]["b_ij match"])
             else:
-                return 1 + self.conflict_functions[self.configuration["settings"]["function connectivity"]](
+                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
                     triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
 
         # only functions for conflicts / quality
         elif self.configuration["settings"]["qubo mode"] == "f_con f_ct":
             if intersection == 1:
-                return self.conflict_functions[self.configuration["settings"]["function conflict"]](
+                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
                     triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
             elif intersection == 2 and not same_layer:
-                return - 1 + self.quality_functions[self.configuration["settings"]["function connectivity"]](
+                return - 1 + self.quality_functions[self.configuration["qubo parameters"]["b_ij match"]](
                     triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
             else:
-                return 1 + self.conflict_functions[self.configuration["settings"]["function conflict"]](
+                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
                     triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
 
     @staticmethod
@@ -492,38 +502,16 @@ class XpletCreatorLUXE:
                        np.std([angle_yz_doublet_1, angle_yz_doublet_2, angle_yz_doublet_3]) ** 2)
 
     def write_info_file(self):
-        """
-        Writes information about the Preselection parameters and some statistics into 'Preselection.txt' which is
-        stored inside the target folder.
+        """        Writes information about the Preselection parameters and some statistics into
+        'Preselection.txt' which is stored inside the output folder.
         """
         with open(self.save_to_folder + "/preselection_info.txt", "w") as f:
             f.write("Preselection performed with the following set of parameters: \n")
             f.write("---\n")
-            f.write("detector planes: \n")
-
-            for plane in self.configuration["detector planes"].keys():
-                f.write(f"\n{plane}:")
-                for key, value in self.configuration["detector planes"][plane].items():
-                    f.write(f"\n{key}: {value}")
+            for outer_key in self.configuration.keys():
+                for inner_key, value in self.configuration[outer_key]:
+                    f.write(f"\n{innter_key}: {value}")
                 f.write("\n")
-
-            f.write("\n\n")
-            f.write("---\n")
-            f.write("doublet criteria: \n")
-            for key, value in self.configuration["doublet criteria"].items():
-                f.write(f"\n{key}: {value}")
-
-            f.write("\n\n")
-            f.write("---\n")
-            f.write("triplet criteria: \n")
-            for key, value in self.configuration["triplet criteria"].items():
-                f.write(f"\n{key}: {value}")
-
-            f.write("\n\n")
-            f.write("---\n")
-            f.write("settings: \n")
-            for key, value in self.configuration["settings"].items():
-                f.write(f"\n{key}: {value}")
 
             f.write("\n\n---\n")
             f.write("Statistics:\n\n")
@@ -536,8 +524,7 @@ class XpletCreatorLUXE:
                     f"{int(self.found_correct_triplets / 2)}\n")
 
     def plot_and_save_statistics(self):
-        """
-        This functions plots and saves various statistics to the same folder where the triplet list is saved to.
+        """This functions plots and saves various statistics to the same folder where the triplet list is saved to.
         The results are saved as 'triplet_coefficients_statistics.pdf' and 'triplet_interactions.pdf' into the
         target folder.
         """
