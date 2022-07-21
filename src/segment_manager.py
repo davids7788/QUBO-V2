@@ -5,7 +5,7 @@ from typing import List
 class SegmentManager:
     def __init__(self,
                  configuration: dict,
-                 detector_layers: List[List[float]]):
+                 detector_layer_file: str):
         """Class for handling segments for doublet and triplet creation
         :param configuration: information needed for the segments:
                 {
@@ -14,18 +14,38 @@ class SegmentManager:
                 triplet: {angle diff x: <value>,
                           angle diff y: <value>}
                 binning: {num bins x: <value>}
+                qubo parameters: {b_ij conflict: <value>,
+                                  b_ij match: value,
+                                  a_i: <value>}
+                scale range parameters: {z_scores: <value>,
+                                         quality: <value>,
+                                         interaction: <value>}
                 }
-        :param detector_geometry: list of detector layer dimensions:
-               [[l0_x0, l0_y0, l0_x1, l0_y1, l0_z], [l1_x0, l1_y0, l1_x1, l1_y1, l1_z], ...]
+        :param detector_geometry: .csv detector layer file with all the chips / detector layers
         """
+
         self.configuration = configuration   # Dictionary of selection criteria
-        self.detector_layers = detector_layers
+        self.detector_layers = []
+        with open(detector_geometry, 'r') as file:
+            csv_reader = csv.reader(file)
+            next(csv_reader)    # skip header, csv files should consist of one line
+            for row in csv_reader:
+                detector_layers.append(row[1:])
+
+        self.num_layers = len(set([self.detector_layers[-1] for _ in self.detector]))
         self.segment_list = []   # List of segment objects
         self.segment_mapping = {}   # Map for segments as <segment>: [<segment_name_0>, <segment_name_1>, ...]
         self.reference_layer_z = None
         self.layer_z_values = [entry[-1] for entry in self.detector_layers]
         self.layer_x_min_values = [entry[0] for entry in self.detector_layers]
         self.layer_x_max_values = [entry[1] for entry in self.detector_layers]
+
+        # create segments and mapping
+        if self.num_layers == 4:
+            self.create_segments_simplified_model()
+            self.segment_mapping_simplified_model()
+        elif self.num_layers == 8:
+            pass  # to be implemented --> FullLUXE
 
     def target_segment(self,
                        name: str):

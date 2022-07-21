@@ -11,9 +11,6 @@ from segment_manager import SegmentManager
 
 class XpletCreatorLUXE:
     def __init__(self,
-                 luxe_tracking_data_file_name,
-                 detector_geometry,
-                 segment_manager,
                  configuration,
                  save_to_folder):
         """Class for creating x_plets from detector hits
@@ -25,7 +22,6 @@ class XpletCreatorLUXE:
             layer_ID        : layer ID, starting from 0
             particle_ID     : number to identify particles
             particle_energy : particle energy [MeV]
-        :param detector_geometry: simplified LUXE (sl) or full LUXE (fl)
         :param segment_manager : managing segments with hits
         :param configuration  : dictionary, configuration for detector setup and xplet selection
             {
@@ -43,24 +39,11 @@ class XpletCreatorLUXE:
             }
         :param save_to_folder : folder in which results are stored
         """
-        self.luxe_tracking_data_file_name = luxe_tracking_data_file_name
-        self.detector_geometry = detector_geometry
         self.configuration = configuration
         self.save_to_folder = save_to_folder
-        self.segment_manager = segment_manager
         self.mode = self.recognize_parameter_setup()
         self.doublet_creation_time = None
         self.triplet_creation_time = None
-
-        # Simplified model only has 4 detector planes
-        if self.detector_geometry == "sl":
-            self.num_layers = 4
-        elif self.detector_geometry == "fl":
-            self.num_layers = 8
-        else:
-            print("No valid detector geometry chosen.")
-            print("Exit program...")
-            exit()
 
         # some values to check if computation successful
         self.num_particles = 0
@@ -78,23 +61,16 @@ class XpletCreatorLUXE:
         self.layer_id = None
         self.particle_energy = None
 
-        # loading data and setting indices for .csv file
-        self.num_segments = self.configuration["binning"]["num bins"]
-        if self.detector_geometry == "sl":
-            self.create_segments_simplified_model()
-            self.segment_manager.map_segments_simple_model()
-        elif self.detector_geometry == "fl":
-            pass  # to be implemented --> FullLUXE
-
-        self.load_tracking_data()
-        print(f"Number of particles found: {self.num_particles}")
-
-    def load_tracking_data(self):
+    def load_tracking_data(self,
+                           tracking_data_file: str,
+                           segment_manager: SegmentManager):
         """Loads data from a .csv file and stores it into a 2-dim array. Also converts values which are used for
         calculations to float from string. The file structure is displayed in the class description.
+        :param tracking_data_file: Luxe tracking data file
+        :param segment_manager: SegmentManager object with already set segments and mapping
         """
         particle_numbers = set()  # counting particle ID
-        with open(self.luxe_tracking_data_file_name, 'r') as file:
+        with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             csv_header = next(csv_reader)  # access header, csv files should consist of one line of header
             self.x = csv_header.index("x")
@@ -111,28 +87,32 @@ class XpletCreatorLUXE:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
-                    self.segment_manager.segment_list[
-                        self.segment_manager.get_segment_at_known_xz_value(row[self.x],
-                                                                           row[self.z])].data.append(row_converted)
+                    segment_manager.segment_list[
+                        segment_manager.get_segment_at_known_xz_value(row[self.x],
+                                                                      row[self.z])].data.append(row_converted)
                 particle_numbers.add(row[self.particle_id])
             self.num_particles = len(particle_numbers)
+            print(f"Number of particles found: {self.num_particles}")
 
-    def make_x_plet_list_simplified_setup(self):
-        """Creates doublets and triplets. For the simplified model only."""
+    def make_x_plet_list_simplified_setup(self,
+                                          segment_manager: SegmentManager):
+        """Creates doublets and triplets. For the simplified model only.
+        :param segment_manager: SegmentManager object with already set segments and mapping"""
 
         print("\nCreating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
-        for segment in self.segment_manager.segment_list:
+        for segment in segment_manager.segment_list:
             if segment.layer > 2:  # no doublets start from last layer
                 continue
-            next_segments = self.segment_manager.target_segments(segment.name)   # target segments
+            next_segments = segment_manager.target_segments(segment.name)   # target segments
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
                         if self.doublet_criteria_check(first_hit[self.x],
                                                        second_hit[self.x],
                                                        first_hit[self.z],
-                                                       second_hit[self.z]):
+                                                       second_hit[self.z],
+                                                       segment_manager.reference_layer_z):
                             doublet = Doublet(first_hit[self.particle_id],
                                               second_hit[self.particle_id],
                                               (first_hit[self.x],
@@ -157,10 +137,10 @@ class XpletCreatorLUXE:
 
         list_triplet_start = time.time()
         print("\nCreating triplet lists...\n")
-        for segment in self.segment_manager.segment_list:
+        for segment in segment_manager.segment_list:
             if segment.layer > 1:   # triplets start only at first two layers
                 continue
-            next_segments = self.segment_manager.target_segments(segment.name)  # target segments
+            next_segments = segment_manager.target_segments(segment.name)  # target segments
             for target_segment in next_segments:
                 for first_doublet in segment.doublet_data:
                     for second_doublet in target_segment.doublet_data:
@@ -194,21 +174,24 @@ class XpletCreatorLUXE:
                 return True
         return False
 
-    def doublet_criteria_check(self, x1, x2, z1, z2):
+    def doublet_criteria_check(self, x1, x2, z1, z2, z_ref):
         """
         Checks if hits may combined to doublets, applying dx/x0 criterion
         :param x1: x value first hit
         :param x2: x value second hit
         :param z1: z value first hit
         :param z2: z value second hit
+        :param z_ref: z-value reference
         :return: True if criteria applies, else False
         """
-        if abs(((x2 - x1) / self.z_at_x0(x1, x2, z1, z2) - self.configuration["doublet"]["dx/x0"])) > \
+        if abs(((x2 - x1) / XpletCreatorLUXE.self.z_at_x0(x1, x2, z1, z2, z_ref) -
+                self.configuration["doublet"]["dx/x0"])) > \
                 self.configuration["doublet"]["eps"]:
             return False
         return True
 
-    def z_at_x0(self, x_end, x_start, z_end, z_start):
+    @staticmethod
+    def z_at_x0(x_end, x_start, z_end, z_start, z_ref):
         """
         Help function for calculation x position of doublet at a z-reference value, usually the first detector layer
         counted from the IP
@@ -216,11 +199,12 @@ class XpletCreatorLUXE:
         :param x_start: x-position of segment
         :param z_end: z-position of target segment
         :param z_start: z-position of segment
+        :param z_ref: z-value reference
         :return: x_position at the reference layer
         """
         dx = x_end - x_start
         dz = z_end - z_start
-        return x_end - dx * abs(z_end - self.segment_manager.reference_layer_z) / dz
+        return x_end - dx * abs(z_end - z_ref) / dz
 
     @staticmethod
     def hms_string(sec_elapsed):

@@ -22,7 +22,7 @@ class Segment:
         self.triplet_data = []   # triplet list, first hit of the triplet is considered to be inside the segment
 
     def is_in_segment(self,
-                     x: str):
+                      x: str):
         """
         Checks if position x is inside the segment
         :param x: position in x [m]

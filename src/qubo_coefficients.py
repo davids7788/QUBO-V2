@@ -1,11 +1,10 @@
 class QuboCoefficients:
 
     def __init__(self,
-                 segment_manager: SegmentManager,
-                 configuration: dict):
+                 configuration: dict,
+                 save_to_folder):
 
         """Class for handling and setting QUBO coefficients
-        :param segment_manager: SegmentManager object
         :param configuration: dictionary, configuration for detector setup and xplet selection
             {
             doublet: {dx/x0: <value>,
@@ -20,11 +19,11 @@ class QuboCoefficients:
                                      quality: <value>,
                                      interaction: <value>}
             }
+        :param save_to_folder: folder to store results
         """
-        self.segment_manager = segment_manager
         self.configuration = configuration
         self.mode = self.recognize_parameter_setup()
-        self.save_to_folder = self.Segment_manager.save_to_folder
+        self.save_to_folder = save_to_folder
 
         # storing triplets
         self.triplet_list = set()
@@ -43,7 +42,8 @@ class QuboCoefficients:
         self.add_quality_function("two norm angle standard deviation", XpletCreatorLUXE.two_norm_std_angle)
         self.add_conflict_function("two norm angle standard deviation", XpletCreatorLUXE.two_norm_std_angle)
 
-    def set_triplet_coefficients(self):
+    def set_triplet_coefficients(self,
+                                 segment_manager: SegmentManager):
         """Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
         set it is also applied. If the process is successful a message and the target folder location containing the
         triplet list is displayed.
@@ -56,10 +56,10 @@ class QuboCoefficients:
         except ValueError:
             quality_mode = "angle function"
 
-        for segment in self.segment_manager.segment_list:
-            if segment.layer > len(self.segment_manager.detector_layers) - 3:
+        for segment in segment_manager.segment_list:
+            if segment.layer > len(segment_manager.detector_layers) - 3:
                 continue
-            next_segments = self.segment_manager.target_segments(segment.name)  # target segments
+            next_segments = segment_manager.target_segments(segment.name)  # target segments
             for t1 in segment.triplet_data:
                 if quality_mode == "constant":
                     t1.quality = quality
@@ -77,7 +77,7 @@ class QuboCoefficients:
                         t2.interactions.update({t1.triplet_id: interaction_value})
 
         # filling list structure
-        for segment in self.segment_manager.segment_list:
+        for segment in segment_manager.segment_list:
             for triplet in segment.triplet_data:
                 self.triplet_list.add(triplet)
             segment.triplet_data.clear()
