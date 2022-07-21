@@ -3,10 +3,10 @@ import time
 import numpy as np
 import sys
 
-from doublet import Doublet
-from triplet import Triplet
-from segment import Segment
-from segment_manager import SegmentManager
+from src.doublet import Doublet
+from src.triplet import Triplet
+from src.segment import Segment
+from src.segment_manager import SegmentManager
 
 
 class XpletCreatorLUXE:
@@ -41,7 +41,6 @@ class XpletCreatorLUXE:
         """
         self.configuration = configuration
         self.save_to_folder = save_to_folder
-        self.mode = self.recognize_parameter_setup()
         self.doublet_creation_time = None
         self.triplet_creation_time = None
 
@@ -87,11 +86,13 @@ class XpletCreatorLUXE:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
-                    segment_manager.segment_list[
-                        segment_manager.get_segment_at_known_xz_value(row[self.x],
-                                                                      row[self.z])].data.append(row_converted)
+
+                segment_manager.segment_list[
+                    segment_manager.get_segment_at_known_xz_value(float(row[self.x]),
+                                                                  float(row[self.z]))].data.append(row_converted)
                 particle_numbers.add(row[self.particle_id])
             self.num_particles = len(particle_numbers)
+            num_entries = 0
             print(f"Number of particles found: {self.num_particles}")
 
     def make_x_plet_list_simplified_setup(self,
@@ -102,9 +103,11 @@ class XpletCreatorLUXE:
         print("\nCreating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
         for segment in segment_manager.segment_list:
-            if segment.layer > 2:  # no doublets start from last layer
+
+            if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
                 continue
             next_segments = segment_manager.target_segments(segment.name)   # target segments
+            print(segment.name, [len(t.data) for t in next_segments])
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
@@ -127,10 +130,11 @@ class XpletCreatorLUXE:
                                 self.found_correct_doublets += 1
                             self.found_doublets += 1
                             segment.doublet_data.append(doublet)
-
+        print(self.found_correct_doublets)
         doublet_list_end = time.time()  # doublet list timer
+        self.doublet_creation_time = XpletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
         print(f"Time elapsed for creating doublets: "
-              f"{XpletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)}")
+              f"{self.doublet_creation_time}")
         print(f"Number of tracks approximately possible to reconstruct at doublet level: "
               f"{int(self.found_correct_doublets / 3)}")
         print(f"Number of doublets found: {self.found_doublets}\n")
@@ -138,7 +142,7 @@ class XpletCreatorLUXE:
         list_triplet_start = time.time()
         print("\nCreating triplet lists...\n")
         for segment in segment_manager.segment_list:
-            if segment.layer > 1:   # triplets start only at first two layers
+            if segment.layer > len(segment_manager.detector_layers) - 3:   # triplets start only at first two layers
                 continue
             next_segments = segment_manager.target_segments(segment.name)  # target segments
             for target_segment in next_segments:
@@ -155,9 +159,10 @@ class XpletCreatorLUXE:
             segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
         list_triplet_end = time.time()
+        self.triplet_creation_time = XpletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
 
         print(f"Time elapsed for creating triplets: "
-              f"{XpletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)}")
+              f"{self.triplet_creation_time}")
         print(f"Number of tracks approximately possible to reconstruct at triplet level: "
               f"{int(self.found_correct_triplets / 2)}")
         print(f"Number of triplets found: {self.found_triplets}")
@@ -184,7 +189,7 @@ class XpletCreatorLUXE:
         :param z_ref: z-value reference
         :return: True if criteria applies, else False
         """
-        if abs(((x2 - x1) / XpletCreatorLUXE.self.z_at_x0(x1, x2, z1, z2, z_ref) -
+        if abs(((x2 - x1) / XpletCreatorLUXE.z_at_x0(x1, x2, z1, z2, z_ref) -
                 self.configuration["doublet"]["dx/x0"])) > \
                 self.configuration["doublet"]["eps"]:
             return False
@@ -214,27 +219,6 @@ class XpletCreatorLUXE:
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
-    @staticmethod
-    def two_norm_std_angle(doublet_1, doublet_2, doublet_3):
-        """Returns 2-norm of angle difference in xz and yz.
-        :param
-            doublet_1 : doublet from hit 1 + 2
-            doublet_2 : doublet from hit 2 + 3
-            doublet_3 : doublet from hit 3 + 4
-        :return
-            2-norm of angle difference in xz and yz."""
-        angle_xz_doublet_1 = doublet_1.xz_angle()
-        angle_yz_doublet_1 = doublet_1.yz_angle()
-
-        angle_xz_doublet_2 = doublet_2.xz_angle()
-        angle_yz_doublet_2 = doublet_2.yz_angle()
-
-        angle_xz_doublet_3 = doublet_3.xz_angle()
-        angle_yz_doublet_3 = doublet_3.yz_angle()
-
-        return np.sqrt(np.std([angle_xz_doublet_1, angle_xz_doublet_2, angle_xz_doublet_3]) ** 2 +
-                       np.std([angle_yz_doublet_1, angle_yz_doublet_2, angle_yz_doublet_3]) ** 2)
-
     def write_info_file(self):
         """        Writes information about the Preselection parameters and some statistics into
         'Preselection.txt' which is stored inside the output folder.
@@ -243,8 +227,8 @@ class XpletCreatorLUXE:
             f.write("Preselection performed with the following set of parameters: \n")
             f.write("---\n")
             for outer_key in self.configuration.keys():
-                for inner_key, value in self.configuration[outer_key]:
-                    f.write(f"\n{innter_key}: {value}")
+                for inner_key, value in self.configuration[outer_key].items():
+                    f.write(f"\n{inner_key}: {value}")
                 f.write("\n")
 
             f.write("\n\n---\n")
@@ -252,12 +236,12 @@ class XpletCreatorLUXE:
             f.write(f"Number of particles hitting at least one detector layer: {self.num_particles}\n\n")
             f.write(f"Number of doublets found: {self.found_doublets}\n")
             f.write(f"Time needed to create doublet candidates: "
-                    f"{XpletCreatorLUXE.hms_string(self.doublet_creation_time)}\n")
+                    f"{self.doublet_creation_time}\n")
             f.write(f"Number of tracks approximately possible to reconstruct at doublet level: "
                     f"{int(self.found_correct_doublets / 3)}\n\n")
 
             f.write(f"Number of triplets found: {self.found_triplets}\n")
             f.write(f"Time needed to create triplet candidates: "
-                    f"{XpletCreatorLUXE.hms_string(self.triplet_creation_time)}\n")
+                    f"{self.triplet_creation_time}\n")
             f.write(f"Number of tracks approximately possible to reconstruct at triplet level: "
                     f"{int(self.found_correct_triplets / 2)}\n")

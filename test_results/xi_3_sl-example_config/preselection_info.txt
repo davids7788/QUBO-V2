@@ -1,0 +1,32 @@
+Preselection performed with the following set of parameters: 
+---
+
+dx/x0: 0.053
+eps: 0.0015
+
+angle diff x: 0.001
+angle diff y: 0.001
+
+num bins x: 2
+
+b_ij conflict: 1.0
+b_ij match: -1.0
+a_i: 0.0
+
+z_scores: None
+quality: None
+interaction: None
+
+
+---
+Statistics:
+
+Number of particles hitting at least one detector layer: 778
+
+Number of doublets found: 6177
+Time needed to create doublet candidates: 0:00:00.84
+Number of tracks approximately possible to reconstruct at doublet level: 518
+
+Number of triplets found: 901
+Time needed to create triplet candidates: 0:00:00.50
+Number of tracks approximately possible to reconstruct at triplet level: 388

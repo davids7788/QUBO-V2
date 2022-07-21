@@ -1,11 +1,15 @@
 import pandas as pd
+import csv
+
+from src.segment import Segment
+
 from typing import List
 
 
 class SegmentManager:
     def __init__(self,
                  configuration: dict,
-                 detector_layer_file: str):
+                 detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
         :param configuration: information needed for the segments:
                 {
@@ -30,9 +34,9 @@ class SegmentManager:
             csv_reader = csv.reader(file)
             next(csv_reader)    # skip header, csv files should consist of one line
             for row in csv_reader:
-                detector_layers.append(row[1:])
+                self.detector_layers.append([float(r) for r in (row[1:])])
 
-        self.num_layers = len(set([self.detector_layers[-1] for _ in self.detector]))
+        self.num_layers = len(set([layer[-1] for layer in self.detector_layers]))
         self.segment_list = []   # List of segment objects
         self.segment_mapping = {}   # Map for segments as <segment>: [<segment_name_0>, <segment_name_1>, ...]
         self.reference_layer_z = None
@@ -47,8 +51,8 @@ class SegmentManager:
         elif self.num_layers == 8:
             pass  # to be implemented --> FullLUXE
 
-    def target_segment(self,
-                       name: str):
+    def target_segments(self,
+                        name: str):
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
         :return: target segments
@@ -66,9 +70,9 @@ class SegmentManager:
         :return: index of corresponding segment in segment list
         """
         z_index = self.layer_z_values.index(z)
-        x_range = self.detector_layers[index][1] - self.detector_layers[index][0]
+        x_range = self.detector_layers[z_index][1] - self.detector_layers[z_index][0]
         x_bin_size = x_range / self.configuration["binning"]["num bins x"]
-        x_index = int((x - self.detector_layers[index][1]) / x_bin_size) + 1
+        x_index = int((x - self.detector_layers[z_index][1]) / x_bin_size) - 1
         return z_index * self.configuration["binning"]["num bins x"] + x_index
 
     def segment_mapping_simplified_model(self):
@@ -86,6 +90,8 @@ class SegmentManager:
             target_list = []
             for target_segment in self.segment_list:
                 if target_segment.layer != segment.layer + 1:   # only consecutive layers
+                    continue
+                if target_segment.x_end < segment.x_start:   # heavy scattering excluded
                     continue
 
                 # max and minimum dx values
@@ -124,10 +130,10 @@ class SegmentManager:
             self.segment_mapping.update({segment.name: target_list})
 
     def z_at_x0(self,
-                x_end: str,
-                x_start: str,
-                z_end: str,
-                z_start: str):
+                x_end: float,
+                x_start: float,
+                z_end: float,
+                z_start: float):
         """Help function for calculation x position of doublet at a z-reference value, which was set before
         as a class attribute
         :param x_end: x-position of target segment
@@ -144,13 +150,13 @@ class SegmentManager:
         """Splitting data into num bins segment to reduce the combinatorial computational costs.
         For the simplified model only.
         """
-        for i, layer in self.detector_layers:   # ordered in z value from lowest to highest
+        for i, layer in enumerate(self.detector_layers):   # ordered in z value from lowest to highest
             x_max = layer[1]
             x_min = layer[0]
-            segment_size = (x_max - x_min) / self.configuration["binning"]["num bins"]
-            for j in range(self.configuration["binning"]["num bins"]):
+            segment_size = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
+            for j in range(int(self.configuration["binning"]["num bins x"])):
                 self.segment_list.append(Segment(f"L{i}S{j}",  # Layer i segment j
                                                  i,
                                                  x_min + j * segment_size,
                                                  x_min + (j + 1) * segment_size,
-                                                 self.reference_layer_z))
+                                                 self.detector_layers[i][-1]))

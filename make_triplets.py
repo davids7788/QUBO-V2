@@ -4,8 +4,9 @@ import os
 
 from pathlib import Path
 
-from x_plets import XpletCreatorLUXE
-from segment_manager import SegmentManager
+from src.x_plets import XpletCreatorLUXE
+from src.segment_manager import SegmentManager
+from src.qubo_coefficients import QuboCoefficients
 
 
 # sys argv [1]: config file
@@ -39,4 +40,4 @@ qubo_coefficients = QuboCoefficients(config_file, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.filling_lists_for_statistics()
 qubo_coefficients.parameter_rescaling()
-qubo_coefficient.plot_and_save_statistics()
+qubo_coefficients.plot_and_save_statistics(x_plet_creator.num_particles)

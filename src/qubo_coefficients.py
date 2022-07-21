@@ -1,3 +1,9 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+from src.segment_manager import SegmentManager
+
+
 class QuboCoefficients:
 
     def __init__(self,
@@ -39,8 +45,8 @@ class QuboCoefficients:
         self.conflict_functions = {}
 
         # Adding a very simple set of quality and conflict functions
-        self.add_quality_function("two norm angle standard deviation", XpletCreatorLUXE.two_norm_std_angle)
-        self.add_conflict_function("two norm angle standard deviation", XpletCreatorLUXE.two_norm_std_angle)
+        self.add_quality_function("two norm angle standard deviation", QuboCoefficients.two_norm_std_angle)
+        self.add_conflict_function("two norm angle standard deviation", QuboCoefficients.two_norm_std_angle)
 
     def set_triplet_coefficients(self,
                                  segment_manager: SegmentManager):
@@ -80,7 +86,7 @@ class QuboCoefficients:
         for segment in segment_manager.segment_list:
             for triplet in segment.triplet_data:
                 self.triplet_list.add(triplet)
-            segment.triplet_data.clear()
+            # segment.triplet_data.clear()
         self.triplet_list = list(self.triplet_list)
         self.triplet_list.sort(key=lambda t: t.triplet_id)   # triplet id = index in triplet list
 
@@ -264,6 +270,27 @@ class QuboCoefficients:
 
         return conflict, match
 
+    @staticmethod
+    def two_norm_std_angle(doublet_1, doublet_2, doublet_3):
+        """Returns 2-norm of angle difference in xz and yz.
+        :param
+            doublet_1 : doublet from hit 1 + 2
+            doublet_2 : doublet from hit 2 + 3
+            doublet_3 : doublet from hit 3 + 4
+        :return
+            2-norm of angle difference in xz and yz."""
+        angle_xz_doublet_1 = doublet_1.xz_angle()
+        angle_yz_doublet_1 = doublet_1.yz_angle()
+
+        angle_xz_doublet_2 = doublet_2.xz_angle()
+        angle_yz_doublet_2 = doublet_2.yz_angle()
+
+        angle_xz_doublet_3 = doublet_3.xz_angle()
+        angle_yz_doublet_3 = doublet_3.yz_angle()
+
+        return np.sqrt(np.std([angle_xz_doublet_1, angle_xz_doublet_2, angle_xz_doublet_3]) ** 2 +
+                       np.std([angle_yz_doublet_1, angle_yz_doublet_2, angle_yz_doublet_3]) ** 2)
+
     def add_quality_function(self,
                              quality_function_name,
                              quality_function_object):
@@ -282,10 +309,12 @@ class QuboCoefficients:
         """
         self.conflict_functions.update({conflict_function_name: conflict_function_object})
 
-    def plot_and_save_statistics(self):
+    def plot_and_save_statistics(self,
+                                 num_particles):
         """This functions plots and saves various statistics to the same folder where the triplet list is saved to.
         The results are saved as 'triplet_coefficients_statistics.pdf' and 'triplet_interactions.pdf' into the
         target folder.
+        :param num_particles: number of particles in the current tracking file
         """
         # Number of interactions with other triplets
         interactions_list = []
@@ -299,9 +328,9 @@ class QuboCoefficients:
                  edgecolor="firebrick",
                  linewidth=3,
                  histtype='step',
-                 label=f"Number of particles: {self.num_particles}\n"
-                       f"Number of triplets: {len(self.triplet_list)}"
-                       f"$\sum$ interactions: {sum(interactions_list) / 2}")
+                 label=f"Number of particles: {num_particles}\n"
+                       f"Number of triplets: {len(self.triplet_list)}\n"
+                       f"Interactions: {int(sum(interactions_list) / 2)}")
         plt.yscale("log")
         plt.legend(loc="best", fontsize=20)
 
@@ -325,11 +354,10 @@ class QuboCoefficients:
         ax1.tick_params(axis='both', labelsize=20)
         ax1.set_ylabel("counts", fontsize=20)
         ax1.set_xlabel("[a.u]", fontsize=20)
-
         n2, bins2, patches2 = ax2.hist([self.connectivity_correct_match_list, self.connectivity_wrong_match_list],
                                        bins=50,
-                                       label=[r"connectivity correct match",
-                                              r"connectivity wrong match"],
+                                       label=[r"interaction correct match",
+                                              r"interaction wrong match"],
                                        edgecolor='k',
                                        color=["goldenrod", "royalblue"],
                                        align="left",
