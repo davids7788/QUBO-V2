@@ -44,6 +44,10 @@ class XpletCreatorLUXE:
         self.doublet_creation_time = None
         self.triplet_creation_time = None
 
+        self.preselection_statistic_dx_x0 = []
+        self.preselection_statistic_angle_xz = []
+        self.preselection_statistic_angle_yz = []
+
         # some values to check if computation successful
         self.num_particles = 0
         self.found_correct_doublets = 0
@@ -94,10 +98,6 @@ class XpletCreatorLUXE:
                 segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
             self.num_particles = len(particle_numbers)
 
-
-
-
-
             print(f"Number of particles found: {self.num_particles}")
 
     def make_x_plet_list_simplified_setup(self,
@@ -107,7 +107,6 @@ class XpletCreatorLUXE:
 
         print("\nCreating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
-
         for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
                 continue
@@ -133,6 +132,14 @@ class XpletCreatorLUXE:
                                               second_hit[self.hit_id])
                             if doublet.is_correct_match:
                                 self.found_correct_doublets += 1
+                                self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
+                                                                          doublet.hit_1_position[0]) /
+                                                                         self.x0_at_z_ref(doublet.hit_2_position[0],
+                                                                                          doublet.hit_1_position[0],
+                                                                                          doublet.hit_2_position[2],
+                                                                                          doublet.hit_1_position[2],
+                                                                                          segment_manager.
+                                                                                          reference_layer_z))
                             self.found_doublets += 1
                             segment.doublet_data.append(doublet)
         print(self.found_correct_doublets)
@@ -143,7 +150,6 @@ class XpletCreatorLUXE:
         print(f"Number of tracks approximately possible to reconstruct at doublet level: "
               f"{int(self.found_correct_doublets / 3)}")
         print(f"Number of doublets found: {self.found_doublets}\n")
-
 
         list_triplet_start = time.time()
         print("\nCreating triplet lists...\n")
@@ -161,6 +167,8 @@ class XpletCreatorLUXE:
                             self.found_triplets += 1
                             segment.triplet_data.append(triplet)
                             if triplet.is_correct_match:
+                                self.preselection_statistic_angle_xz.append(triplet.angles_between_doublets()[0])
+                                self.preselection_statistic_angle_yz.append(triplet.angles_between_doublets()[1])
                                 self.found_correct_triplets += 1
             segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
@@ -195,14 +203,14 @@ class XpletCreatorLUXE:
         :param z_ref: z-value reference
         :return: True if criteria applies, else False
         """
-        if abs(((x2 - x1) / XpletCreatorLUXE.z_at_x0(x1, x2, z1, z2, z_ref) -
+        if abs(((x2 - x1) / XpletCreatorLUXE.x0_at_z_ref(x1, x2, z1, z2, z_ref) -
                 self.configuration["doublet"]["dx/x0"])) > \
                 self.configuration["doublet"]["eps"]:
             return False
         return True
 
     @staticmethod
-    def z_at_x0(x_end, x_start, z_end, z_start, z_ref):
+    def x0_at_z_ref(x_end, x_start, z_end, z_start, z_ref):
         """
         Help function for calculation x position of doublet at a z-reference value, usually the first detector layer
         counted from the IP

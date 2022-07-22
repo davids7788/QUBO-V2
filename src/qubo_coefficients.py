@@ -309,11 +309,15 @@ class QuboCoefficients:
         self.conflict_functions.update({conflict_function_name: conflict_function_object})
 
     def plot_and_save_statistics(self,
-                                 num_particles):
+                                 num_particles,
+                                 preselection_statistics):
         """This functions plots and saves various statistics to the same folder where the triplet list is saved to.
         The results are saved as 'triplet_coefficients_statistics.pdf' and 'triplet_interactions.pdf' into the
         target folder.
         :param num_particles: number of particles in the current tracking file
+        :param preselection_statistics: [preselection_statistic_dx_x0,
+                                         self.preselection_statistic_angle_xz,
+                                         self.preselection_statistic_angle_yz]
         """
         # Number of interactions with other triplets
         interactions_list = []
@@ -338,6 +342,7 @@ class QuboCoefficients:
         plt.xticks(fontsize=20)
         plt.yticks(fontsize=20)
         plt.savefig(f"{self.save_to_folder}/triplet_interactions.pdf")
+        plt.close()
 
         # distribution of coefficients
         fig, (ax1, ax2) = plt.subplots(2, figsize=(12, 12))
@@ -374,3 +379,38 @@ class QuboCoefficients:
         ax2.tick_params(axis='both', labelsize=20)
         ax2.set_xlabel("[a.u]", fontsize=20)
         plt.savefig(f"{self.save_to_folder}/triplet_coefficients_statistics.pdf")
+        plt.close()
+
+        # preselection statistics iof truth doublets / triplets
+        fig, (ax3, ax4) = plt.subplots(2, figsize=(12, 12))
+        ax3.hist(np.array(preselection_statistics[0]) * 1e2,
+                 bins=50,
+                 label=r"dx/x0 truth doublets",
+                 edgecolor="blue",
+                 linewidth=3,
+                 histtype='step',
+                 align="left")
+        ax3.legend(loc='best', fontsize=20)
+        ax3.tick_params(axis='both', labelsize=20)
+        ax3.set_ylabel("counts", fontsize=20)
+        ax3.set_xlabel("[$10^{-2}$ a.u]", fontsize=20)
+
+        ax4.hist(np.array(preselection_statistics[1]) * 1e3,
+                 bins=50,
+                 label=r"angle difference xz",
+                 edgecolor="goldenrod",
+                 linewidth=3,
+                 histtype='step',
+                 align="left")
+        ax4.hist(np.array(preselection_statistics[2]) * 1e3,
+                 bins=50,
+                 label=r"angle difference yz",
+                 edgecolor="royalblue",
+                 linewidth=3,
+                 histtype='step',
+                 align="left")
+        ax4.legend(loc='best', fontsize=20)
+        ax4.set_ylabel("counts", fontsize=20)
+        ax4.tick_params(axis='both', labelsize=20)
+        ax4.set_xlabel("[$10^{-3}$ rad]", fontsize=20)
+        plt.savefig(f"{self.save_to_folder}/preselection_truth_statistics.pdf")

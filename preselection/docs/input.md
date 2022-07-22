@@ -17,10 +17,11 @@ To reduce computational costs, separating hits into bins.
 * `num bins x:` number of bins in x-direction (int)
 
 # qubo
-QUBO parameters. Separating parameters for quadratic terms to match and conflict.
-* `b_ij conflict:` linear term  (conflict) of triplets not creating a track, (float) or name of function from self written class in src/functions
-* `b_ij match:` linear term (interaction) of triplets creating a track candidate, (float) or name of function from self written class in src/functions
-* `a_i:` quadratic term (quality) of triplet term of 
+QUBO parameters. Separating parameters for quadratic terms to match and conflict. The QuboCoefficients class administers the functions. 
+To add a function, ensure that it is added to the function dictionary with a name as a key and the function as the value.
+* `b_ij conflict:` linear term  (conflict) of triplets not creating a track, (float) or name of function
+* `b_ij match:` linear term (interaction) of triplets creating a track candidate, (float) or name of function
+* `a_i:` quadratic term (quality) of triplet term, (float) or name of function
 
 # scaling:
 Rescaling QUBO parameters
