@@ -11,10 +11,10 @@ binning:
 
 qubo parameters:
   b_ij conflict: 1.0
-  b_ij match: -1.0
-  a_i: 0.0
+  b_ij match: two norm angle standard deviation
+  a_i: two norm angle standard deviation
 
 scale range parameters:
-  z_scores: null
-  quality: null
-  interaction: null
+  z_scores: True
+  quality: [-0.2, 0.2]
+  interaction: [-1.0, -0.8]

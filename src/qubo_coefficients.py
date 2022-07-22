@@ -112,18 +112,19 @@ class QuboCoefficients:
 
     def parameter_rescaling(self):
         # additional processing of qubo parameters
-        if self.configuration["scale range parameters"]["z_scores"] is not None:
+        if self.configuration["scale range parameters"]["z_scores"]:
             quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
             mu = np.mean(quality_values)
             sigma = np.std(quality_values)
-            max_z_value = max([abs((value - mu) / sigma) for value in quality_values])
             for triplet in self.triplet_list:
-                triplet.quality = (triplet.quality - mu) / sigma / max_z_value
+                triplet.quality = (triplet.quality - mu) / sigma
+            self.quality_correct_match_list = [(entry - mu) / sigma for entry in self.quality_correct_match_list]
+            self.quality_wrong_match_list = [(entry - mu) / sigma for entry in self.quality_wrong_match_list]
 
         # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
         if self.configuration["scale range parameters"]["quality"] is not None:
-            a = self.configuration["settings"]["quality scale range"][0]
-            b = self.configuration["settings"]["quality scale range"][1]
+            a = self.configuration["scale range parameters"]["quality"][0]
+            b = self.configuration["scale range parameters"]["quality"][1]
             quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
             min_quality = min(quality_values)
             max_quality = max(quality_values)
@@ -131,12 +132,10 @@ class QuboCoefficients:
                 triplet.quality = a + (triplet.quality - min_quality) * (b - a) / (max_quality - min_quality)
 
             # rewriting a_i lists
-            for i in range(len(self.quality_correct_match_list)):
-                self.quality_correct_match_list[i] = \
-                    a + (self.quality_correct_match_list[i] - min_quality) * (b - a) / (max_quality - min_quality)
-            for i in range(len(self.quality_wrong_match_list)):
-                self.quality_wrong_match_list[i] = \
-                    a + (self.quality_wrong_match_list[i] - min_quality) * (b - a) / (max_quality - min_quality)
+            self.quality_correct_match_list = [a + (entry - min_quality) * (b - a) / (max_quality - min_quality)
+                                               for entry in self.quality_correct_match_list]
+            self.quality_wrong_match_list = [a + (entry - min_quality) * (b - a) / (max_quality - min_quality)
+                                             for entry in self.quality_wrong_match_list]
 
         # scaling connectivity
         if self.configuration["scale range parameters"]["interaction"] is not None:
