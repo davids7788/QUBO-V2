@@ -86,13 +86,18 @@ class XpletCreatorLUXE:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
+                # storing in segment
 
-                segment_manager.segment_list[
-                    segment_manager.get_segment_at_known_xz_value(float(row[self.x]),
-                                                                  float(row[self.z]))].data.append(row_converted)
                 particle_numbers.add(row[self.particle_id])
+                segment_index_for_entry = segment_manager.get_segment_at_known_xz_value(row_converted[self.x],
+                                                                                        row_converted[self.z])
+                segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
             self.num_particles = len(particle_numbers)
-            num_entries = 0
+
+
+
+
+
             print(f"Number of particles found: {self.num_particles}")
 
     def make_x_plet_list_simplified_setup(self,
@@ -102,12 +107,12 @@ class XpletCreatorLUXE:
 
         print("\nCreating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
-        for segment in segment_manager.segment_list:
 
+        for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
                 continue
             next_segments = segment_manager.target_segments(segment.name)   # target segments
-            print(segment.name, [len(t.data) for t in next_segments])
+
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
@@ -138,6 +143,7 @@ class XpletCreatorLUXE:
         print(f"Number of tracks approximately possible to reconstruct at doublet level: "
               f"{int(self.found_correct_doublets / 3)}")
         print(f"Number of doublets found: {self.found_doublets}\n")
+
 
         list_triplet_start = time.time()
         print("\nCreating triplet lists...\n")

@@ -72,7 +72,7 @@ class SegmentManager:
         z_index = self.layer_z_values.index(z)
         x_range = self.detector_layers[z_index][1] - self.detector_layers[z_index][0]
         x_bin_size = x_range / self.configuration["binning"]["num bins x"]
-        x_index = int((x - self.detector_layers[z_index][1]) / x_bin_size) - 1
+        x_index = int((x - self.detector_layers[z_index][0]) / x_bin_size)
         return z_index * self.configuration["binning"]["num bins x"] + x_index
 
     def segment_mapping_simplified_model(self):
@@ -99,15 +99,11 @@ class SegmentManager:
                 min_dx = max([target_segment.x_start - segment.x_end, 0])
 
                 # max x_0 range on reference screen
-                x0_max = self.z_at_x0(target_segment.x_start,
-                                      segment.x_end,
-                                      target_segment.z_position,
-                                      segment.z_position)
+                x0_max = self.x0_at_z_ref(target_segment.x_start, segment.x_end, target_segment.z_position,
+                                          segment.z_position)
 
-                x0_min = self.z_at_x0(target_segment.x_end,
-                                      segment.x_start,
-                                      target_segment.z_position,
-                                      segment.z_position)
+                x0_min = self.x0_at_z_ref(target_segment.x_end, segment.x_start, target_segment.z_position,
+                                          segment.z_position)
 
                 # correct for detector dimensions
                 if x0_min < min_x_detector_dimension:
@@ -129,11 +125,11 @@ class SegmentManager:
 
             self.segment_mapping.update({segment.name: target_list})
 
-    def z_at_x0(self,
-                x_end: float,
-                x_start: float,
-                z_end: float,
-                z_start: float):
+    def x0_at_z_ref(self,
+                    x_end: float,
+                    x_start: float,
+                    z_end: float,
+                    z_start: float):
         """Help function for calculation x position of doublet at a z-reference value, which was set before
         as a class attribute
         :param x_end: x-position of target segment
