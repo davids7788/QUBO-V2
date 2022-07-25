@@ -1,0 +1,8 @@
+.idea
+pycharm
+
+__pycache__
+
+venv
+virtualenv
+p2-venv
