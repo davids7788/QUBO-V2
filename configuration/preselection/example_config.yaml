@@ -1,13 +1,13 @@
 doublet:
-  dx/x0 : 0.0525
-  eps: 0.0015
+  dx/x0 : 0.0526
+  eps: 0.00065
 
 triplet:
   angle diff x: 0.001
   angle diff y: 0.001
 
 binning:
-  num bins x: 1000
+  num bins x: 1500
 
 qubo parameters:
   b_ij conflict: 1.0

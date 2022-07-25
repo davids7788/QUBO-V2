@@ -26,7 +26,7 @@ class XpletCreatorLUXE:
         :param configuration  : dictionary, configuration for detector setup and xplet selection
             {
             doublet: {dx/x0: <value>,
-                       eps:   <value>},
+                      eps:   <value>},
             triplet: {angle diff x: <value>,
                       angle diff y: <value>},
             binning: {num bins x: <value>},
@@ -56,13 +56,13 @@ class XpletCreatorLUXE:
         self.found_triplets = 0
 
         # indices from .csv file, code gets not messed up if some information might be added in the future to them
-        self.x = None
-        self.y = None
-        self.z = None
-        self.hit_id = None
-        self.particle_id = None
-        self.layer_id = None
-        self.particle_energy = None
+        self.x_index = None
+        self.y_index = None
+        self.z_index = None
+        self.hit_id_index = None
+        self.particle_id_index = None
+        self.layer_id_index = None
+        self.particle_energy_index = None
 
     def load_tracking_data(self,
                            tracking_data_file: str,
@@ -76,32 +76,39 @@ class XpletCreatorLUXE:
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             csv_header = next(csv_reader)  # access header, csv files should consist of one line of header
-            self.x = csv_header.index("x")
-            self.y = csv_header.index("y")
-            self.z = csv_header.index("z")
-            self.hit_id = csv_header.index("hit_ID")
-            self.particle_id = csv_header.index("particle_ID")
-            self.layer_id = csv_header.index("layer_ID")
-            self.particle_energy = csv_header.index("particle_energy")
+            self.x_index = csv_header.index("x")
+            self.y_index = csv_header.index("y")
+            self.z_index = csv_header.index("z")
+            self.hit_id_index = csv_header.index("hit_ID")
+            self.particle_id_index = csv_header.index("particle_ID")
+            self.layer_id_index = csv_header.index("layer_ID")
+            self.particle_energy_index = csv_header.index("particle_energy")
             for row in csv_reader:
                 row_converted = []
                 for i in range(len(row)):
-                    if i in [self.x, self.y, self.z]:
+                    if i in [self.x_index, self.y_index, self.z_index]:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
                 # storing in segment
 
-                particle_numbers.add(row[self.particle_id])
-                segment_index_for_entry = segment_manager.get_segment_at_known_xz_value(row_converted[self.x],
-                                                                                        row_converted[self.z])
+                particle_numbers.add(row[self.particle_id_index])
+                segment_index_for_entry = segment_manager.get_segment_at_known_xz_value(row_converted[self.x_index],
+                                                                                        row_converted[self.z_index])
                 segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
             self.num_particles = len(particle_numbers)
 
             print(f"Number of particles found: {self.num_particles}")
 
-    def make_x_plet_list_simplified_setup(self,
-                                          segment_manager: SegmentManager):
+    def create_x_plets(self,
+                       segment_manager: SegmentManager):
+        if segment_manager.setup == "Simplified LUXE":
+            self.create_x_plets_simplified_setup(segment_manager)
+        elif segment_manager.setup == "Full LUXE":
+            pass   # to be implemented
+
+    def create_x_plets_simplified_setup(self,
+                                        segment_manager: SegmentManager):
         """Creates doublets and triplets. For the simplified model only.
         :param segment_manager: SegmentManager object with already set segments and mapping"""
 
@@ -115,21 +122,21 @@ class XpletCreatorLUXE:
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
-                        if self.doublet_criteria_check(first_hit[self.x],
-                                                       second_hit[self.x],
-                                                       first_hit[self.z],
-                                                       second_hit[self.z],
+                        if self.doublet_criteria_check(first_hit[self.x_index],
+                                                       second_hit[self.x_index],
+                                                       first_hit[self.z_index],
+                                                       second_hit[self.z_index],
                                                        segment_manager.reference_layer_z):
-                            doublet = Doublet(first_hit[self.particle_id],
-                                              second_hit[self.particle_id],
-                                              (first_hit[self.x],
-                                               first_hit[self.y],
-                                               first_hit[self.z]),
-                                              (second_hit[self.x],
-                                               second_hit[self.y],
-                                               second_hit[self.z]),
-                                              first_hit[self.hit_id],
-                                              second_hit[self.hit_id])
+                            doublet = Doublet(first_hit[self.particle_id_index],
+                                              second_hit[self.particle_id_index],
+                                              (first_hit[self.x_index],
+                                               first_hit[self.y_index],
+                                               first_hit[self.z_index]),
+                                              (second_hit[self.x_index],
+                                               second_hit[self.y_index],
+                                               second_hit[self.z_index]),
+                                              first_hit[self.hit_id_index],
+                                              second_hit[self.hit_id_index])
                             if doublet.is_correct_match:
                                 self.found_correct_doublets += 1
                                 self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
@@ -142,14 +149,17 @@ class XpletCreatorLUXE:
                                                                                           reference_layer_z))
                             self.found_doublets += 1
                             segment.doublet_data.append(doublet)
-        print(self.found_correct_doublets)
         doublet_list_end = time.time()  # doublet list timer
         self.doublet_creation_time = XpletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
         print(f"Time elapsed for creating doublets: "
               f"{self.doublet_creation_time}")
-        print(f"Number of tracks approximately possible to reconstruct at doublet level: "
-              f"{int(self.found_correct_doublets / 3)}")
         print(f"Number of doublets found: {self.found_doublets}\n")
+        print(f"Number of tracks approximately possible to reconstruct with set doublet preselection parameters: "
+              f"{int(self.found_correct_doublets / 3)}\n")
+        print(f"Doublet selection efficiency d_matched / d_max: "
+              f"{np.around(100 * self.found_correct_doublets / (3 * self.num_particles), 3)} %\n"
+              f"d_max: maximum possible correctly matched doublets\n"
+              f"d_matched: number of doublets stemming from only one particle")
 
         list_triplet_start = time.time()
         print("\nCreating triplet lists...\n")
@@ -166,6 +176,8 @@ class XpletCreatorLUXE:
                             triplet = Triplet(first_doublet, second_doublet, self.found_triplets)
                             self.found_triplets += 1
                             segment.triplet_data.append(triplet)
+
+                            # filling lists for statistical purposes
                             if triplet.is_correct_match:
                                 self.preselection_statistic_angle_xz.append(triplet.angles_between_doublets()[0])
                                 self.preselection_statistic_angle_yz.append(triplet.angles_between_doublets()[1])
@@ -177,13 +189,18 @@ class XpletCreatorLUXE:
 
         print(f"Time elapsed for creating triplets: "
               f"{self.triplet_creation_time}")
-        print(f"Number of tracks approximately possible to reconstruct at triplet level: "
-              f"{int(self.found_correct_triplets / 2)}")
         print(f"Number of triplets found: {self.found_triplets}")
+        print(f"Number of tracks approximately possible to reconstruct with set triplet preselection parameters: "
+              f"{int(self.found_correct_triplets / 2)}\n")
+        print(f"Triplet selection efficiency t_matched / t_max: "
+              f"{np.around(100 * self.found_correct_triplets / (2 * self.num_particles), 3)} %\n"
+              f"d_max: maximum possible correctly matched triplets\n"
+              f"d_matched: number of triplets stemming from only one particle")
 
-    def triplet_criteria_check(self, doublet1, doublet2):
-        """
-        Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
+    def triplet_criteria_check(self,
+                               doublet1: Doublet,
+                               doublet2: Doublet):
+        """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
         :param doublet1: first doublet, nearer to IP
         :param doublet2: second doublet, further from IP
         :return: True if criteria applies, else False
@@ -193,9 +210,13 @@ class XpletCreatorLUXE:
                 return True
         return False
 
-    def doublet_criteria_check(self, x1, x2, z1, z2, z_ref):
-        """
-        Checks if hits may combined to doublets, applying dx/x0 criterion
+    def doublet_criteria_check(self,
+                               x1: float,
+                               x2: float,
+                               z1: float,
+                               z2: float,
+                               z_ref: float):
+        """Checks if hits may combined to doublets, applying dx/x0 criterion
         :param x1: x value first hit
         :param x2: x value second hit
         :param z1: z value first hit
@@ -210,15 +231,17 @@ class XpletCreatorLUXE:
         return True
 
     @staticmethod
-    def x0_at_z_ref(x_end, x_start, z_end, z_start, z_ref):
-        """
-        Help function for calculation x position of doublet at a z-reference value, usually the first detector layer
-        counted from the IP
-        :param x_end: x-position of target segment
-        :param x_start: x-position of segment
-        :param z_end: z-position of target segment
-        :param z_start: z-position of segment
-        :param z_ref: z-value reference
+    def x0_at_z_ref(x_end: float,
+                    x_start: float,
+                    z_end: float,
+                    z_start: float,
+                    z_ref: float):
+        """Function for calculation x position of a doublet at a z-reference value.
+        :param x_end: x-position of second hit
+        :param x_start: x-position of first hit
+        :param z_end: z-position of second hit
+        :param z_start: z-position of first hit
+        :param z_ref: z-value reference layer
         :return: x_position at the reference layer
         """
         dx = x_end - x_start
@@ -227,15 +250,18 @@ class XpletCreatorLUXE:
 
     @staticmethod
     def hms_string(sec_elapsed):
-        """Nicely formatted time string."""
+        """Nicely formatted time string.
+        :param sec_elapsed time in ms
+        :return hh:mm:ss.msms
+        """
         h = int(sec_elapsed / (60 * 60))
         m = int((sec_elapsed % (60 * 60)) / 60)
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
     def write_info_file(self):
-        """        Writes information about the Preselection parameters and some statistics into
-        'Preselection.txt' which is stored inside the output folder.
+        """Writes information about the Preselection parameters and some statistics into
+        'preselection_info.txt' which is stored inside the output folder.
         """
         with open(self.save_to_folder + "/preselection_info.txt", "w") as f:
             f.write("Preselection performed with the following set of parameters: \n")
@@ -244,18 +270,25 @@ class XpletCreatorLUXE:
                 for inner_key, value in self.configuration[outer_key].items():
                     f.write(f"\n{inner_key}: {value}")
                 f.write("\n")
+            f.write("\n\n")
+            f.write("---\n")
 
-            f.write("\n\n---\n")
-            f.write("Statistics:\n\n")
-            f.write(f"Number of particles hitting at least one detector layer: {self.num_particles}\n\n")
-            f.write(f"Number of doublets found: {self.found_doublets}\n")
-            f.write(f"Time needed to create doublet candidates: "
+            f.write(f"Time elapsed for creating doublets: "
                     f"{self.doublet_creation_time}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct at doublet level: "
+            f.write(f"Number of doublets found: {self.found_doublets}\n")
+            f.write(f"Number of tracks approximately possible to reconstruct with set doublet preselection parameters: "
                     f"{int(self.found_correct_doublets / 3)}\n\n")
+            f.write(f"Doublet selection efficiency d_matched / d_max: "
+                    f"{np.around(100 * self.found_correct_doublets / (3 * self.num_particles), 3)} %\n"
+                    f"d_max: maximum possible correctly matched doublets, known from truth number of particles\n"
+                    f"d_matched: number of doublets stemming from only one particle\n\n")
 
-            f.write(f"Number of triplets found: {self.found_triplets}\n")
-            f.write(f"Time needed to create triplet candidates: "
+            f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct at triplet level: "
-                    f"{int(self.found_correct_triplets / 2)}\n")
+            f.write(f"Number of triplets found: {self.found_triplets}\n")
+            f.write(f"Number of tracks approximately possible to reconstruct with set triplet preselection parameters: "
+                    f"{int(self.found_correct_triplets / 2)}\n\n")
+            f.write(f"Triplet selection efficiency t_matched / t_max: "
+                    f"{np.around(100 * self.found_correct_triplets / (2 * self.num_particles), 3)} %\n"
+                    f"t_max: maximum possible correctly matched triplets, known from truth number of particles\n"
+                    f"t_matched: number of triplets stemming from only one particle")

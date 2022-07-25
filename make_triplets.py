@@ -8,7 +8,6 @@ from src.x_plets import XpletCreatorLUXE
 from src.segment_manager import SegmentManager
 from src.qubo_coefficients import QuboCoefficients
 
-
 # sys argv [1]: config file
 # sys argv [2]: tracking data, csv file
 # sys argv [3]: geometry file
@@ -33,7 +32,7 @@ s_manager = SegmentManager(config_file, sys.argv[3])
 
 x_plet_creator = XpletCreatorLUXE(config_file, new_folder)
 x_plet_creator.load_tracking_data(tracking_data, s_manager)
-x_plet_creator.make_x_plet_list_simplified_setup(s_manager)
+x_plet_creator.create_x_plets(s_manager)
 x_plet_creator.write_info_file()
 
 qubo_coefficients = QuboCoefficients(config_file, new_folder)

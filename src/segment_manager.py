@@ -25,7 +25,7 @@ class SegmentManager:
                                          quality: <value>,
                                          interaction: <value>}
                 }
-        :param detector_geometry: .csv detector layer file with all the chips / detector layers
+        :param detector_geometry: .csv detector layer file geometry file
         """
 
         self.configuration = configuration   # Dictionary of selection criteria
@@ -35,11 +35,12 @@ class SegmentManager:
             next(csv_reader)    # skip header, csv files should consist of one line
             for row in csv_reader:
                 self.detector_layers.append([float(r) for r in (row[1:])])
+        self.detector_layers.sort(key=lambda entry: entry[-1])   # sort by z-value
 
         self.num_layers = len(set([layer[-1] for layer in self.detector_layers]))
         self.segment_list = []   # List of segment objects
-        self.segment_mapping = {}   # Map for segments as <segment>: [<segment_name_0>, <segment_name_1>, ...]
-        self.reference_layer_z = None
+        self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)
+        self.reference_layer_z = None   # reference layer for dx/x0 criterion
         self.layer_z_values = [entry[-1] for entry in self.detector_layers]
         self.layer_x_min_values = [entry[0] for entry in self.detector_layers]
         self.layer_x_max_values = [entry[1] for entry in self.detector_layers]
@@ -48,7 +49,9 @@ class SegmentManager:
         if self.num_layers == 4:
             self.create_segments_simplified_model()
             self.segment_mapping_simplified_model()
+            self.setup = "Simplified LUXE"
         elif self.num_layers == 8:
+            self.setup = "Full LUXE"
             pass  # to be implemented --> FullLUXE
 
     def target_segments(self,
@@ -140,7 +143,7 @@ class SegmentManager:
         """
         dx = x_end - x_start
         dz = z_end - z_start
-        return x_end - dx * abs(z_end - self.reference_layer_z) / dz
+        return x_end - dx * (z_end - self.reference_layer_z) / dz
 
     def create_segments_simplified_model(self):
         """Splitting data into num bins segment to reduce the combinatorial computational costs.
@@ -151,7 +154,7 @@ class SegmentManager:
             x_min = layer[0]
             segment_size = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
             for j in range(int(self.configuration["binning"]["num bins x"])):
-                self.segment_list.append(Segment(f"L{i}S{j}",  # Layer i segment j
+                self.segment_list.append(Segment(f"L{i}_S{j}",  # Layer i segment j
                                                  i,
                                                  x_min + j * segment_size,
                                                  x_min + (j + 1) * segment_size,

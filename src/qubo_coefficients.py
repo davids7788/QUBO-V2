@@ -91,8 +91,8 @@ class QuboCoefficients:
         self.triplet_list.sort(key=lambda t: t.triplet_id)   # triplet id = index in triplet list
 
     def filling_lists_for_statistics(self):
-        """"Helping function for collecting and storing information about quality and interaction values,
-        as well as truth information about the triplets"""
+        """"Function for collecting and storing information about quality and interaction values,
+        as well as truth information about the triplets."""
         for t1 in self.triplet_list:
             if t1.is_correct_match:
                 self.quality_correct_match_list.append(t1.quality)
@@ -295,7 +295,7 @@ class QuboCoefficients:
                              quality_function_object):
         """Adds a function to the quality function dictionary
         :param quality_function_name: name of the function
-        :param quality_function_object:  function object
+        :param quality_function_object: function object
         """
         self.quality_functions.update({quality_function_name: quality_function_object})
 
@@ -332,8 +332,7 @@ class QuboCoefficients:
                  linewidth=3,
                  histtype='step',
                  label=f"Number of particles: {num_particles}\n"
-                       f"Number of triplets: {len(self.triplet_list)}\n"
-                       f"Interactions: {int(sum(interactions_list) / 2)}")
+                       f"Number of triplets: {len(self.triplet_list)}\n")
         plt.yscale("log")
         plt.legend(loc="best", fontsize=20)
 
@@ -381,11 +380,13 @@ class QuboCoefficients:
         plt.savefig(f"{self.save_to_folder}/triplet_coefficients_statistics.pdf")
         plt.close()
 
-        # preselection statistics iof truth doublets / triplets
+        # preselection statistics of truth doublets / triplets
         fig, (ax3, ax4) = plt.subplots(2, figsize=(12, 12))
+        ax3.set_title(r"dx/x0 truth doublets", fontsize=20, loc="left")
         ax3.hist(np.array(preselection_statistics[0]) * 1e2,
                  bins=50,
-                 label=r"dx/x0 truth doublets",
+                 label=f"$\mu$ = {np.around(np.mean(preselection_statistics[0]), 4)}\n"
+                       f"$\sigma$ = {np.around(np.std(preselection_statistics[0]), 4)}",
                  edgecolor="blue",
                  linewidth=3,
                  histtype='step',
@@ -393,18 +394,27 @@ class QuboCoefficients:
         ax3.legend(loc='best', fontsize=20)
         ax3.tick_params(axis='both', labelsize=20)
         ax3.set_ylabel("counts", fontsize=20)
-        ax3.set_xlabel("[$10^{-2}$ a.u]", fontsize=20)
+        ax3.set_xlabel("[$10^{-2}$ a.u]", fontsize=20, loc="right")
 
+        ax4.set_title("Angles truth triplets", fontsize=20, loc="left")
         ax4.hist(np.array(preselection_statistics[1]) * 1e3,
+                 range=(min(preselection_statistics[1] + preselection_statistics[2]) * 1e3,
+                        max(preselection_statistics[1] + preselection_statistics[2]) * 1e3),
                  bins=50,
-                 label=r"angle difference xz",
+                 label=f"xz: \n"
+                       f"$\mu$ = {np.around(np.mean(preselection_statistics[1]), 4)}\n"
+                       f"$\sigma$ = {np.around(np.std(preselection_statistics[1]), 4)}\n",
                  edgecolor="goldenrod",
                  linewidth=3,
                  histtype='step',
                  align="left")
         ax4.hist(np.array(preselection_statistics[2]) * 1e3,
                  bins=50,
-                 label=r"angle difference yz",
+                 range=(min(preselection_statistics[1] + preselection_statistics[2]) * 1e3,
+                        max(preselection_statistics[1] + preselection_statistics[2]) * 1e3),
+                 label=f"yz: \n"
+                       f"$\mu$ = {np.around(np.mean(preselection_statistics[2]), 4)}\n"
+                       f"$\sigma$ = {np.around(np.std(preselection_statistics[2]), 4)}\n",
                  edgecolor="royalblue",
                  linewidth=3,
                  histtype='step',
@@ -412,5 +422,5 @@ class QuboCoefficients:
         ax4.legend(loc='best', fontsize=20)
         ax4.set_ylabel("counts", fontsize=20)
         ax4.tick_params(axis='both', labelsize=20)
-        ax4.set_xlabel("[$10^{-3}$ rad]", fontsize=20)
+        ax4.set_xlabel("[$10^{-3}$ rad]", fontsize=20, loc="right")
         plt.savefig(f"{self.save_to_folder}/preselection_truth_statistics.pdf")
