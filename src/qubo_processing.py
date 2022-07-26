@@ -6,7 +6,6 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit.optimization.algorithms import MinimumEigenOptimizer
 
-from functions_library import TabuSearch, hms_string, compare_bits
 from hamiltonian import Hamiltonian
 from sub_qubo import SubQubo
 
@@ -71,8 +70,7 @@ class QuboProcessing:
 
     def impact_list_solve(self):
         """Performs impact list algorithm"""
-
-        self.qubo_process(self.make_impact_list)
+        self.qubo_process(optimization_strategy=self.make_impact_list)
 
     def qubo_process(self,
                      optimization_strategy):

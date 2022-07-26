@@ -2,6 +2,8 @@ from qiskit.algorithms import VQE, QAOA
 from qiskit.algorithms.optimizers import COBYLA, L_BFGS_B, SPSA, SLSQP, NFT
 from qiskit.utils import QuantumInstance
 from qiskit import Aer
+from qiskit.providers.aer import QasmSimulator
+from qiskit.providers.fake_provider import FakeAthens, FakeCasablanca, FakeJakarta, FakeGuadalupe
 
 
 class Solver:
@@ -10,10 +12,22 @@ class Solver:
         """Creates a solver object for solving (Sub-) QUBOs.
         :param config: dictionary with configuration parameters
         """
-        self.model = None
+        self.config = config
         self.quantum_instance = None
-        self.parameters = {}
-        self.parameters.update(kwargs)
+        self.quantum_algorithm = None
+
+        if self.config["solver"]["backend"] == "Ideal Qasm Sim":
+            self.backend = Aer.get_backend('qasm_simulator')
+        elif self.config["solver"]["backend"] == "FakeAthens":
+            self.backend = QasmSimulator.from_backend(FakeAthens())       # 5 qubits
+        elif self.config["solver"]["backend"] == "FakeCasablanca":
+            self.backend = QasmSimulator.from_backend(FakeCasablanca())   # 7 qubits
+        elif self.config["solver"]["backend"] == "FakeJakarta":
+            self.backend = QasmSimulator.from_backend(FakeJakarta())      # 7 qubits
+        elif self.config["solver"]["backend"] == "FakeGuadalupe":
+            self.backend = QasmSimulator.from_backend(FakeGuadalupe())    # 16 qubits
+
+        self.set_quantum_instance()
 
     def get_optimizer(self):
         """Returns the optimizer with the maxiter value created from the class attributes.
@@ -37,29 +51,29 @@ class Solver:
         if self.parameters["optimizer"] == "GSLS":
             return GSLS(maxiter=self.parameters["maxiter"])
 
-    def set_vqe_ideal_qasm(self, ansatz):
+    def set_quantum_instance(self):
+        """Sets the quantum instance used by the quantum algorithms with parameters of the config file.
         """
-        Set vqe with a specific ansatz.
+        self.quantum_instance = QuantumInstance(backend=self.backend,
+                                                seed_simulator=self.config["solver"]["seed"],
+                                                seed_transpiler=self.config["solver"]["seed"],
+                                                shots=self.config["solver"]["shots"],
+                                                optimization_level=self.config["solver"]["optimization_level"])
+
+    def set_vqe(self, ansatz):
+        """Set vqe with a specific ansatz.
         :param ansatz: quantum circuit
         """
-        self.quantum_instance = QuantumInstance(backend=Aer.get_backend('qasm_simulator'),
-                                                seed_simulator=self.parameters["seed"],
-                                                seed_transpiler=self.parameters["seed"],
-                                                shots=self.parameters["shots"],
-                                                optimization_level=self.parameters["optimization_level"])
         vqe = VQE(ansatz=ansatz.circuit,
                   optimizer=self.get_optimizer(),
                   quantum_instance=self.quantum_instance)
-        self.model = vqe
+        self.quantum_algorithm = vqe
 
-    def set_vqe_ideal_qaoa(self, ansatz):
-        self.quantum_instance = QuantumInstance(backend=Aer.get_backend('qasm_simulator'),
-                                                seed_simulator=self.parameters["seed"],
-                                                seed_transpiler=self.parameters["seed"],
-                                                shots=self.parameters["shots"],
-                                                optimization_level=self.parameters["optimization_level"])
+    def set_qaoa(self):
+        """Set QAOA.
+        """
         ideal_qaoa = QAOA(optimizer=self.get_optimizer(),
                           reps=ansatz.circuit_depth,
                           max_evals_grouped=1,
                           quantum_instance=self.quantum_instance)
-        self.model = ideal_qaoa
+        self.quantum_algorithm = ideal_qaoa
