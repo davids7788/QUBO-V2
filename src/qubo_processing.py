@@ -4,10 +4,12 @@ import numpy as np
 
 from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
-from qiskit.optimization.algorithms import MinimumEigenOptimizer
+from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from hamiltonian import Hamiltonian
-from sub_qubo import SubQubo
+from src.solver import Solver
+from src.hamiltonian import Hamiltonian
+from src.ansatz import Ansatz
+from src.qubo_logging import QuboLogging
 
 algorithm_globals.massive = True
 
@@ -18,21 +20,25 @@ class QuboProcessing:
                  config: dict,
                  solver: Solver,
                  ansatz: Ansatz,
-                 qubo_logging: QuboLogging):
+                 qubo_logging: QuboLogging,
+                 save_folder: str):
         """Processes the Qubo and provides solving functions like a solving process via an impact list.
         :param triplet_list_file: .npy file with triplet objects
         :param config: dictionary with configuration parameters
         :param solver: solver object
         :param ansatz: ansatz circuit
         :param qubo_logging: object for handling information about the solving process of class QuboLogging
+        :param save_folder: folder to which results are stored
         """
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
         self.config = config
         self.solver = solver
-        self.solver.configure_solver()
         self.ansatz = ansatz
+        if self.solver is not None:
+            self.configure_solver()
         self.error_mitigation = None
         self.qubo_logging = qubo_logging
+        self.save_folder = save_folder
 
         # Log truth minimum energy state and energy
         self.log_truth_energy()
@@ -51,17 +57,18 @@ class QuboProcessing:
         self.exact_solver = MinimumEigenOptimizer(NumPyMinimumEigensolver())
 
         # Performing initial bit flip optimization
-        if self.config["bit flip optimization"]["initial"] > 0:
-            for i in range(self.config["bit flip optimization"]["initial"]):
+        if self.config["bit flip optimization"]["iterations"] > 0:
+            for i in range(self.config["bit flip optimization"]["iterations"]):
                 new_solution_candidate = self.bit_flip_optimization(self.triplets,
                                                                     self.solution_candidate,
-                                                                    self.make_impact_list())
+                                                                    self.make_impact_list(),
+                                                                    self.config["bit flip optimization"]["reverse"])
                 self.energy_candidate = self.hamiltonian_energy(new_solution_candidate)
                 self.qubo_logging.add_entry("solution vector", self.iteration, self.solution_candidate)
                 self.qubo_logging.add_entry("energy", self.iteration, self.energy_candidate)
                 self.iteration += 1
-                print(f"Energy after performing {i + 1} bit flip tabu search(es): "
-                      f"{np.around(self.energy_candidate, 4)}")
+                print(f"Energy after performing {i + 1} bit flip optimization(s): "
+                      f"{np.around(self.energy_candidate, 2)}")
 
         # Here starts the sub qubo algorithm
         self.loop_count = 0
@@ -81,38 +88,45 @@ class QuboProcessing:
         start_solving_process_time = time.time()
 
         # global optimization iterations
-        while self.pass_count < search_depth:
+        while self.pass_count < self.config["qubo"]["search depth"]:
             start_loop = time.time()
             start_quantum_part = time.time()
 
             # triplet list ordering determines also how many subqubos are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
-            triplet_ordering = optimization_strategy
+            triplet_ordering = optimization_strategy()
 
             # Calculate number of sub qubos:
-            if len(triplet_ordering) % self.config["solver"]["num qubits"] == 0:
-                num_sub_qubos = int(len(triplet_ordering) / self.config["solver"]["num qubits"])
+            if len(triplet_ordering) % self.config["qubo"]["num qubits"] == 0:
+                num_sub_qubos = int(len(triplet_ordering) / self.config["qubo"]["num qubits"])
             else:
-                num_sub_qubos = int(len(triplet_ordering) / self.config["solver"]["num qubits"]) + 1
-            print(f"Number of Subqubos: {num_sub_qubos} for iteration {self.loop_count}")
+                num_sub_qubos = int(len(triplet_ordering) / self.config["qubo"]["num qubits"]) + 1
 
             # Sub-qubos with full size
-            for i in range(int(len(self.triplets) / sub_qubo_size)):
-                solve_subqubos([self.triplets[i] for i in triplet_ordering[sub_qubo_size * i: sub_qubo_size * (i + 1)]],
-                               i)
+            for i in range(int(len(self.triplets) / self.config["qubo"]["num qubits"])):
+                print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
+                result = self.solve_subqubos([self.triplets[i] for i in
+                                             triplet_ordering[self.config["qubo"]["num qubits"] * i:
+                                                              self.config["qubo"]["num qubits"] * (i + 1)]])
+                for k, entry in enumerate(triplet_ordering[self.config["qubo"]["num qubits"] * i:
+                                                           self.config["qubo"]["num qubits"] * (i + 1)]):
+                    self.solution_candidate[entry] = result[k]
 
             # Check if triplets are left -> take the last <sub_qubo_size> triplets and perform a vqe
-            if len(triplet_ordering) % self.config["solver"]["num qubits"] != 0:
-                solve_subqubos([self.triplets[i] for i in triplet_ordering[- sub_qubo_size:]],
-                               int(len(triplet_ordering) / self.config["solver"]["num qubits"]) + 1)
+            if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
+                print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
+                result = self.solve_subqubos([self.triplets[i] for i in
+                                              triplet_ordering[- self.config["qubo"]["num qubits"]:]])
+                for k, entry in enumerate(triplet_ordering[- self.config["qubo"]["num qubits"]:]):
+                    self.solution_candidate[entry] = result[k]
 
             # Time tracking quantum part
             end_quantum_part = time.time()
             quantum_time = end_quantum_part - start_quantum_part
-            self.qubo_logging.add_qubo_log_entry("time tracking quantum",
-                                                 str(self.loop_count),
-                                                 quantum_time)
+            self.qubo_logging.add_entry("time tracking quantum",
+                                        str(self.loop_count),
+                                        quantum_time)
             # update energy
             self.energy_candidate = self.hamiltonian_energy(self.solution_candidate)
 
@@ -135,24 +149,27 @@ class QuboProcessing:
             else:
                 self.pass_count += 1
 
+            print(f"Energy after iteration {self.loop_count} at pass count {self.pass_count}: "
+                  f"{np.around(self.energy_candidate, 2)}")
+
             # increasing overall loop count
             self.loop_count += 1
 
             # time tracking iteration
             end_loop = time.time()
             loop_time = end_loop - start_loop
-            self.qubo_logging.add_qubo_log_entry("time tracking qubo iteration",
-                                                 str(self.loop_count),
-                                                 loop_time)
+            self.qubo_logging.add_entry("time tracking qubo iteration",
+                                        str(self.loop_count),
+                                        loop_time)
 
             self.qubo_logging.save_results(self.save_folder)
 
         end_solving_process_time = time.time()
         solving_process_time = end_solving_process_time - start_solving_process_time
-        self.qubo_logging.add_qubo_log_entry("time tracking complete",
-                                             "complete run",
-                                             solving_process_time)
-        print(f"Solving process for all solver needed {hms_string(solving_process_time)}")
+        self.qubo_logging.add_entry("time tracking complete",
+                                    "complete run",
+                                    solving_process_time)
+        print(f"Solving process for all solver needed {QuboProcessing.hms_string(solving_process_time)}")
 
     def make_impact_list(self):
         """
@@ -183,7 +200,7 @@ class QuboProcessing:
     @staticmethod
     def bit_flip_optimization(triplets,
                               solution_candidate,
-                              impact_list,
+                              triplet_ordering,
                               reverse=True):
 
         """Looping over a list of triplet objects and a corresponding binary solution vector to compute if the energy
@@ -191,35 +208,35 @@ class QuboProcessing:
         decreases, the triplet state is flipped.
         :param triplets: list of triplet objects
         :param solution_candidate binary vector representing triplet states
-        :param impact_list: index list of triplets
-        :param reverse: True if sorting from highest impact to lowest, else from lowest to highest
+        :param triplet_ordering: index list of triplets
+        :param reverse: False if provided sorting order, else reversed
         """
         if reverse:
-            impact.list.reverse()
-        for i, triplet in enumerate([triplets[impact_index] for impact_index in impact_list]):
+            triplet_ordering.reverse()
+        for i, triplet in enumerate([triplets[index] for index in triplet_ordering]):
             # energy change if this particular bit is flipped
             energy_change = 0
 
             # checking linear term
-            if solution_candidate[impact_list[i]] == 0:
+            if solution_candidate[triplet_ordering[i]] == 0:
                 energy_change += triplet.quality
             else:
                 energy_change -= triplet.quality
 
             # Checking interactions with other triplets
             for interaction in triplet.interactions.keys():
-                if solution_candidate[impact_list[i]] == 0 and solution_candidate[interaction] == 0:
+                if solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[interaction] == 0:
                     pass
-                elif solution_candidate[impact_list[i]] == 0 and solution_candidate[interaction] == 1:
+                elif solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[interaction] == 1:
                     energy_change += triplet.interactions[interaction]
-                elif solution_candidate[impact_list[i]] == 1 and solution_candidate[interaction] == 0:
+                elif solution_candidate[triplet_ordering[i]] == 1 and solution_candidate[interaction] == 0:
                     pass
                 else:
                     energy_change -= triplet.interactions[interaction]
 
             # flip if overall energy change is negative
             if energy_change < 0:
-                solution_candidate[impact_list[i]] = 1 - solution_candidate[impact_list[i]]
+                solution_candidate[triplet_ordering[i]] = 1 - solution_candidate[triplet_ordering[i]]
 
         return solution_candidate
 
@@ -233,27 +250,6 @@ class QuboProcessing:
             else:
                 minimum_energy_state.append(0)
         return minimum_energy_state, self.hamiltonian_energy(minimum_energy_state)
-
-    def perform_tabu_search(self, tabu_search, key):
-        impacts = self.make_impact_list()
-        if key == "initial tabu search":
-            impacts.reverse()
-        # tabu_search_time_start = time.time()
-        solution_candidate = copy.deepcopy(self.solution_candidate)
-        solution_candidate_after_tabu, num_bit_flips = tabu_search(self.triplets, solution_candidate, impacts)
-        energy_after_tabu = self.hamiltonian_energy(solution_candidate)
-        if energy_after_tabu < self.energy_candidate:
-            self.energy_candidate = energy_after_tabu
-            self.solution_candidate = solution_candidate_after_tabu
-        # tabu_search_time_end = time.time()
-        # tabu_time = tabu_search_time_end - tabu_search_time_start
-        # self.qubo_logging.add_tabu_log_entry("bit flips", key, num_bit_flips)
-        # self.qubo_logging.add_tabu_log_entry("time tracking", key, tabu_time)
-        # self.qubo_logging.add_qubo_log_entry("solution vector", key, solution_candidate_after_tabu)
-        # self.qubo_logging.add_qubo_log_entry("energy", key, energy_after_tabu)
-        # self.qubo_logging.add_qubo_log_entry("triplet sorting",
-        #                                      key,
-        #                                      compare_bits(self.triplets, self.solution_candidate))
 
     def hamiltonian_energy(self, binary_vector):
         """
@@ -281,18 +277,19 @@ class QuboProcessing:
         self.qubo_logging.set_value("truth minimum energy", min_energy)
         print(f"Minimal Energy of the problem: {np.around(min_energy, 3)}")
 
-    def set_initial_vector(self):
+    def set_initial_solution(self):
         """Setting the initial vector according to the configuration file.
         """
-        if self.config["initial binary vector"] == "zeros":
-            self.solution_candidate = np.zeros(len(self.triplets))
+        if self.config["qubo"]["initial binary vector"] == "zeros":
+            solution_candidate = np.zeros(len(self.triplets))
             print("Starting with every triplet set to 0\n")
-        elif self.config["initial binary vector"] == "ones":
-            self.solution_candidate = np.ones(len(self.triplets))
+        elif self.config["qubo"]["initial binary vector"] == "ones":
+            solution_candidate = np.ones(len(self.triplets))
             print("Starting with every triplet set to 1\n")
-        elif self.config["initial binary vector"] is None:
-            self.solution_candidate = np.random.randint(2, size=len(self.triplets))
+        else:
+            solution_candidate = np.random.randint(2, size=len(self.triplets))
             print("Starting with a random vector\n")
+        return solution_candidate
 
     def solve_quantum(self,
                       hamiltonian):
@@ -300,8 +297,8 @@ class QuboProcessing:
         :param hamiltonian: hamiltonian in the form of a PauliSumOp list from qiskit
         :return
             result of the solving process"""
-        result_quantum = self.solver.compute_minimum_eigenvalue(hamiltonian)
-        if self.config["solver"]["error mitigation algorithm"] == "algebraic":
+        result_quantum = self.solver.quantum_algorithm.compute_minimum_eigenvalue(hamiltonian)
+        if self.config["qubo"]["error mitigation algorithm"] == "algebraic":
             result_quantum = self.error_mitigation.meas_filter.apply(result_quantum)
 
         def get_result_in_correct_order(res):
@@ -322,34 +319,32 @@ class QuboProcessing:
         return get_result_in_correct_order(result_quantum)
 
     def solve_subqubos(self,
-                       triplet_slice,
-                       index):
+                       triplet_slice):
 
         result = None
         sub_qubo_time = None
 
         # start timer sub-qubo creation and solving
-        print(f"Processing Sub-qubo {index + 1} of {num_sub_qubos}", end="\r")
+
         hamiltonian = Hamiltonian(triplet_slice=triplet_slice,
                                   solution_candidate=self.solution_candidate,
                                   rescaling=self.config["qubo"]["hamiltonian rescaling"])
         if self.loop_count == 0:  # Uses a lot of disk space, so just results of first iteration
-            self.qubo_logging.add_qubo_log_entry("hamiltonian",
-                                                 self.sub_qubo_counter,
-                                                 [hamiltonian.linear_term(), hamiltonian.quadratic_term()])
+            self.qubo_logging.add_entry("hamiltonian",
+                                        self.sub_qubo_counter,
+                                        [hamiltonian.linear_term(), hamiltonian.quadratic_term()])
 
         # Create hamiltonian and check if no linear and quadratic terms --> do nothing
-        hamiltonian = qubo_representation_vqe()
-        if hamiltonian is None:
+        if hamiltonian.qubo_representation_quantum() is None:
             return
 
-        # Overwrite ansatz for vqe if HamiltonianDriven
-        if self.ansatz.layout == "HamiltonianDriven":
-            triplet_slice = triplet_slice
-            self.ansatz = self.ansatz.hamiltonian_driven(triplet_slice)
-            self.solver.quantum_instance.ansatz = self.ansatz
+        if self.config["solver"]["algorithm"] == "VQE" or self.config["solver"]["algorithm"] == "QAOA":
 
-        if self.config["algorithm"] == "VQE" or self.config["algorithm"] == "QAOA":
+            # Overwrite ansatz for vqe if HamiltonianDriven
+            if self.ansatz.config["ansatz"]["layout"] == "HamiltonianDriven":
+                triplet_slice = triplet_slice
+                self.ansatz = self.ansatz.hamiltonian_driven(triplet_slice)
+                self.solver.quantum_instance.ansatz = self.ansatz
 
             # Timestamps and solving the SubQUBO
             start_sub_qubo = time.time()
@@ -358,35 +353,35 @@ class QuboProcessing:
             sub_qubo_time = end_sub_qubo - start_sub_qubo
 
             # Check if comparing to Eigensolver
-            if self.config["solver"]["compare to eigensolver"] and self.loop_count == 0:  # one iteration
+            if self.config["qubo"]["compare to eigensolver"] and self.loop_count == 0:  # one iteration
                 exact_result = self.exact_solver.solve(hamiltonian.qubo_representation()).x
-                self.qubo_logging.add_qubo_log_entry("subqubo solving success",
-                                                     self.sub_qubo_counter,
-                                                     ([float(r) for r in result] == exact_result))
+                self.qubo_logging.add_entry("compare to analytical solution",
+                                            self.sub_qubo_counter,
+                                            ([float(r) for r in result] == exact_result))
 
-        elif self.config["algorithm"] == "Numpy Eigensolver":
+        elif self.config["solver"]["algorithm"] == "Numpy Eigensolver":
             start_sub_qubo = time.time()
             result = self.exact_solver.solve(hamiltonian.qubo_representation()).x
             end_sub_qubo = time.time()
             sub_qubo_time = end_sub_qubo - start_sub_qubo
 
         # update solution
-        for k, entry in enumerate(impact_list[sub_qubo_size * i: sub_qubo_size * (i + 1)]):
-            self.solution_candidate[entry] = result[k]
-        self.qubo_logging.add_qubo_log_entry("time tracking subQUBOs",
-                                             self.sub_qubo_counter,
-                                             sub_qubo_time)
+
+        self.qubo_logging.add_entry("time tracking subQUBOs",
+                                    self.sub_qubo_counter,
+                                    sub_qubo_time)
 
         self.sub_qubo_counter += 1
+        return result
 
     def configure_solver(self):
         # Set up the the chosen algorithm, VQE, QAOA or NumpyEigensolver
         # VQE --> ansatz can be chosen
-        if self.config["algorithm"] == "VQE":
+        if self.config["solver"]["algorithm"] == "VQE":
             self.solver.set_vqe(self.ansatz)
 
         # QAOA --> ansatz determined by algorithm
-        elif self.config["algorithm"] == "QAOA":
+        elif self.config["solver"]["algorithm"] == "QAOA":
             self.solver.set_qaoa()
 
         # Numpy Eigensolver does not need further preparation
@@ -394,3 +389,11 @@ class QuboProcessing:
             pass
         else:
             "No valid algorithm chosen!"
+
+    @staticmethod
+    def hms_string(sec_elapsed):
+        """Nicely formatted time string."""
+        h = int(sec_elapsed / (60 * 60))
+        m = int((sec_elapsed % (60 * 60)) / 60)
+        s = sec_elapsed % 60
+        return "{}:{:>02}:{:>05.2f}".format(h, m, s)

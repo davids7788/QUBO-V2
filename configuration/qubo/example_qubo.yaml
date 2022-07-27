@@ -1,10 +1,10 @@
 ---
 ansatz:
   layout: "TwoLocal"
-  circuit depth: 3
+  circuit depth: 1
   rotation blocks: "ry"
   entanglement blocks: "cx"
-  entanglement: "full"
+  entanglement: "linear"
   skip final rotation layer: False
   skip unentangled qubits: False
 
@@ -12,21 +12,20 @@ solver:
   algorithm: "VQE"
   backend: "Ideal Qasm Sim"
   optimizer: NFT
-  maxiter: 5000
+  maxiter: 50
   seed: 0
   shots: 50
   optimization level: 2
 
 qubo:
   optimization strategy: impact list
-  hamiltonian rescaling: null
+  hamiltonian rescaling: "complete"
   initial binary vector: ones
-  search depth: 10
+  search depth: 2
   num qubits: 7
   error mitigation algorithm: null
-  compare to eigensolver: False
+  compare to eigensolver: True
 
 bit flip optimization:
-  initial: 10
-  loopwise: False
-  final: False
+  iterations: 2
+  reverse: True

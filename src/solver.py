@@ -1,5 +1,5 @@
 from qiskit.algorithms import VQE, QAOA
-from qiskit.algorithms.optimizers import COBYLA, L_BFGS_B, SPSA, SLSQP, NFT
+from qiskit.algorithms.optimizers import COBYLA, L_BFGS_B, SPSA, SLSQP, NFT, NELDER_MEAD, ADAM, GSLS
 from qiskit.utils import QuantumInstance
 from qiskit import Aer
 from qiskit.providers.aer import QasmSimulator
@@ -35,31 +35,31 @@ class Solver:
         """Returns the optimizer with the maxiter value from the config file.
         :return Optimizer: the optimizer with the maxiter value from the config file
         """
-        if self.parameters["optimizer"] == "COBYLA":
+        if self.config["solver"]["optimizer"] == "COBYLA":
             return COBYLA(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "L_BFGS_B":
+        if self.config["solver"]["optimizer"] == "L_BFGS_B":
             return L_BFGS_B(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "SPSA":
+        if self.config["solver"]["optimizer"] == "SPSA":
             return SPSA(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "SLSQP":
+        if self.config["solver"]["optimizer"] == "SLSQP":
             return SLSQP(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "NFT":
+        if self.config["solver"]["optimizer"] == "NFT":
             return NFT(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "NELDER_MEAD":
+        if self.config["solver"]["optimizer"] == "NELDER_MEAD":
             return NELDER_MEAD(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "ADAM":
+        if self.config["solver"]["optimizer"] == "ADAM":
             return ADAM(maxiter=self.config["solver"]["maxiter"])
-        if self.parameters["optimizer"] == "GSLS":
+        if self.config["solver"]["optimizer"] == "GSLS":
             return GSLS(maxiter=self.config["solver"]["maxiter"])
 
-    def quantum_instance(self):
+    def set_quantum_instance(self):
         """Sets the quantum instance used by the quantum algorithms with parameters of the config file.
         """
         self.quantum_instance = QuantumInstance(backend=self.get_backend(),
                                                 seed_simulator=self.config["solver"]["seed"],
                                                 seed_transpiler=self.config["solver"]["seed"],
                                                 shots=self.config["solver"]["shots"],
-                                                optimization_level=self.config["solver"]["optimization_level"])
+                                                optimization_level=self.config["solver"]["optimization level"])
 
     def set_vqe(self, ansatz):
         """Set vqe with a specific ansatz.
@@ -74,6 +74,6 @@ class Solver:
         """Set QAOA.
         """
         ideal_qaoa = QAOA(optimizer=self.get_optimizer(),
-                          reps=self.config["ansatz"]["circuit_depth"],
+                          reps=self.config["ansatz"]["circuit depth"],
                           quantum_instance=self.quantum_instance)
         self.quantum_algorithm = ideal_qaoa

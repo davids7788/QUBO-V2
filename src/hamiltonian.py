@@ -38,10 +38,10 @@ class Hamiltonian:
                     if self.solution_candidate[interaction_key] == 1:
                         lin_out += triplet.interactions[interaction_key]
                         lin_out_counter += 1
-            if self.normalizing == "complete":
+            if self.rescaling == "complete":
                 linear[i] += lin_out
                 linear[i] /= (lin_out_counter + 1)
-            elif self.normalizing == "outer terms":
+            elif self.rescaling == "outer terms":
                 if lin_out != 0:
                     linear[i] += lin_out / lin_out_counter
             else:
@@ -66,7 +66,7 @@ class Hamiltonian:
         return qubo
 
     def qubo_representation_quantum(self):
-        """Returns qubo hamiltonian suited for VQE"""
+        """Returns qubo hamiltonian suited for VQE."""
         op, offset = self.qubo_representation().to_ising()
         operator_list = []
         try:

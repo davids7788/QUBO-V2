@@ -8,29 +8,19 @@ class Ansatz:
         """Class for managing the ansatz circuit.
         :param config: dictionary with configuration parameters
         """
-        self.layout = config["ansatz"]["layout"]
-        self.num_qubits = config["qubo"]["num qubits"]
-        self.circuit_depth = config["ansatz"]["circuit_depth"]
-        self.skip_unentangled_qubits = config["ansatz"]["skip_unentangled_qubits"]
-        self.skip_final_rotation_layer = config["ansatz"]["skip_final_rotation_layer"]
+        self.config = config
         self.circuit = None
 
-    def set_two_local(self,
-                      rotation_blocks="ry",
-                      entanglement_blocks="cx",
-                      entanglement="full"):
+    def set_two_local(self):
         """Configures the "TwoLocal" ansatz.
-        :param rotation_blocks: Single gate or list of gates possible, e.g. "ry" or ["ry", "rz"]
-        :param entanglement_blocks: Entanglement block, e.g "cx", "cxx"
-        :param entanglement: "linear", "full", "circular"
         """
-        self.circuit = TwoLocal(num_qubits=self.num_qubits,
-                                rotation_blocks=rotation_blocks,
-                                entanglement_blocks=entanglement_blocks,
-                                entanglement=entanglement,
-                                reps=self.circuit_depth,
-                                skip_unentangled_qubits=self.skip_unentangled_qubits,
-                                skip_final_rotation_layer=self.skip_final_rotation_layer)
+        self.circuit = TwoLocal(num_qubits=self.config["qubo"]["num qubits"],
+                                rotation_blocks=self.config["ansatz"]["rotation blocks"],
+                                entanglement_blocks=self.config["ansatz"]["entanglement blocks"],
+                                entanglement=self.config["ansatz"]["entanglement"],
+                                reps=self.config["ansatz"]["circuit depth"],
+                                skip_unentangled_qubits=self.config["ansatz"]["skip unentangled qubits"],
+                                skip_final_rotation_layer=self.config["ansatz"]["skip final rotation layer"])
 
     def set_hamiltonian_driven(self,
                                triplet_list_slice):
@@ -39,11 +29,11 @@ class Ansatz:
         Currently restricted to "ry" and "cx" gates.
         :param triplet_list_slice: triplet list slice of the problem
         """
-        qc = QuantumCircuit(self.num_qubits)
+        qc = QuantumCircuit(self.config["qubo"]["num qubits"])
         # Number of repetitions
         entanglement_map = []
-        for i in range(self.circuit_depth):
-            for j in range(self.num_qubits):
+        for i in range(self.config["ansatz"]["circuit depth"]):
+            for j in range(self.config["qubo"]["num qubits"]):
                 qc.ry(Parameter(str(i) + str(j)), j)  # Parametrized ry gates on every qubit
             for k, p1 in enumerate(triplet_list_slice):
                 for m, p2 in enumerate(triplet_list_slice):
@@ -54,20 +44,16 @@ class Ansatz:
                             qc.cx(k, m)  # if b_ij != 0 for the qubits/triplets, set entanglement cx
                             entanglement_map.append((p1, p2))
         # final rotation layer
-        if not self.skip_final_rotation_layer:
-            for n in range(self.num_qubits):
-                qc.ry(Parameter(str(self.circuit_depth) * self.num_qubits + str(n)), n)  # Final rotation layer
+        if not self.config["ansatz"]["skip final rotation layer"]:
+            for n in range(self.config["qubo"]["num qubits"]):
+                qc.ry(Parameter(str(self.config["ansatz"]["circuit depth"]) *
+                                self.config["qubo"]["num qubits"] + str(n)), n)   # Final rotation layer
         self.circuit = qc
 
     def set_no_entanglements(self):
         """Set quantum circuits with just rotation layers and not entanglements."""
-        qc = QuantumCircuit(self.num_qubits)
-        for i in range(self.circuit_depth):
-            for j in range(self.num_qubits):
+        qc = QuantumCircuit(self.config["qubo"]["num qubits"])
+        for i in range(self.config["ansatz"]["circuit depth"]):
+            for j in range(self.config["qubo"]["num qubits"]):
                 qc.ry(Parameter(str(i) + str(j)), j)  # Parametrized ry gates on every qubit
-        # final rotation layer
-        if not self.skip_final_rotation_layer:
-            for n in range(self.num_qubits):
-                qc.ry(Parameter(str(self.circuit_depth) * self.num_qubits + str(n)), n)
-
         self.circuit = qc
