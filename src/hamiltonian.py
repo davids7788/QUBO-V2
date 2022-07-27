@@ -65,7 +65,7 @@ class Hamiltonian:
         qubo.minimize(linear=self.linear_term(), quadratic=self.quadratic_term())
         return qubo
 
-    def qubo_representation_vqe(self):
+    def qubo_representation_quantum(self):
         """Returns qubo hamiltonian suited for VQE"""
         op, offset = self.qubo_representation().to_ising()
         operator_list = []

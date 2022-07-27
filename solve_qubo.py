@@ -56,6 +56,8 @@ else:
 # If not "hamiltonian aware" additional parameters are set
 if config_file["ansatz"]["layout"] == "TwoLocal":
     ansatz.set_two_local(config_file["ansatz"])
+elif config_file["ansatz"]["layout"] is None:
+    self.ansatz.no_entanglements()
 
 # Create Solver object and set parameters from config file
 solver = Solver(config["solver"])

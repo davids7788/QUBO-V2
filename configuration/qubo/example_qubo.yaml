@@ -23,8 +23,8 @@ qubo:
   initial binary vector: ones
   search depth: 10
   num qubits: 7
+  error mitigation algorithm: null
   compare to eigensolver: False
-  error mitigation: null
 
 bit flip optimization:
   initial: 10

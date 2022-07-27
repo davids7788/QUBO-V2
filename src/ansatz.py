@@ -32,8 +32,8 @@ class Ansatz:
                                 skip_unentangled_qubits=self.skip_unentangled_qubits,
                                 skip_final_rotation_layer=self.skip_final_rotation_layer)
 
-    def set_hamiltonian_aware_ansatz(self,
-                                     triplet_list_slice):
+    def set_hamiltonian_driven(self,
+                               triplet_list_slice):
         """Creates entanglements of the ansatz based on the hamiltonian and sets it as the circuit of the ansatz.
         Direct entanglement means if there is a direct connection, a value b_ij which would connect both.
         Currently restricted to "ry" and "cx" gates.
@@ -59,7 +59,7 @@ class Ansatz:
                 qc.ry(Parameter(str(self.circuit_depth) * self.num_qubits + str(n)), n)  # Final rotation layer
         self.circuit = qc
 
-    def set_no_entanglement_circuit(self):
+    def set_no_entanglements(self):
         """Set quantum circuits with just rotation layers and not entanglements."""
         qc = QuantumCircuit(self.num_qubits)
         for i in range(self.circuit_depth):

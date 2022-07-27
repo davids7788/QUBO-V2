@@ -12,14 +12,13 @@ class QuboLogging:
                          "time tracking complete": {},            # complete time needed for program execution
                          "time tracking quantum": {},             # quantum part
                          "time tracking qubo iteration": {},      # one iteration of the global optimization algorithm
-                         "time tracking subqubos": {},            # time needed for solving a single subqubo
+                         "time tracking subQUBOs": {},            # time needed for solving a single subqubo
                          "time tracking bit flip search": {},     # time needed for one bit flip search
                          "compare to numpy": {},                  # [True , False, ..., False] for each SubQUBO
-                         "compare to noiseless VQE": {},          # [True , False, ..., False] for each SubQUBO
                          "hamiltonian": {},                       # [linear, quadratic] for 500 SubQUBOs
                          "energy": {},                            # energy level after each iteration
-                         "solution vector": {},                   # computed solution candidate after each iteration
-                         "triplet sorting": {}}                   # sorted indices list of triplets}
+                         "solution vector": {}},                  # computed solution candidate after each iteration
+
 
     def add_entry(self,
                   sub_dict: str,
