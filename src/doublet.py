@@ -18,8 +18,8 @@ class Doublet:
         :param hit_2_position: particle position [x, y, z] on detector layer of hit 2
         :param hit_1_id: unique integer hit id on detector of hit 1
         :param hit_2_id: unique integer hit id on detector of hit 2
-        :param hit_1_id: unique integer hit id on detector of hit 1
-        :param hit_2_id: unique integer hit id on detector of hit 2
+        :param energy_1 unique integer hit id on detector of hit 1
+        :param energy_2: unique integer hit id on detector of hit 2
         """
         self.hit_1_position = hit_1_position
         self.hit_1_particle_key = hit_1_particle_key

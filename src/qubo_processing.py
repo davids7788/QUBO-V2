@@ -1,6 +1,7 @@
 import copy
 import time
 import numpy as np
+import matplotlib.pyplot as plt
 
 from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
@@ -75,7 +76,6 @@ class QuboProcessing:
                 self.qubo_logging.save_results(self.save_folder)
             end_bit_flip = time.time()
             print(f"Bit flip optimization needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
-
 
         # Here starts the sub qubo algorithm
         self.loop_count = 0
@@ -436,15 +436,31 @@ class QuboProcessing:
                 f.write("\n")
             f.write("\n\n")
             f.write("---\n")
-            found_tracks, efficiency, fake_rate = self.track_efficiency_and_fake_rate()
-            f.write(f"Found tracks: {found_tracks}\n")
-            f.write(f"Efficiency: {np.around(efficiency, 2)}\n")
-            f.write(f"Fake rate: {np.around(fake_rate, 2)}")
+
+            energy, found_tracks, efficiency, fake_rate = self.track_efficiency_and_fake_rate()
+
+            f.write("Efficiency sorted by energy: \n")
+            f.write("Energy,  found tracks, efficiency, fake rate\n")
+            for e, f_t, eff, f_r in zip(energy[0], found_tracks[0], efficiency[0], fake_rate[0]):
+                f.write(f"{np.around(e, 2)}, {np.around(f_t, 2)}, {np.around(eff, 2)}, {np.around(f_r, 2)}\n")
+            f.write("\n\n")
+
+            f.write("Efficiency sorted by angle: \n")
+            f.write("angle, found tracks, efficiency, fake rate\n")
+            for e, f_t, eff, f_r in zip(energy[1], found_tracks[1], efficiency[1], fake_rate[1]):
+                f.write(f"{np.around(e, 2)}, {np.around(f_t, 2)}, {np.around(eff, 2)}, {np.around(f_r, 2)}\n")
+
+            f.write(f"Found tracks: {found_tracks[2]}\n")
+            f.write(f"Efficiency: {np.around(efficiency[2], 2)}\n")
+            f.write(f"Fake rate: {np.around(fake_rate[2], 2)}")
 
     def track_efficiency_and_fake_rate(self):
         """"Calculates the track efficiency and fake rate and returns it together with the number found tracks.
         :return
-            (found_tracks, efficiency, fake_rate)
+            [energy_sorted_energy_list, angle_sorted_energy_list], \
+            [energy_sorted_found_tracks_list, angle_sorted_found_tracks_list, total_found_tracks],\
+            [energy_sorted_efficiency_list, angle_sorted_efficiency_list, total_efficiency], \
+            [energy_sorted_fake_rate_list, angle_sorted_fake_rate_list, total_fake_rate]
         """
         solution = self.qubo_logging.qubo_log["computed solution vector"]
         found_tracks = []
@@ -469,7 +485,6 @@ class QuboProcessing:
                     used_triplets_for_tracks.add(index)
                     used_triplets_for_tracks.add(best_interaction_key)
 
-        matched_tracks = 0
         found_tracks_ambiguity_solved = []
         for i, track_1 in enumerate(found_tracks):
             ambiguities = False
@@ -489,6 +504,97 @@ class QuboProcessing:
             if not ambiguities:
                 found_tracks_ambiguity_solved.append(track_1)
 
+        def get_track_energy(track_for_energy):
+            """Sums over triplets in a track and calculates the mean energy.
+             :return
+                energy of track
+            """
+            num_triplets = len(track_for_energy.triplets)
+            energy = 0
+            for triplet in track_for_energy.triplets:
+                energy += triplet.doublet_1.energy_1
+                energy += triplet.doublet_1.energy_2
+                energy += triplet.doublet_2.energy_1
+                energy += triplet.doublet_2.energy_2
+            energy /= (3 + num_triplets * 3)
+            return energy
+
+        def get_track_angle(track_for_angle):
+            """Sums over triplets in a track and calculates the mean energy.
+             :return
+                angle of track
+            """
+            num_triplets = len(track_for_angle.triplets)
+            angle = 0
+            for triplet in track_for_angle.triplets:
+                angle += triplet.doublet_1.xz_angle()
+                angle += triplet.doublet_1.xz_angle()
+                angle += triplet.doublet_2.xz_angle()
+                angle += triplet.doublet_2.xz_angle()
+            angle /= (3 + num_triplets * 3)
+            return angle
+
+        # sort in energy, 500 MeV bin size chosen
+        found_tracks_ambiguity_solved.sort(key=get_track_energy)
+        energy_list = []
+        e_found_tracks_list = []
+        e_efficiency_list = []
+        e_fake_rate_list = []
+
+        t_counter = 0
+        t_matched_counter = 0
+        b_counter = 0
+        for track in found_tracks_ambiguity_solved:
+            if get_track_energy(track) < 1000 + (b_counter + 1) * 500:
+                t_counter += 1
+                if track.is_matched_track:
+                    t_matched_counter += 1
+            else:
+                energy_list.append(1000 + (b_counter + 1) * 500)
+                e_found_tracks_list.append(t_counter)
+
+                if t_counter != 0:
+                    e_fake_rate_list.append((t_counter - t_matched_counter) / t_counter)
+                    e_efficiency_list.append(t_matched_counter / t_counter)
+                else:
+                    e_fake_rate_list.append(0)
+                    e_efficiency_list.append(0)
+                t_counter = 0
+                t_matched_counter = 0
+                b_counter += 1
+
+        # sort in angle, 500 MeV bin size chosen
+        found_tracks_ambiguity_solved.sort(key=get_track_angle)
+        min_angle = get_track_angle(found_tracks_ambiguity_solved[0])
+        max_angle = get_track_angle(found_tracks_ambiguity_solved[-1])
+        angle_list = []
+        a_found_tracks_list = []
+        a_efficiency_list = []
+        a_fake_rate_list = []
+
+        t_counter = 0
+        t_matched_counter = 0
+        b_counter = 0
+        for track in found_tracks_ambiguity_solved:
+            if get_track_angle(track) < min_angle + (b_counter + 1) * (max_angle - min_angle) / 25:
+                t_counter += 1
+                if track.is_matched_track:
+                    t_matched_counter += 1
+            else:
+                angle_list.append(min_angle + (b_counter + 1) * (max_angle - min_angle) / 25)
+                a_found_tracks_list.append(t_counter)
+                if t_counter != 0:
+                    a_fake_rate_list.append((t_counter - t_matched_counter) / t_counter)
+                    a_efficiency_list.append(t_matched_counter / t_counter)
+                else:
+                    a_fake_rate_list.append(0)
+                    a_efficiency_list.append(0)
+                t_counter = 0
+                t_matched_counter = 0
+                b_counter += 1
+
+        # total efficiency, fake rate
+        matched_tracks = 0
         for track in found_tracks_ambiguity_solved:
             if track.is_matched_track:
                 matched_tracks += 1
@@ -500,4 +606,7 @@ class QuboProcessing:
         print(f"\nFound tracks: {np.around(found_tracks, 2)}")
         print(f"Efficiency: {np.around(efficiency, 2)}")
         print(f"Fake rate: {np.around(fake_rate, 2)}")
-        return found_tracks, efficiency, fake_rate
+        return [energy_list, angle_list], \
+               [e_found_tracks_list, a_found_tracks_list, found_tracks],\
+               [e_efficiency_list, a_efficiency_list, efficiency], \
+               [e_fake_rate_list, a_fake_rate_list, fake_rate]

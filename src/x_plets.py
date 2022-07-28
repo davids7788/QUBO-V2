@@ -86,7 +86,7 @@ class XpletCreatorLUXE:
             for row in csv_reader:
                 row_converted = []
                 for i in range(len(row)):
-                    if i in [self.x_index, self.y_index, self.z_index]:
+                    if i in [self.x_index, self.y_index, self.z_index, self.particle_energy_index]:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
@@ -140,8 +140,8 @@ class XpletCreatorLUXE:
                                                second_hit[self.z_index]),
                                               first_hit[self.hit_id_index],
                                               second_hit[self.hit_id_index],
-                                              first_hit[self.particle_id_index],
-                                              second_hit[self.particle_id_index])
+                                              first_hit[self.particle_energy_index],
+                                              second_hit[self.particle_energy_index])
                             if doublet.is_correct_match:
                                 self.found_correct_doublets += 1
                                 self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -

@@ -33,7 +33,7 @@ new_folder = folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
 if Path(new_folder).is_dir():
     pass
 else:
-    print(new_folder)
+    print(f"Creating folder: {new_folder}")
     os.mkdir(new_folder)
 
 # Create logger
