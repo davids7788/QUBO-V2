@@ -4,7 +4,7 @@ from qiskit.circuit.library.n_local.two_local import TwoLocal
 
 class Ansatz:
     def __init__(self,
-                 config):
+                 config: dict):
         """Class for managing the ansatz circuit.
         :param config: dictionary with configuration parameters
         """
@@ -51,7 +51,8 @@ class Ansatz:
         self.circuit = qc
 
     def set_no_entanglements(self):
-        """Set quantum circuits with just rotation layers and not entanglements."""
+        """Set quantum circuits with just rotation layers and not entanglements.
+        """
         qc = QuantumCircuit(self.config["qubo"]["num qubits"])
         for i in range(self.config["ansatz"]["circuit depth"]):
             for j in range(self.config["qubo"]["num qubits"]):

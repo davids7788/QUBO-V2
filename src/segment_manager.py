@@ -58,7 +58,8 @@ class SegmentManager:
                         name: str):
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
-        :return: target segments
+        :return:
+            target segments
         """
         segment_names = [segment_name for segment_name in self.segment_mapping[name]]
         return [segment for segment in self.segment_list if segment.name in segment_names]
@@ -70,7 +71,8 @@ class SegmentManager:
         <number layers> * <num segments per layer> entries
         :param x: x value of
         :param z: z value of hit
-        :return: index of corresponding segment in segment list
+        :return:
+            index of corresponding segment in segment list
         """
         z_index = self.layer_z_values.index(z)
         x_range = self.detector_layers[z_index][1] - self.detector_layers[z_index][0]
@@ -139,7 +141,8 @@ class SegmentManager:
         :param x_start: x-position of segment
         :param z_end: z-position of target segment
         :param z_start: z-position of segment
-        :return: x_position at the reference layer
+        :return:
+            x_position at the reference layer
         """
         dx = x_end - x_start
         dz = z_end - z_start

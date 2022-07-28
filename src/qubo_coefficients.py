@@ -53,6 +53,7 @@ class QuboCoefficients:
         """Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
         set it is also applied. If the process is successful a message and the target folder location containing the
         triplet list is displayed.
+        :param segment_manager: segment manager object
         """
         # self checking configuration
         quality = None
@@ -92,7 +93,8 @@ class QuboCoefficients:
 
     def filling_lists_for_statistics(self):
         """"Function for collecting and storing information about quality and interaction values,
-        as well as truth information about the triplets."""
+        as well as truth information about the triplets.
+        """
         for t1 in self.triplet_list:
             if t1.is_correct_match:
                 self.quality_correct_match_list.append(t1.quality)
@@ -111,6 +113,8 @@ class QuboCoefficients:
                         self.connectivity_wrong_match_list.append(i_value)
 
     def parameter_rescaling(self):
+        """Rescaling parameters according to the config file.
+        """
         # additional processing of qubo parameters
         if self.configuration["scale range parameters"]["z_scores"]:
             quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
@@ -185,7 +189,8 @@ class QuboCoefficients:
         """Compares two triplets and  how they match.
         :param triplet: first triplet
         :param other_triplet: triplet to compare with the first one
-        :return value based on connectivity/conflict and chosen set of parameters
+        :return
+            value based on connectivity/conflict and chosen set of parameters
         """
         # checking number of shared hits
         intersection = 0
@@ -255,7 +260,9 @@ class QuboCoefficients:
 
     def recognize_parameter_setup(self):
         """Recognizes the chosen parameter setup for the QUBO
-        :return: tuple of strings with setup information"""
+        :return:
+            tuple of strings with setup information
+        """
         try:
             float(self.configuration["qubo parameters"]["b_ij conflict"])
             conflict = "constant"
@@ -272,12 +279,12 @@ class QuboCoefficients:
     @staticmethod
     def two_norm_std_angle(doublet_1, doublet_2, doublet_3):
         """Returns 2-norm of angle difference in xz and yz.
-        :param
-            doublet_1 : doublet from hit 1 + 2
-            doublet_2 : doublet from hit 2 + 3
-            doublet_3 : doublet from hit 3 + 4
+        :param doublet_1 : doublet from hit 1 + 2
+        :param doublet_2 : doublet from hit 2 + 3
+        :param doublet_3 : doublet from hit 3 + 4
         :return
-            2-norm of angle difference in xz and yz."""
+            2-norm of angle difference in xz and yz.
+        """
         angle_xz_doublet_1 = doublet_1.xz_angle()
         angle_yz_doublet_1 = doublet_1.yz_angle()
 

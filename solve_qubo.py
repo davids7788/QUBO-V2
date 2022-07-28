@@ -36,16 +36,6 @@ else:
     print(new_folder)
     os.mkdir(new_folder)
 
-with open(new_folder + "/qubo_info.txt", "w") as f:
-    f.write("Qubo solved with the following configuration: \n")
-    f.write("---\n")
-    for outer_key in config_file.keys():
-        for inner_key, value in config_file[outer_key].items():
-            f.write(f"\n{inner_key}: {value}")
-        f.write("\n")
-    f.write("\n\n")
-    f.write("---\n")
-
 # Create logger
 qubo_logger = QuboLogging()
 
@@ -69,13 +59,15 @@ else:
 
 
 # Create and configure solving process
-qubo_solver = QuboProcessing(folder + "/triplet_list.npy",
-                             config=config_file,
-                             solver=solver,
-                             ansatz=ansatz,
-                             qubo_logging=qubo_logger,
-                             save_folder=new_folder)
+qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
+                                config=config_file,
+                                solver=solver,
+                                ansatz=ansatz,
+                                qubo_logging=qubo_logger,
+                                save_folder=new_folder)
 
 # Select solving method
 if config_file["qubo"]["optimization strategy"] == "impact list":
-    qubo_solver.impact_list_solve()
+    qubo_processor.impact_list_solve()
+
+qubo_processor.write_results_to_file(new_folder)

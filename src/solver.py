@@ -9,7 +9,7 @@ from qiskit.providers.fake_provider import FakeAthens, FakeCasablanca, FakeJakar
 class Solver:
     def __init__(self,
                  config):
-        """Creates a solver object for solving (Sub-) QUBOs.
+        """Class for handling a solver object for solving (Sub-) QUBOs.
         :param config: dictionary with configuration parameters
         """
         self.config = config
@@ -17,8 +17,8 @@ class Solver:
         self.quantum_algorithm = None
         self.set_quantum_instance()
 
-    def get_backend(self):
-        """Returns the backend set in the config file.
+    def set_backend(self):
+        """Sets the backend set in the config file.
         """
         if self.config["solver"]["backend"] == "Ideal Qasm Sim":
             return Aer.get_backend('qasm_simulator')                # noiseless simulator
@@ -31,7 +31,7 @@ class Solver:
         elif self.config["solver"]["backend"] == "FakeGuadalupe":
             return QasmSimulator.from_backend(FakeGuadalupe())      # 16 qubits
 
-    def get_optimizer(self):
+    def set_optimizer(self):
         """Returns the optimizer with the maxiter value from the config file.
         :return Optimizer: the optimizer with the maxiter value from the config file
         """
@@ -55,25 +55,25 @@ class Solver:
     def set_quantum_instance(self):
         """Sets the quantum instance used by the quantum algorithms with parameters of the config file.
         """
-        self.quantum_instance = QuantumInstance(backend=self.get_backend(),
+        self.quantum_instance = QuantumInstance(backend=self.set_backend(),
                                                 seed_simulator=self.config["solver"]["seed"],
                                                 seed_transpiler=self.config["solver"]["seed"],
                                                 shots=self.config["solver"]["shots"],
                                                 optimization_level=self.config["solver"]["optimization level"])
 
     def set_vqe(self, ansatz):
-        """Set vqe with a specific ansatz.
+        """Set VQE with a specific ansatz.
         :param ansatz: quantum circuit
         """
         vqe = VQE(ansatz=ansatz.circuit,
-                  optimizer=self.get_optimizer(),
+                  optimizer=self.set_optimizer(),
                   quantum_instance=self.quantum_instance)
         self.quantum_algorithm = vqe
 
     def set_qaoa(self):
         """Set QAOA.
         """
-        ideal_qaoa = QAOA(optimizer=self.get_optimizer(),
+        ideal_qaoa = QAOA(optimizer=self.set_optimizer(),
                           reps=self.config["ansatz"]["circuit depth"],
                           quantum_instance=self.quantum_instance)
         self.quantum_algorithm = ideal_qaoa

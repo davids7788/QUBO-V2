@@ -23,8 +23,7 @@ class Segment:
 
     def is_in_segment(self,
                       x: float):
-        """
-        Checks if position x is inside the segment
+        """Checks if position x is inside the segment
         :param x: position in x [m]
         :return: True if x in segment, else False
         """

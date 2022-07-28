@@ -102,6 +102,9 @@ class XpletCreatorLUXE:
 
     def create_x_plets(self,
                        segment_manager: SegmentManager):
+        """Selects the setup for the configuration Simplified or Full LUXE.
+        :param segment_manager: segement manager object
+        """
         if segment_manager.setup == "Simplified LUXE":
             self.create_x_plets_simplified_setup(segment_manager)
         elif segment_manager.setup == "Full LUXE":
@@ -110,8 +113,8 @@ class XpletCreatorLUXE:
     def create_x_plets_simplified_setup(self,
                                         segment_manager: SegmentManager):
         """Creates doublets and triplets. For the simplified model only.
-        :param segment_manager: SegmentManager object with already set segments and mapping"""
-
+        :param segment_manager: SegmentManager object with already set segments and mapping
+        """
         print("\nCreating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
         for segment in segment_manager.segment_list:
@@ -203,7 +206,8 @@ class XpletCreatorLUXE:
         """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
         :param doublet1: first doublet, nearer to IP
         :param doublet2: second doublet, further from IP
-        :return: True if criteria applies, else False
+        :return:
+            True if criteria applies, else False
         """
         if abs(doublet2.xz_angle() - doublet1.xz_angle()) < self.configuration["triplet"]["angle diff x"]:
             if abs(doublet2.yz_angle() - doublet1.yz_angle()) < self.configuration["triplet"]["angle diff y"]:
@@ -222,7 +226,8 @@ class XpletCreatorLUXE:
         :param z1: z value first hit
         :param z2: z value second hit
         :param z_ref: z-value reference
-        :return: True if criteria applies, else False
+        :return:
+            True if criteria applies, else False
         """
         if abs(((x2 - x1) / XpletCreatorLUXE.x0_at_z_ref(x1, x2, z1, z2, z_ref) -
                 self.configuration["doublet"]["dx/x0"])) > \
@@ -242,7 +247,8 @@ class XpletCreatorLUXE:
         :param z_end: z-position of second hit
         :param z_start: z-position of first hit
         :param z_ref: z-value reference layer
-        :return: x_position at the reference layer
+        :return:
+            x_position at the reference layer
         """
         dx = x_end - x_start
         dz = z_end - z_start
@@ -252,7 +258,8 @@ class XpletCreatorLUXE:
     def hms_string(sec_elapsed):
         """Nicely formatted time string.
         :param sec_elapsed time in ms
-        :return hh:mm:ss.msms
+        :return
+            hh:mm:ss.msms
         """
         h = int(sec_elapsed / (60 * 60))
         m = int((sec_elapsed % (60 * 60)) / 60)

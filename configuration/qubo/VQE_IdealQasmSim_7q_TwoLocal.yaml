@@ -1,7 +1,7 @@
 ---
 ansatz:
   layout: "TwoLocal"
-  circuit depth: 1
+  circuit depth: 2
   rotation blocks: "ry"
   entanglement blocks: "cx"
   entanglement: "linear"
@@ -10,22 +10,22 @@ ansatz:
 
 solver:
   algorithm: "VQE"
-  backend: "Ideal Qasm Sim"
+  backend: "Qasm Ideal Sim""
   optimizer: NFT
-  maxiter: 50
+  maxiter: 3000
   seed: 0
   shots: 50
   optimization level: 2
 
 qubo:
   optimization strategy: impact list
-  hamiltonian rescaling: "complete"
+  hamiltonian rescaling: null
   initial binary vector: ones
-  search depth: 2
+  search depth: 5
   num qubits: 7
   error mitigation algorithm: null
   compare to eigensolver: True
 
 bit flip optimization:
-  iterations: 2
+  iterations: 0
   reverse: True

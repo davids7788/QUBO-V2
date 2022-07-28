@@ -1,0 +1,20 @@
+doublet:
+  dx/x0 : 0.0526
+  eps: 0.00065
+
+triplet:
+  angle diff x: 0.001
+  angle diff y: 0.001
+
+binning:
+  num bins x: 1500
+
+qubo parameters:
+  b_ij conflict: 1.0
+  b_ij match: -1
+  a_i: 0
+
+scale range parameters:
+  z_scores: False
+  quality: null
+  interaction: null

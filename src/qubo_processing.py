@@ -10,6 +10,7 @@ from src.solver import Solver
 from src.hamiltonian import Hamiltonian
 from src.ansatz import Ansatz
 from src.qubo_logging import QuboLogging
+from src.track import Track
 
 algorithm_globals.massive = True
 
@@ -58,6 +59,7 @@ class QuboProcessing:
 
         # Performing initial bit flip optimization
         if self.config["bit flip optimization"]["iterations"] > 0:
+            start_bit_flip = time.time()
             for i in range(self.config["bit flip optimization"]["iterations"]):
                 new_solution_candidate = self.bit_flip_optimization(self.triplets,
                                                                     self.solution_candidate,
@@ -69,6 +71,11 @@ class QuboProcessing:
                 self.iteration += 1
                 print(f"Energy after performing {i + 1} bit flip optimization(s): "
                       f"{np.around(self.energy_candidate, 2)}")
+            if self.config["qubo"]["search depth"] == 0:
+                self.qubo_logging.save_results(self.save_folder)
+            end_bit_flip = time.time()
+            print(f"Bit flip optimization needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
+
 
         # Here starts the sub qubo algorithm
         self.loop_count = 0
@@ -76,7 +83,8 @@ class QuboProcessing:
         self.sub_qubo_counter = 0
 
     def impact_list_solve(self):
-        """Performs impact list algorithm"""
+        """Performs impact list algorithm
+        """
         self.qubo_process(optimization_strategy=self.make_impact_list)
 
     def qubo_process(self,
@@ -109,6 +117,8 @@ class QuboProcessing:
                 result = self.solve_subqubos([self.triplets[i] for i in
                                              triplet_ordering[self.config["qubo"]["num qubits"] * i:
                                                               self.config["qubo"]["num qubits"] * (i + 1)]])
+                if result is None:
+                    continue
                 for k, entry in enumerate(triplet_ordering[self.config["qubo"]["num qubits"] * i:
                                                            self.config["qubo"]["num qubits"] * (i + 1)]):
                     self.solution_candidate[entry] = result[k]
@@ -118,8 +128,11 @@ class QuboProcessing:
                 print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                               triplet_ordering[- self.config["qubo"]["num qubits"]:]])
-                for k, entry in enumerate(triplet_ordering[- self.config["qubo"]["num qubits"]:]):
-                    self.solution_candidate[entry] = result[k]
+                if result is None:
+                    pass
+                else:
+                    for k, entry in enumerate(triplet_ordering[- self.config["qubo"]["num qubits"]:]):
+                        self.solution_candidate[entry] = result[k]
 
             # Time tracking quantum part
             end_quantum_part = time.time()
@@ -169,12 +182,14 @@ class QuboProcessing:
         self.qubo_logging.add_entry("time tracking complete",
                                     "complete run",
                                     solving_process_time)
-        print(f"Solving process for all solver needed {QuboProcessing.hms_string(solving_process_time)}")
+        self.qubo_logging.save_results(self.save_folder)
+        print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
 
     def make_impact_list(self):
         """
         Creates an impact list based on how much influence on the energy a bit flip has
-        :return: list of indices ordered from lowest to highest impact of triplets in triplet list
+        :return:
+            list of indices ordered from lowest to highest impact of triplets in triplet list
         """
         impact_list_values = []
         for triplet, t_i in zip(self.triplets, self.solution_candidate):
@@ -242,7 +257,8 @@ class QuboProcessing:
 
     def minimal_energy_and_solution(self):
         """Calculates the minimum energy state and value.
-        :return: minimum energy state, minimum energy value """
+        :return:
+            minimum energy state, minimum energy value """
         minimum_energy_state = []
         for t in self.triplets:
             if t.is_correct_match:
@@ -255,7 +271,8 @@ class QuboProcessing:
         """
         Calculates the energy according to a binary vector matching the triplet list
         :param binary_vector: binary solution candidate vector
-        :return: energy value
+        :return:
+            energy value
         """
         hamiltonian_energy = 0
         for i, b1 in enumerate(binary_vector):
@@ -304,7 +321,8 @@ class QuboProcessing:
         def get_result_in_correct_order(res):
             """Returns the result with the highest probability in the correct ordering of the qubits.
             :param res: result obtained via quantum algorithm
-            :return res_out: result with the highest probability in the correct ordering of the qubits"""
+            :return
+                result with the highest probability in the correct ordering of the qubits"""
             highest_prob = 0
             key_best_vqe = ""
             for key, prob, in zip(res.eigenstate.keys(), res.eigenstate.values()):
@@ -320,7 +338,11 @@ class QuboProcessing:
 
     def solve_subqubos(self,
                        triplet_slice):
-
+        """Function for solving a SubQUBO
+        :param triplet_slice: slice of triplets used for the SubQUBO
+        :return
+            result of computation
+        """
         result = None
         sub_qubo_time = None
 
@@ -375,6 +397,8 @@ class QuboProcessing:
         return result
 
     def configure_solver(self):
+        """Configures the Solver object for VQE, QAOA or NumpyEigensolver.
+        """
         # Set up the the chosen algorithm, VQE, QAOA or NumpyEigensolver
         # VQE --> ansatz can be chosen
         if self.config["solver"]["algorithm"] == "VQE":
@@ -392,8 +416,88 @@ class QuboProcessing:
 
     @staticmethod
     def hms_string(sec_elapsed):
-        """Nicely formatted time string."""
+        """Nicely formatted time string.
+        """
         h = int(sec_elapsed / (60 * 60))
         m = int((sec_elapsed % (60 * 60)) / 60)
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
+
+    def write_results_to_file(self, new_folder):
+        """Writes configuration details and track efficiency and fake rate results into a .txt file.
+        :param new_folder: folder in which to write the .txt file
+        """
+        with open(new_folder + "/qubo_info.txt", "w") as f:
+            f.write("Qubo solved with the following configuration: \n")
+            f.write("---\n")
+            for outer_key in self.config.keys():
+                for inner_key, value in self.config[outer_key].items():
+                    f.write(f"\n{inner_key}: {value}")
+                f.write("\n")
+            f.write("\n\n")
+            f.write("---\n")
+            found_tracks, efficiency, fake_rate = self.track_efficiency_and_fake_rate()
+            f.write(f"Found tracks: {found_tracks}\n")
+            f.write(f"Efficiency: {np.around(efficiency, 2)}\n")
+            f.write(f"Fake rate: {np.around(fake_rate, 2)}")
+
+    def track_efficiency_and_fake_rate(self):
+        """"Calculates the track efficiency and fake rate and returns it together with the number found tracks.
+        :return
+            (found_tracks, efficiency, fake_rate)
+        """
+        solution = self.qubo_logging.qubo_log["computed solution vector"]
+        found_tracks = []
+        used_triplets_for_tracks = set()
+        for index, result in enumerate(solution):  # looping over triplet list
+            if result == 1:  # check if triplet is kept
+                best_interaction_key = None  # variable for best connection if ambiguities
+                best_value = 0  # variable for best connection value if ambiguities
+                for key, value in zip(self.triplets[index].interactions.keys(),
+                                      self.triplets[index].interactions.values()):
+                    if int(key) < int(self.triplets[index].triplet_id):  # to not create tracks two times
+                        if solution[key] == 1:  # only if possible partner triplet is kept, too
+                            if value < best_value:
+                                best_value = value
+                                best_interaction_key = key
+
+                if best_value < 0:  # if partner triplet was found
+                    new_track = Track()
+                    new_track.add_triplet_to_track(self.triplets[index])
+                    new_track.add_triplet_to_track(self.triplets[best_interaction_key])
+                    found_tracks.append(new_track)
+                    used_triplets_for_tracks.add(index)
+                    used_triplets_for_tracks.add(best_interaction_key)
+
+        matched_tracks = 0
+        found_tracks_ambiguity_solved = []
+        for i, track_1 in enumerate(found_tracks):
+            ambiguities = False
+            for j, track_2 in enumerate(found_tracks[i + 1:]):
+                if track_1.is_in_conflict(track_2):
+                    ambiguities = True
+                    sum_interactions_track_1 = 0
+                    sum_interactions_track_2 = 0
+                    for triplet_1, triplet_2 in zip(track_1.triplets[:-1], track_1.triplets[1:]):
+                        sum_interactions_track_1 += triplet_1.interactions[triplet_2.triplet_id]
+                    for triplet_1, triplet_2 in zip(track_2.triplets[:-1], track_2.triplets[1:]):
+                        sum_interactions_track_2 += triplet_1.interactions[triplet_2.triplet_id]
+                    if sum_interactions_track_2 > sum_interactions_track_1:
+                        found_tracks_ambiguity_solved.append(track_2)
+                    else:
+                        found_tracks_ambiguity_solved.append(track_1)
+            if not ambiguities:
+                found_tracks_ambiguity_solved.append(track_1)
+
+        for track in found_tracks_ambiguity_solved:
+            if track.is_matched_track:
+                matched_tracks += 1
+
+        found_tracks = len(found_tracks_ambiguity_solved)
+        efficiency = 100 * matched_tracks / found_tracks
+        fake_rate = 100 * (found_tracks - matched_tracks) / found_tracks
+
+        print(f"\nFound tracks: {np.around(found_tracks, 2)}")
+        print(f"Efficiency: {np.around(efficiency, 2)}")
+        print(f"Fake rate: {np.around(fake_rate, 2)}")
+        return found_tracks, efficiency, fake_rate

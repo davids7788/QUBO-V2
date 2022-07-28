@@ -6,3 +6,5 @@ __pycache__
 venv
 virtualenv
 p2-venv
+test_files/
+test_results/
