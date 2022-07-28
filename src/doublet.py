@@ -8,12 +8,16 @@ class Doublet:
                  hit_1_position: [float, float, float],
                  hit_2_position: [float, float, float],
                  hit_1_id: int,
-                 hit_2_id: int):
+                 hit_2_id: int,
+                 energy_1: float,
+                 energy_2: float):
         """Class for doublet objects, consisting of two hits on different detector layers.
         :param hit_1_particle_key: particle true number, from simulation
-        :param hit_1_position:  particle position [x, y, z] on detector layer of hit 1
         :param hit_2_particle_key: particle true number, from simulation
+        :param hit_1_position:  particle position [x, y, z] on detector layer of hit 1
         :param hit_2_position: particle position [x, y, z] on detector layer of hit 2
+        :param hit_1_id: unique integer hit id on detector of hit 1
+        :param hit_2_id: unique integer hit id on detector of hit 2
         :param hit_1_id: unique integer hit id on detector of hit 1
         :param hit_2_id: unique integer hit id on detector of hit 2
         """
@@ -23,6 +27,8 @@ class Doublet:
         self.hit_2_particle_key = hit_2_particle_key
         self.hit_1_id = hit_1_id
         self.hit_2_id = hit_2_id
+        self.energy_1 = energy_1
+        self.energy_2 = energy_2
         self.is_correct_match = self.set_is_correct_match()
 
     def set_is_correct_match(self):

@@ -139,7 +139,9 @@ class XpletCreatorLUXE:
                                                second_hit[self.y_index],
                                                second_hit[self.z_index]),
                                               first_hit[self.hit_id_index],
-                                              second_hit[self.hit_id_index])
+                                              second_hit[self.hit_id_index],
+                                              first_hit[self.particle_id_index],
+                                              second_hit[self.particle_id_index])
                             if doublet.is_correct_match:
                                 self.found_correct_doublets += 1
                                 self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
