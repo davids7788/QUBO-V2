@@ -12,6 +12,7 @@ from src.hamiltonian import Hamiltonian
 from src.ansatz import Ansatz
 from src.qubo_logging import QuboLogging
 from src.track import Track
+from src.error_mitigation import ErrorMitigation
 
 algorithm_globals.massive = True
 
@@ -23,7 +24,8 @@ class QuboProcessing:
                  solver: Solver,
                  ansatz: Ansatz,
                  qubo_logging: QuboLogging,
-                 save_folder: str):
+                 save_folder: str,
+                 error_mitigation: ErrorMitigation):
         """Processes the Qubo and provides solving functions like a solving process via an impact list.
         :param triplet_list_file: .npy file with triplet objects
         :param config: dictionary with configuration parameters
@@ -31,6 +33,7 @@ class QuboProcessing:
         :param ansatz: ansatz circuit
         :param qubo_logging: object for handling information about the solving process of class QuboLogging
         :param save_folder: folder to which results are stored
+        :param error_mitigation: class to help mitigate errors
         """
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
         self.config = config
@@ -38,7 +41,7 @@ class QuboProcessing:
         self.ansatz = ansatz
         if self.solver is not None:
             self.configure_solver()
-        self.error_mitigation = None
+        self.error_mitigation = error_mitigation
         self.qubo_logging = qubo_logging
         self.save_folder = save_folder
 
@@ -176,6 +179,7 @@ class QuboProcessing:
                                         loop_time)
 
             self.qubo_logging.save_results(self.save_folder)
+            self.write_results_to_file()
 
         end_solving_process_time = time.time()
         solving_process_time = end_solving_process_time - start_solving_process_time
@@ -316,7 +320,9 @@ class QuboProcessing:
             result of the solving process"""
         result_quantum = self.solver.quantum_algorithm.compute_minimum_eigenvalue(hamiltonian)
         if self.config["qubo"]["error mitigation algorithm"] == "algebraic":
-            result_quantum = self.error_mitigation.meas_filter.apply(result_quantum)
+            result_quantum_vector = ErrorMitigation.dict_to_vector(dict(result_quantum.eigenstate.items()))
+            result_quantum_vector_mitigated = np.dot(self.error_mitigation.meas_filter_matrix, result_quantum_vector)
+            result_quantum = ErrorMitigation.vector_to_dict(result_quantum_vector_mitigated)
 
         def get_result_in_correct_order(res):
             """Returns the result with the highest probability in the correct ordering of the qubits.
@@ -325,7 +331,7 @@ class QuboProcessing:
                 result with the highest probability in the correct ordering of the qubits"""
             highest_prob = 0
             key_best_vqe = ""
-            for key, prob, in zip(res.eigenstate.keys(), res.eigenstate.values()):
+            for key, prob, in zip(res.keys(), res.values()):
                 if prob > highest_prob:
                     highest_prob = prob
                     key_best_vqe = key
@@ -423,11 +429,10 @@ class QuboProcessing:
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
-    def write_results_to_file(self, new_folder):
+    def write_results_to_file(self):
         """Writes configuration details and track efficiency and fake rate results into a .txt file.
-        :param new_folder: folder in which to write the .txt file
         """
-        with open(new_folder + "/qubo_info.txt", "w") as f:
+        with open(self.save_folder + "/qubo_info.txt", "w") as f:
             f.write("Qubo solved with the following configuration: \n")
             f.write("---\n")
             for outer_key in self.config.keys():
@@ -603,7 +608,8 @@ class QuboProcessing:
         efficiency = 100 * matched_tracks / found_tracks
         fake_rate = 100 * (found_tracks - matched_tracks) / found_tracks
 
-        print(f"\nFound tracks: {np.around(found_tracks, 2)}")
+        print("\n\nTotal\n")
+        print(f"Found tracks: {np.around(found_tracks, 2)}")
         print(f"Efficiency: {np.around(efficiency, 2)}")
         print(f"Fake rate: {np.around(fake_rate, 2)}")
         return [energy_list, angle_list], \

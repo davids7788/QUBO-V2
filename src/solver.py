@@ -17,7 +17,7 @@ class Solver:
         self.quantum_algorithm = None
         self.set_quantum_instance()
 
-    def set_backend(self):
+    def get_backend(self):
         """Sets the backend set in the config file.
         """
         if self.config["solver"]["backend"] == "Ideal Qasm Sim":
@@ -31,7 +31,7 @@ class Solver:
         elif self.config["solver"]["backend"] == "FakeGuadalupe":
             return QasmSimulator.from_backend(FakeGuadalupe())      # 16 qubits
 
-    def set_optimizer(self):
+    def get_optimizer(self):
         """Returns the optimizer with the maxiter value from the config file.
         :return Optimizer: the optimizer with the maxiter value from the config file
         """
@@ -55,7 +55,7 @@ class Solver:
     def set_quantum_instance(self):
         """Sets the quantum instance used by the quantum algorithms with parameters of the config file.
         """
-        self.quantum_instance = QuantumInstance(backend=self.set_backend(),
+        self.quantum_instance = QuantumInstance(backend=self.get_backend(),
                                                 seed_simulator=self.config["solver"]["seed"],
                                                 seed_transpiler=self.config["solver"]["seed"],
                                                 shots=self.config["solver"]["shots"],
@@ -66,14 +66,14 @@ class Solver:
         :param ansatz: quantum circuit
         """
         vqe = VQE(ansatz=ansatz.circuit,
-                  optimizer=self.set_optimizer(),
+                  optimizer=self.get_optimizer(),
                   quantum_instance=self.quantum_instance)
         self.quantum_algorithm = vqe
 
     def set_qaoa(self):
         """Set QAOA.
         """
-        ideal_qaoa = QAOA(optimizer=self.set_optimizer(),
+        ideal_qaoa = QAOA(optimizer=self.get_optimizer(),
                           reps=self.config["ansatz"]["circuit depth"],
                           quantum_instance=self.quantum_instance)
         self.quantum_algorithm = ideal_qaoa

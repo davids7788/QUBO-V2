@@ -1,0 +1,31 @@
+---
+ansatz:
+  layout: "TwoLocal"
+  circuit depth: 2
+  rotation blocks: "ry"
+  entanglement blocks: "cx"
+  entanglement: "linear"
+  skip final rotation layer: False
+  skip unentangled qubits: False
+
+solver:
+  algorithm: "VQE"
+  backend: "FakeJakarta"
+  optimizer: "NFT"
+  maxiter: 20
+  seed: 0
+  shots: 1
+  optimization level: 2
+
+qubo:
+  optimization strategy: impact list
+  hamiltonian rescaling: null
+  initial binary vector: ones
+  search depth: 5
+  num qubits: 7
+  error mitigation algorithm: "algebraic"
+  compare to eigensolver: True
+
+bit flip optimization:
+  iterations: 0
+  reverse: null
