@@ -5,26 +5,26 @@ ansatz:
   rotation blocks: null
   entanglement blocks: null
   entanglement: null
-  skip final rotation layer: False
-  skip unentangled qubits: False
+  skip final rotation layer: null
+  skip unentangled qubits: null
 
 solver:
-  algorithm: null
+  algorithm: "Numpy Eigensolver"
   backend: null
   optimizer: null
   maxiter: null
   seed: null
   shots: null
-  optimization level: 2
+  optimization level: null
 
 qubo:
-  optimization strategy: null
+  optimization strategy: impact list
   hamiltonian rescaling: null
   initial binary vector: zeros
-  search depth: 0
-  num qubits: 7
+  search depth: 5
+  num qubits: 12
   error mitigation algorithm: null
-  compare to eigensolver: False
+  compare to eigensolver: null
 
 bit flip optimization:
   iterations: 15

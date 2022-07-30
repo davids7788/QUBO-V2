@@ -77,6 +77,7 @@ class QuboProcessing:
                       f"{np.around(self.energy_candidate, 2)}")
             if self.config["qubo"]["search depth"] == 0:
                 self.qubo_logging.save_results(self.save_folder)
+                self.write_results_to_file()
             end_bit_flip = time.time()
             print(f"Bit flip optimization needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
 
@@ -89,6 +90,7 @@ class QuboProcessing:
         """Performs impact list algorithm
         """
         self.qubo_process(optimization_strategy=self.make_impact_list)
+        self.write_results_to_file()
 
     def qubo_process(self,
                      optimization_strategy):
@@ -179,7 +181,6 @@ class QuboProcessing:
                                         loop_time)
 
             self.qubo_logging.save_results(self.save_folder)
-            self.write_results_to_file()
 
         end_solving_process_time = time.time()
         solving_process_time = end_solving_process_time - start_solving_process_time
@@ -453,8 +454,8 @@ class QuboProcessing:
             f.write("Efficiency sorted by angle: \n")
             f.write("angle, found tracks, efficiency, fake rate\n")
             for e, f_t, eff, f_r in zip(energy[1], found_tracks[1], efficiency[1], fake_rate[1]):
-                f.write(f"{np.around(e, 2)}, {np.around(f_t, 2)}, {np.around(eff, 2)}, {np.around(f_r, 2)}\n")
-
+                f.write(f"{np.around(e, 2)}, {np.around(f_t, 2)}, {np.around(eff, 2)}, {np.around(f_r, 2)}\n\n")
+            f.write("Total:\n")
             f.write(f"Found tracks: {found_tracks[2]}\n")
             f.write(f"Efficiency: {np.around(efficiency[2], 2)}\n")
             f.write(f"Fake rate: {np.around(fake_rate[2], 2)}")
@@ -608,10 +609,11 @@ class QuboProcessing:
         efficiency = 100 * matched_tracks / found_tracks
         fake_rate = 100 * (found_tracks - matched_tracks) / found_tracks
 
-        print("\n\nTotal\n")
+        print("\nTotal:")
         print(f"Found tracks: {np.around(found_tracks, 2)}")
         print(f"Efficiency: {np.around(efficiency, 2)}")
         print(f"Fake rate: {np.around(fake_rate, 2)}")
+        print(f"------------\n")
         return [energy_list, angle_list], \
                [e_found_tracks_list, a_found_tracks_list, found_tracks],\
                [e_efficiency_list, a_efficiency_list, efficiency], \

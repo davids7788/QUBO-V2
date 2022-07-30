@@ -1,10 +1,10 @@
 doublet:
   dx/x0 : 0.0526
-  eps: 0.00065
+  eps: 0.0009
 
 triplet:
-  angle diff x: 0.001
-  angle diff y: 0.001
+  angle diff x: 0.0012
+  angle diff y: 0.0012
 
 binning:
   num bins x: 1500

@@ -28,6 +28,8 @@ elif config_file["solver"]["algorithm"] == "VQE":
     file_extension += "_vqe"
 elif config_file["solver"]["algorithm"] == "QAOA":
     file_extension += "_qaoa"
+else:
+    file_extension += "_bit_flip_only"
 
 
 new_folder = folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
@@ -49,11 +51,13 @@ else:
 # If not "hamiltonian aware" additional parameters are set
 if config_file["ansatz"]["layout"] == "TwoLocal":
     ansatz.set_two_local()
-elif config_file["ansatz"]["layout"] is None and config_file["solver"]["algorithm"] != "Numpy Eigensolver":
-    ansatz.set_no_entanglements()
+elif config_file["ansatz"]["layout"] is None:
+    if config_file["solver"]["algorithm"] is not None:
+        if config_file["solver"]["algorithm"] != "Numpy Eigensolver":
+            ansatz.set_no_entanglements()
 
 # Create Solver object and set parameters from config file
-if config_file["solver"]["algorithm"] != "Numpy Eigensolver":
+if config_file["solver"]["algorithm"] != "Numpy Eigensolver" and config_file["solver"]["algorithm"] is not None:
     solver = Solver(config_file)
 else:
     solver = None
