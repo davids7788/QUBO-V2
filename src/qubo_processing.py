@@ -65,11 +65,11 @@ class QuboProcessing:
         if self.config["bit flip optimization"]["iterations"] > 0:
             start_bit_flip = time.time()
             for i in range(self.config["bit flip optimization"]["iterations"]):
-                new_solution_candidate = self.bit_flip_optimization(self.triplets,
-                                                                    self.solution_candidate,
-                                                                    self.make_impact_list(),
-                                                                    self.config["bit flip optimization"]["reverse"])
-                self.energy_candidate = self.hamiltonian_energy(new_solution_candidate)
+                new_solution_candidate, new_energy = self.bit_flip_optimization(self.triplets,
+                                                                                self.solution_candidate,
+                                                                                self.make_impact_list(),
+                                                                                self.config["bit flip optimization"]["reverse"])
+                self.energy_candidate = new_energy
                 self.qubo_logging.add_entry("solution vector", self.iteration, self.solution_candidate)
                 self.qubo_logging.add_entry("energy", self.iteration, self.energy_candidate)
                 self.iteration += 1
@@ -233,6 +233,7 @@ class QuboProcessing:
         """
         if reverse:
             triplet_ordering.reverse()
+        energy_change_total = 0
         for i, triplet in enumerate([triplets[index] for index in triplet_ordering]):
             # energy change if this particular bit is flipped
             energy_change = 0
@@ -257,8 +258,9 @@ class QuboProcessing:
             # flip if overall energy change is negative
             if energy_change < 0:
                 solution_candidate[triplet_ordering[i]] = 1 - solution_candidate[triplet_ordering[i]]
+                energy_change_total + energy_change
 
-        return solution_candidate
+        return solution_candidate, self.energy_candidate + new_energy
 
     def minimal_energy_and_solution(self):
         """Calculates the minimum energy state and value.

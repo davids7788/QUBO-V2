@@ -7,7 +7,7 @@ triplet:
   angle diff y: 0.0012
 
 binning:
-  num bins x: 1500
+  num bins x: 2000
 
 qubo parameters:
   b_ij conflict: 1.0
