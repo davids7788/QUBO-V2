@@ -87,7 +87,7 @@ class QuboCoefficients:
         for segment in segment_manager.segment_list:
             for triplet in segment.triplet_data:
                 self.triplet_list.add(triplet)
-            # segment.triplet_data.clear()
+            segment.triplet_data.clear()
         self.triplet_list = list(self.triplet_list)
         self.triplet_list.sort(key=lambda t: t.triplet_id)   # triplet id = index in triplet list
 
