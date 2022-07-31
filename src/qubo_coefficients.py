@@ -56,6 +56,7 @@ class QuboCoefficients:
         :param segment_manager: segment manager object
         """
         # self checking configuration
+        print("Setting triplet coefficients...")
         quality = None
         try:
             quality = float(self.configuration["qubo parameters"]["a_i"])
@@ -95,6 +96,7 @@ class QuboCoefficients:
         """"Function for collecting and storing information about quality and interaction values,
         as well as truth information about the triplets.
         """
+        print("Filling list for statistics of a_i and b_ij")
         for t1 in self.triplet_list:
             if t1.is_correct_match:
                 self.quality_correct_match_list.append(t1.quality)
@@ -115,6 +117,7 @@ class QuboCoefficients:
     def parameter_rescaling(self):
         """Rescaling parameters according to the config file.
         """
+        print("Starting rescaling...")
         # additional processing of qubo parameters
         if self.configuration["scale range parameters"]["z_scores"]:
             quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
@@ -122,10 +125,12 @@ class QuboCoefficients:
             sigma = np.std(quality_values)
             for triplet in self.triplet_list:
                 triplet.quality = (triplet.quality - mu) / sigma
-            self.quality_correct_match_list = [(entry - mu) / sigma for entry in self.quality_correct_match_list]
-            self.quality_wrong_match_list = [(entry - mu) / sigma for entry in self.quality_wrong_match_list]
+            for i, quality in enumerate(self.quality_correct_match_list):
+                self.quality_correct_match_list[i] = (quality - mu) / sigma
+            for i, quality in enumerate(self.quality_wrong_match_list):
+                self.quality_wrong_match_list[i] = (quality - mu) / sigma
 
-        # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
+                # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
         if self.configuration["scale range parameters"]["quality"] is not None:
             a = self.configuration["scale range parameters"]["quality"][0]
             b = self.configuration["scale range parameters"]["quality"][1]
@@ -136,10 +141,10 @@ class QuboCoefficients:
                 triplet.quality = a + (triplet.quality - min_quality) * (b - a) / (max_quality - min_quality)
 
             # rewriting a_i lists
-            self.quality_correct_match_list = [a + (entry - min_quality) * (b - a) / (max_quality - min_quality)
-                                               for entry in self.quality_correct_match_list]
-            self.quality_wrong_match_list = [a + (entry - min_quality) * (b - a) / (max_quality - min_quality)
-                                             for entry in self.quality_wrong_match_list]
+            for i, quality in enumerate(self.quality_correct_match_list):
+                self.quality_correct_match_list[i] = a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
+            for i, quality in enumerate(self.quality_wrong_match_list):
+                self.quality_wrong_match_list[i] = a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
 
         # scaling connectivity
         if self.configuration["scale range parameters"]["interaction"] is not None:
