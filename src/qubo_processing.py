@@ -25,6 +25,7 @@ class QuboProcessing:
                  ansatz: Ansatz,
                  qubo_logging: QuboLogging,
                  save_folder: str,
+                 num_generated_tracks: int,
                  error_mitigation: ErrorMitigation):
         """Processes the Qubo and provides solving functions like a solving process via an impact list.
         :param triplet_list_file: .npy file with triplet objects
@@ -33,6 +34,7 @@ class QuboProcessing:
         :param ansatz: ansatz circuit
         :param qubo_logging: object for handling information about the solving process of class QuboLogging
         :param save_folder: folder to which results are stored
+        :param num_generated_tracks: number of complete tracks
         :param error_mitigation: class to help mitigate errors
         """
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
@@ -41,6 +43,7 @@ class QuboProcessing:
         self.ansatz = ansatz
         if self.solver is not None:
             self.configure_solver()
+        self.num_generated_tracks = num_generated_tracks
         self.error_mitigation = error_mitigation
         self.qubo_logging = qubo_logging
         self.save_folder = save_folder
@@ -471,6 +474,8 @@ class QuboProcessing:
             [energy_sorted_efficiency_list, angle_sorted_efficiency_list, total_efficiency], \
             [energy_sorted_fake_rate_list, angle_sorted_fake_rate_list, total_fake_rate]
         """
+        #
+
         solution = self.qubo_logging.qubo_log["computed solution vector"]
         found_tracks = []
         used_triplets_for_tracks = set()
@@ -518,15 +523,7 @@ class QuboProcessing:
              :return
                 energy of track
             """
-            num_triplets = len(track_for_energy.triplets)
-            energy = 0
-            for triplet in track_for_energy.triplets:
-                energy += triplet.doublet_1.energy_1
-                energy += triplet.doublet_1.energy_2
-                energy += triplet.doublet_2.energy_1
-                energy += triplet.doublet_2.energy_2
-            energy /= (3 + num_triplets * 3)
-            return energy
+            return track_for_energy.triplets[0].doublet_1.energy_1
 
         def get_track_angle(track_for_angle):
             """Sums over triplets in a track and calculates the mean energy.
@@ -609,7 +606,7 @@ class QuboProcessing:
                 matched_tracks += 1
 
         found_tracks = len(found_tracks_ambiguity_solved)
-        efficiency = 100 * matched_tracks / found_tracks
+        efficiency = 100 * matched_tracks / self.num_generated_tracks
         fake_rate = 100 * (found_tracks - matched_tracks) / found_tracks
 
         print("\nTotal:")
