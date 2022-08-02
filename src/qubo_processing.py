@@ -554,12 +554,12 @@ class QuboProcessing:
         t_matched_counter = 0
         b_counter = 0
         for track in found_tracks_ambiguity_solved:
-            if get_track_energy(track) < 1000 + (b_counter + 1) * 500:
+            if get_track_energy(track) < 1000 + (b_counter + 1) * 250:
                 t_counter += 1
                 if track.is_matched_track:
                     t_matched_counter += 1
             else:
-                energy_list.append(1000 + (b_counter + 1) * 500)
+                energy_list.append(1000 + (b_counter + 1) * 250)
                 e_found_tracks_list.append(t_counter)
 
                 if t_counter != 0:
@@ -585,12 +585,12 @@ class QuboProcessing:
         t_matched_counter = 0
         b_counter = 0
         for track in found_tracks_ambiguity_solved:
-            if get_track_angle(track) < min_angle + (b_counter + 1) * (max_angle - min_angle) / 25:
+            if get_track_angle(track) < min_angle + (b_counter + 1) * (max_angle - min_angle) / 50:
                 t_counter += 1
                 if track.is_matched_track:
                     t_matched_counter += 1
             else:
-                angle_list.append(min_angle + (b_counter + 1) * (max_angle - min_angle) / 25)
+                angle_list.append(min_angle + (b_counter + 1) * (max_angle - min_angle) / 50)
                 a_found_tracks_list.append(t_counter)
                 if t_counter != 0:
                     a_fake_rate_list.append((t_counter - t_matched_counter) / t_counter)
