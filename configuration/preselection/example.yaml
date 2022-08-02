@@ -3,8 +3,7 @@ doublet:
   eps: 0.0009
 
 triplet:
-  angle diff x: 0.0012
-  angle diff y: 0.0012
+  max scattering: 0.0010
 
 binning:
   num bins x: 2000

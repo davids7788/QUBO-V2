@@ -322,14 +322,14 @@ class QuboCoefficients:
 
     def plot_and_save_statistics(self,
                                  num_particles,
-                                 preselection_statistics):
+                                 preselection_statistic_dx_x0,
+                                 preselection_statistic_scattering):
         """This functions plots and saves various statistics to the same folder where the triplet list is saved to.
         The results are saved as 'triplet_coefficients_statistics.pdf' and 'triplet_interactions.pdf' into the
         target folder.
         :param num_particles: number of particles in the current tracking file
-        :param preselection_statistics: [preselection_statistic_dx_x0,
-                                         self.preselection_statistic_angle_xz,
-                                         self.preselection_statistic_angle_yz]
+        :param preselection_statistic_dx_x0: doublet preselection statistic
+        :param preselection_statistic_scattering: scattering / triplet angle statistics
         """
         # Number of interactions with other triplets
         interactions_list = []
@@ -389,16 +389,16 @@ class QuboCoefficients:
         ax2.set_ylabel("counts", fontsize=20)
         ax2.tick_params(axis='both', labelsize=20)
         ax2.set_xlabel("[a.u]", fontsize=20)
-        plt.savefig(f"{self.save_to_folder}/triplet_coefficients_statistics.pdf")
+        plt.savefig(f"{self.save_to_folder}/qubo_coefficients_statistics.pdf")
         plt.close()
 
         # preselection statistics of truth doublets / triplets
         fig, (ax3, ax4) = plt.subplots(2, figsize=(12, 12))
-        ax3.set_title(r"dx/x0 truth doublets", fontsize=20, loc="left")
-        ax3.hist(np.array(preselection_statistics[0]) * 1e2,
+        ax3.set_title(r"dx/$x_0$ truth doublets", fontsize=20, loc="left")
+        ax3.hist(np.array(preselection_statistic_dx_x0) * 1e2,
                  bins=50,
-                 label=f"$\mu$ = {np.around(np.mean(preselection_statistics[0]), 4)}\n"
-                       f"$\sigma$ = {np.around(np.std(preselection_statistics[0]), 4)}",
+                 label=f"$\mu$ = {np.around(np.mean(preselection_statistic_dx_x0), 5)}\n"
+                       f"$\sigma$ = {np.around(np.std(preselection_statistic_dx_x0), 5)}",
                  edgecolor="blue",
                  linewidth=3,
                  histtype='step',
@@ -408,29 +408,19 @@ class QuboCoefficients:
         ax3.set_ylabel("counts", fontsize=20)
         ax3.set_xlabel("[$10^{-2}$ a.u]", fontsize=20, loc="right")
 
-        ax4.set_title("Angles truth triplets", fontsize=20, loc="left")
-        ax4.hist(np.array(preselection_statistics[1]) * 1e3,
-                 range=(min(preselection_statistics[1] + preselection_statistics[2]) * 1e3,
-                        max(preselection_statistics[1] + preselection_statistics[2]) * 1e3),
+        ax4.set_title("Scattering angle truth triplets", fontsize=20, loc="left")
+        ax4.hist(np.array(preselection_statistic_scattering) * 1e3,
+                 range=(min(preselection_statistic_scattering) * 1e3,
+                        max(preselection_statistic_scattering) * 1e3),
                  bins=50,
-                 label=f"xz: \n"
-                       f"$\mu$ = {np.around(np.mean(preselection_statistics[1]), 4)}\n"
-                       f"$\sigma$ = {np.around(np.std(preselection_statistics[1]), 4)}\n",
+                 label=r"$\sqrt{angle_{xz}^2 + angle_{yz}^2}$:"
+                       f"\n$\mu$ = {np.around(np.mean(preselection_statistic_scattering), 5)}\n"
+                       f"$\sigma$ = {np.around(np.std(preselection_statistic_scattering), 5)}\n",
                  edgecolor="goldenrod",
                  linewidth=3,
                  histtype='step',
                  align="left")
-        ax4.hist(np.array(preselection_statistics[2]) * 1e3,
-                 bins=50,
-                 range=(min(preselection_statistics[1] + preselection_statistics[2]) * 1e3,
-                        max(preselection_statistics[1] + preselection_statistics[2]) * 1e3),
-                 label=f"yz: \n"
-                       f"$\mu$ = {np.around(np.mean(preselection_statistics[2]), 4)}\n"
-                       f"$\sigma$ = {np.around(np.std(preselection_statistics[2]), 4)}\n",
-                 edgecolor="royalblue",
-                 linewidth=3,
-                 histtype='step',
-                 align="left")
+
         ax4.legend(loc='best', fontsize=20)
         ax4.set_ylabel("counts", fontsize=20)
         ax4.tick_params(axis='both', labelsize=20)

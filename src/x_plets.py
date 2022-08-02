@@ -45,8 +45,7 @@ class XpletCreatorLUXE:
         self.triplet_creation_time = None
 
         self.preselection_statistic_dx_x0 = []
-        self.preselection_statistic_angle_xz = []
-        self.preselection_statistic_angle_yz = []
+        self.preselection_statistic_scattering = []
 
         # some values to check if computation successful
         self.num_particles = 0
@@ -116,6 +115,7 @@ class XpletCreatorLUXE:
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
         print("\nCreating doublet lists...\n")
+        doublet_dy = []
         doublet_list_start = time.time()  # doublet list timer
         for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
@@ -125,6 +125,8 @@ class XpletCreatorLUXE:
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
+                        if abs(second_hit[self.y_index] - first_hit[self.y_index]) > 0.0003:
+                            continue
                         if self.doublet_criteria_check(first_hit[self.x_index],
                                                        second_hit[self.x_index],
                                                        first_hit[self.z_index],
@@ -184,8 +186,9 @@ class XpletCreatorLUXE:
 
                             # filling lists for statistical purposes
                             if triplet.is_correct_match:
-                                self.preselection_statistic_angle_xz.append(triplet.angles_between_doublets()[0])
-                                self.preselection_statistic_angle_yz.append(triplet.angles_between_doublets()[1])
+                                self.preselection_statistic_scattering.append(
+                                    np.sqrt(triplet.angles_between_doublets()[0]**2 +
+                                            triplet.angles_between_doublets()[1]**2))
                                 self.found_correct_triplets += 1
             segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
@@ -211,9 +214,9 @@ class XpletCreatorLUXE:
         :return:
             True if criteria applies, else False
         """
-        if abs(doublet2.xz_angle() - doublet1.xz_angle()) < self.configuration["triplet"]["angle diff x"]:
-            if abs(doublet2.yz_angle() - doublet1.yz_angle()) < self.configuration["triplet"]["angle diff y"]:
-                return True
+        if np.sqrt((doublet2.xz_angle() - doublet1.xz_angle())**2 +
+                   (doublet2.yz_angle() - doublet1.yz_angle())**2) < self.configuration["triplet"]["max scattering"]:
+            return True
         return False
 
     def doublet_criteria_check(self,
@@ -255,6 +258,10 @@ class XpletCreatorLUXE:
         dx = x_end - x_start
         dz = z_end - z_start
         return x_end - dx * abs(z_end - z_ref) / dz
+
+    @staticmethod
+    def second_element(elem):
+        return elem[1]
 
     @staticmethod
     def hms_string(sec_elapsed):

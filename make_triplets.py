@@ -40,6 +40,5 @@ qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.filling_lists_for_statistics()
 qubo_coefficients.parameter_rescaling()
 qubo_coefficients.plot_and_save_statistics(x_plet_creator.num_particles,
-                                           [x_plet_creator.preselection_statistic_dx_x0,
-                                            x_plet_creator.preselection_statistic_angle_xz,
-                                            x_plet_creator.preselection_statistic_angle_yz])
+                                           x_plet_creator.preselection_statistic_dx_x0,
+                                           x_plet_creator.preselection_statistic_scattering)
