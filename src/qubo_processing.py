@@ -457,7 +457,7 @@ class QuboProcessing:
             f.write("Efficiency sorted by angle: \n")
             f.write("angle, found tracks, efficiency, fake rate\n")
             for e, f_t, eff, f_r in zip(energy[1], found_tracks[1], efficiency[1], fake_rate[1]):
-                f.write(f"{np.around(e, 2)}, {np.around(f_t, 2)}, {np.around(eff, 2)}, {np.around(f_r, 2)}\n\n")
+                f.write(f"{np.around(e, 2)}, {np.around(f_t, 2)}, {np.around(eff, 2)}, {np.around(f_r, 2)}\n")
             f.write("Total:\n")
             f.write(f"Found tracks: {found_tracks[2]}\n")
             f.write(f"Efficiency: {np.around(efficiency[2], 2)}\n")
