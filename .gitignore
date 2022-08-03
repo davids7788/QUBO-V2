@@ -1,4 +1,6 @@
 .idea
+.pdf
+.ipynb_checkpints/
 pycharm
 
 __pycache__
