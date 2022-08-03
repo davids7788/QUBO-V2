@@ -21,14 +21,6 @@ with open(sys.argv[1], 'r') as f:
 # Create new folder
 folder = sys.argv[2]
 
-num_generated_tracks = 0
-with open(folder + "/preselection_info.txt", 'r') as f:
-    lines = f.readlines()
-    for line in lines:
-        if "Number of generated tracks found" in line:
-            num_generated_tracks = int(line.split(" ")[-1])
-print(num_generated_tracks)
-
 file_extension = ""
 if config_file["solver"]["algorithm"] == "Numpy Eigensolver":
     file_extension += "_numpy-eigensolver"
@@ -83,7 +75,6 @@ qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
                                 ansatz=ansatz,
                                 qubo_logging=qubo_logger,
                                 save_folder=new_folder,
-                                num_generated_tracks=num_generated_tracks,
                                 error_mitigation=error_mitigation)
 
 # Select solving method

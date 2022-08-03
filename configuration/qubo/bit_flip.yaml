@@ -27,5 +27,5 @@ qubo:
   compare to eigensolver: False
 
 bit flip optimization:
-  iterations: 25
+  iterations: 5
   reverse: True

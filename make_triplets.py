@@ -34,6 +34,7 @@ x_plet_creator = XpletCreatorLUXE(config_file, new_folder)
 x_plet_creator.load_tracking_data(tracking_data, s_manager)
 x_plet_creator.create_x_plets(s_manager)
 x_plet_creator.write_info_file()
+x_plet_creator.create_and_save_generated_tracks(tracking_data)
 
 qubo_coefficients = QuboCoefficients(config_file, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)

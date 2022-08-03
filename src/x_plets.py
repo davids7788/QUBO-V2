@@ -5,6 +5,7 @@ import sys
 
 from src.doublet import Doublet
 from src.triplet import Triplet
+from src.track import Track
 from src.segment import Segment
 from src.segment_manager import SegmentManager
 
@@ -43,6 +44,8 @@ class XpletCreatorLUXE:
         self.save_to_folder = save_to_folder
         self.doublet_creation_time = None
         self.triplet_creation_time = None
+        self.complete_tracks = []
+        self.num_particles = 0
 
         self.preselection_statistic_dx_x0 = []
         self.preselection_statistic_scattering = []
@@ -100,16 +103,86 @@ class XpletCreatorLUXE:
                                                                                         row_converted[self.z_index])
                 # storing in segment
                 segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
-            for value in particle_numbers.values():
+            for key, value in particle_numbers.items():
                 if value == 4:
                     self.num_complete_tracks += 1
+                    self.complete_tracks.append(key)
+                self.num_particles += 1
 
-            print(f"Number of particles found: {self.num_complete_tracks}")
+            print(f"Total number of particles with at least one hit: {self.num_particles}")
+
+    def create_and_save_generated_tracks(self,
+                                         tracking_data_file: str):
+        """Creates the list of truth generated tracks and saves them in the folder with the triplet list.
+        :param tracking_data_file: file with tracking data
+        """
+        generated_tracks = []
+        rows = []
+        with open(tracking_data_file, 'r') as file:
+            csv_reader = csv.reader(file)
+            _ = next(csv_reader)  # access header, csv files should consist of one line of header
+            for row in csv_reader:
+                rows.append(row)
+            for i, row in enumerate(rows):
+                if row[self.layer_id_index] != "Plane 0":
+                    continue
+                track = []
+                p_id = row[self.particle_id_index]
+                track.append(row)
+                for row_2 in rows[i + 1:]:
+                    if row_2[self.particle_id_index] == p_id and row[self.hit_id_index] != row_2[self.hit_id_index]:
+                        track.append(row_2)
+                if len(track) == 4:
+                    d1 = Doublet(track[0][self.particle_id_index],
+                                 track[1][self.particle_id_index],
+                                 (float(track[0][self.x_index]),
+                                  float(track[0][self.y_index]),
+                                  float(track[0][self.z_index])),
+                                 (float(track[1][self.x_index]),
+                                  float(track[1][self.y_index]),
+                                  float(track[1][self.z_index])),
+                                 track[0][self.hit_id_index],
+                                 track[1][self.hit_id_index],
+                                 float(track[0][self.particle_energy_index]),
+                                 float(track[1][self.particle_energy_index]))
+                    d2 = Doublet(track[1][self.particle_id_index],
+                                 track[2][self.particle_id_index],
+                                 (float(track[1][self.x_index]),
+                                  float(track[1][self.y_index]),
+                                  float(track[1][self.z_index])),
+                                 (float(track[2][self.x_index]),
+                                  float(track[2][self.y_index]),
+                                  float(track[2][self.z_index])),
+                                 track[1][self.hit_id_index],
+                                 track[2][self.hit_id_index],
+                                 float(track[1][self.particle_energy_index]),
+                                 float(track[2][self.particle_energy_index]))
+                    d3 = Doublet(track[2][self.particle_id_index],
+                                 track[3][self.particle_id_index],
+                                 (float(track[2][self.x_index]),
+                                  float(track[2][self.y_index]),
+                                  float(track[2][self.z_index])),
+                                 (float(track[3][self.x_index]),
+                                  float(track[3][self.y_index]),
+                                  float(track[3][self.z_index])),
+                                 track[2][self.hit_id_index],
+                                 track[3][self.hit_id_index],
+                                 float(track[2][self.particle_energy_index]),
+                                 float(track[3][self.particle_energy_index]))
+                    t1 = Triplet(d1, d2, -1)
+                    t2 = Triplet(d2, d3, -1)
+                    truth_track = Track()
+                    truth_track.add_triplet_to_track(t1)
+                    truth_track.add_triplet_to_track(t2)
+                    generated_tracks.append(truth_track)
+
+        np.save(self.save_to_folder + "/track_list", generated_tracks)
+        print(f"Number of generated tracks: {len(generated_tracks)}\n")
 
     def create_x_plets(self,
                        segment_manager: SegmentManager):
         """Selects the setup for the configuration Simplified or Full LUXE.
-        :param segment_manager: segement manager object
+        :param segment_manager: segment manager object
         """
         if segment_manager.setup == "Simplified LUXE":
             self.create_x_plets_simplified_setup(segment_manager)
@@ -294,7 +367,8 @@ class XpletCreatorLUXE:
                 f.write("\n")
             f.write("\n\n")
             f.write("---\n")
-            f.write(f"Number of generated tracks found: {self.num_complete_tracks}\n")
+            f.write(f"Number of particles with at least one hit on the detector:: {self.num_particles}\n")
+            f.write(f"Number of generated tracks: {self.num_complete_tracks}\n")
 
             f.write(f"Time elapsed for creating doublets: "
                     f"{self.doublet_creation_time}\n")
