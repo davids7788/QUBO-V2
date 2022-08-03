@@ -108,28 +108,49 @@ for k, n in zip(n_fake_energy, n_reco_energy):
         get_standard_deviation(k, n) if min(k / n, 1) + get_standard_deviation(k, n) <= 1 else 1 - min(k / n, 1))
 
 
-plt.figure(dpi=200, figsize=(8, 6))
-plt.title(f"Efficiency and fake rate for xi = {xi}, {len(generated_tracks)} generated tracks", loc="left")
-plt.errorbar(bins_matched_energy[:-1],
-             efficiency_e,
-             yerr=(eff_standard_deviation_e_lower, eff_standard_deviation_e_upper),
-             linestyle="",
-             marker="^",
-             color="blue",
-             markersize=8,
-             ecolor="k",
-             elinewidth=2.5,
-             label="efficiency")
-plt.errorbar(bins_matched_energy[:-1],
-             fake_rate_e,
-             yerr=(f_r_standard_deviation_lower, f_r_standard_deviation_upper),
-             linestyle="",
-             marker="^",
-             color="red",
-             markersize=8,
-             ecolor="k",
-             elinewidth=2.5,
-             label="efficiency")
-plt.xticks(fontsize=16)
+fig, ax = plt.subplots(dpi=300, figsize=(8, 6))
+ax2 = ax.twinx()
+ax.set_title(rf"$\xi$={xi}, {len(generated_tracks)} generated tracks",
+             loc="left",
+             fontsize=14)
+ax.errorbar(bins_matched_energy[:-1],
+            np.array(efficiency_e) * 100,
+            yerr=(np.array(eff_standard_deviation_e_lower) * 100, np.array(eff_standard_deviation_e_upper) * 100),
+            linestyle="",
+            marker="o",
+            color="blue",
+            markersize=6,
+            ecolor="k",
+            elinewidth=1.5,
+            label="efficiency")
+ax.errorbar(bins_matched_energy[:-1],
+            np.array(fake_rate_e) * 100,
+            yerr=(np.array(f_r_standard_deviation_lower) * 100, np.array(f_r_standard_deviation_upper) * 100),
+            linestyle="",
+            marker="o",
+            color="red",
+            markersize=6,
+            ecolor="k",
+            elinewidth=1.5,
+            label="fake rate")
+ax2.hist(energy_distribution_generated,
+         color="grey",
+         label="gen tracks",
+         alpha=0.8,
+         bins=25,
+         histtype="step",
+         linewidth=1.5,
+         align="left",
+         range=(1000, 11000))
+ax.tick_params(labelsize=14)
+ax.set_xlabel("True particle energy [MeV]", fontsize=14)
+ax.set_yticks([0, 20, 40, 60, 80, 100])
+ax.set_ylabel("[%]", fontsize=14)
+ax2.tick_params(labelsize=14)
+ax2.legend(loc=[0.75, 0.6], fontsize=12)
+ax.legend(loc=[0.75, 0.4], fontsize=12)
+ax2.set_ylabel("counts / 400 MeV", fontsize=14)
+fig.savefig(f"efficiency_{xi}.pdf")
+ax.grid()
 plt.show()
 
