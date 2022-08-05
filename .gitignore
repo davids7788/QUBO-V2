@@ -2,7 +2,8 @@
 .pdf
 .ipynb_checkpints/
 pycharm
-
+Convert_data_from_Tim.py
+Convert_back_data_from_Tim.py
 __pycache__
 
 venv
