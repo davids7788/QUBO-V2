@@ -4,7 +4,8 @@ It consists of the sections [doublet](#doublet), [triplet](#triplet), [binning](
 
 # doublet
 Criterion for a preselection on doublet level. Creating a Doublet object, if a set of two hits fulfill the criterion.
-* `dx/x0:` (x2 - x1) / x0 with x1 (float) and x2 (float) as x-coordinates of hits ond (consecutive layers) and x0 as linearly interpolated hit on reference layer (float)
+* `dx/x0:` $\frac{(x_2 - x_1)}{x_0}$ with $x_1$ (float) and $x_2$ (float) as x-coordinates of hits ond 
+  (consecutive layers) and $x_0$ as linearly interpolated hit on reference layer (float)
 * `eps:` maximum deviation from the d/dx criteria (float)
 
 Criteria for a preselection on triplet level. Creating a Doublet object, if a set of two doublets fulfill both criteria.

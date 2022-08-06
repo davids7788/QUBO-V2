@@ -19,9 +19,9 @@ Parameters for the solver, the used algorithm and backend.
 * `algorithm:` "NumpyEigensolver", "VQE" or "QAOA" or null (for using bit flip optimisation only)
 * `backend:` "Qasm Ideal Sim", "FakeAthens" (5Q), "FakeCasablanca" (7Q), "FakeJakarta" (7Q) and "FakeGuadalupe" (16Q)
 * `optimiser:` "ADAM", "COBYLA", "GSLS", "L_BFGS_B", NELDER_MEAD", "NFT", "SLSQP" or "SPSA" 
-* `maxiter:` max number of iterations of the optimising step
-* `seed:` some integer number for setting a defined seed
-* `shots:` number of evaluations of the quantum circuit
+* `maxiter:` max number of iterations of the optimising step (int)
+* `seed:` some number for setting a defined seed (int)
+* `shots:` number of evaluations of the quantum circuit (int)
 * `optimisation level:` 0 (no optimisation), 1 (light optimisation), 2 (heavy optimisation) or 3 
   (even heavier optimisation)  
   
@@ -30,14 +30,14 @@ Additional parameters for solving the QUBO, such as initialisation, optimisation
 comparing to analytical solution.
 * `optimisation strategy:` "impact list" (more added in the future)
 * `hamiltonian rescaling:` When using the SubQUBO approach, contributions from outside the SubQUBO are added to the 
-  linear term of the participants in the SubQUBO. If "complete" then all the values, including the a_i term from the SubQUBO
+  linear term of the participants in the SubQUBO. If "complete" then all the values, including the $a_i$ term from the SubQUBO
   are divided by the number of all the participating outer contributions + 1, if "outer term", then it is only divided by the number
   of outside contributions, else no rescaling is done
 * `initial binary vector:` initial solution vector, "ones" for [1, 1, ..., 1], "zeros for" [0, 0, ..., 0], else random
 * `search depth:` number of iterations the algorithm is allowed not to find a better solution in the context of a 
   minimum energy (int)
 * `num qubits:` number of qubits of the SubQUBO (int)
-* `error mitigation algorithm:` "algebraic" (adding method of https://arxiv.org/pdf/2007.03663.pdf soon)
+* `error mitigation algorithm:` "algebraic" for error mitigation via matrix inverse of a calibration measurement (adding method of https://arxiv.org/pdf/2007.03663.pdf soon)
 * `compare to eigensolver:` True if calculation on SubQUBO level is done with Eigensolver too
 
 # bit flip optimisation
