@@ -92,5 +92,6 @@ class Hamiltonian:
         return qubo_vqe
 
     def error_mitigated_hamiltonian(self):
+        """TODO: Implement!"""
         # returning error mitigated hamiltonian --> paper from Karl's group
         pass

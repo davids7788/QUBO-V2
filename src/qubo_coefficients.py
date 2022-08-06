@@ -8,7 +8,7 @@ class QuboCoefficients:
 
     def __init__(self,
                  configuration: dict,
-                 save_to_folder):
+                 save_to_folder: str):
 
         """Class for handling and setting QUBO coefficients
         :param configuration: dictionary, configuration for detector setup and xplet selection

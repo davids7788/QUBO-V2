@@ -62,7 +62,7 @@ class QuboProcessing:
         self.exact_solver = MinimumEigenOptimizer(NumPyMinimumEigensolver())
 
         # Performing initial bit flip optimisation
-        if self.config["bit flip optimisation"]["iterations"] > 0:
+        if self.config["bit flip optimisation"]["iterations"] is not None:
             start_bit_flip = time.time()
             for i in range(self.config["bit flip optimisation"]["iterations"]):
                 new_solution_candidate, energy_change = self.bit_flip_optimisation(self.triplets,
@@ -324,9 +324,9 @@ class QuboProcessing:
         :param hamiltonian: hamiltonian in the form of a PauliSumOp list from qiskit
         :return
             result of the solving process"""
-        result_quantum = self.solver.quantum_algorithm.compute_minimum_eigenvalue(hamiltonian)
+        result_quantum = dict(self.solver.quantum_algorithm.compute_minimum_eigenvalue(hamiltonian).eigenstate)
         if self.config["qubo"]["error mitigation algorithm"] == "algebraic":
-            result_quantum_vector = ErrorMitigation.dict_to_vector(dict(result_quantum.eigenstate.items()))
+            result_quantum_vector = ErrorMitigation.dict_to_vector(result_quantum)
             result_quantum_vector_mitigated = np.dot(self.error_mitigation.meas_filter_matrix, result_quantum_vector)
             result_quantum = ErrorMitigation.vector_to_dict(result_quantum_vector_mitigated)
 
@@ -375,9 +375,10 @@ class QuboProcessing:
         if self.config["solver"]["algorithm"] == "VQE" or self.config["solver"]["algorithm"] == "QAOA":
 
             # Overwrite ansatz for vqe if HamiltonianDriven
-            if self.ansatz.config["ansatz"]["layout"] == "HamiltonianDriven":
+
+            if self.config["ansatz"]["layout"] == "HamiltonianDriven":
                 triplet_slice = triplet_slice
-                self.ansatz = self.ansatz.hamiltonian_driven(triplet_slice)
+                self.ansatz.set_hamiltonian_driven(triplet_slice)
                 self.solver.quantum_instance.ansatz = self.ansatz
 
             # Timestamps and solving the SubQUBO
@@ -420,7 +421,7 @@ class QuboProcessing:
         elif self.config["solver"]["algorithm"] == "QAOA":
             self.solver.set_qaoa()
 
-        # Numpy Eigensolver does not need further preparation
+        # Numpy Eigensolver does not need further preselection
         elif self.config["algorithm"] == "Numpy Eigensolver":
             pass
         else:

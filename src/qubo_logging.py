@@ -33,8 +33,8 @@ class QuboLogging:
         self.qubo_log[sub_dict].update({key: value})
 
     def set_value(self,
-                  key,
-                  value):
+                  key: str,
+                  value: object):
         """Updates the specific value of the dictionary.
         :param key   : key of the new entry
         :param value : value of the new entry

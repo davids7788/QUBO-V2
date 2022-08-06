@@ -11,21 +11,21 @@ ansatz:
 solver:
   algorithm: "Numpy Eigensolver"
   backend: null
-  optimizer: null
+  optimiser: null
   maxiter: null
   seed: null
   shots: null
-  optimization level: null
+  optimisation level: null
 
 qubo:
-  optimization strategy: impact list
+  optimisation strategy: impact list
   hamiltonian rescaling: null
   initial binary vector: ones
-  search depth: 1
+  search depth: 3
   num qubits: 7
   error mitigation algorithm: null
   compare to eigensolver: null
 
-bit flip optimization:
-  iterations: 0
+bit flip optimisation:
+  iterations: null
   reverse: null

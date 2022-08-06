@@ -13,7 +13,8 @@ class ErrorMitigation:
         self.meas_filter_matrix = None
 
     def algebraic_mitigation(self, qc):
-        """Calibrates the meas filter with the backend and the quantum circuit"""
+        """Calibrates the meas filter with the backend and the quantum circuit.
+        """
         cal_circuits, state_labels = mitigation.complete_meas_cal(qr=qc.qregs[0],
                                                                   circlabel='measurement_calibration')
         cal_job = qiskit.execute(cal_circuits,
@@ -45,7 +46,12 @@ class ErrorMitigation:
         :return
             dictionary with strings in binary format as keys and probabilities as values
         """
-        def return_binary_string(decimal, length):
+        def return_binary_string(decimal: int,
+                                 length: int):
+            """Returns decimal number in binary format of given length
+            :param decimal: integer number
+            :param length: length of the format
+            """
             return format(decimal, "b").zfill(length)
 
         str_length = 0

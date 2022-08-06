@@ -153,4 +153,3 @@ ax2.set_ylabel("counts / 400 MeV", fontsize=14)
 fig.savefig(f"efficiency_{xi}.pdf")
 ax.grid()
 plt.show()
-

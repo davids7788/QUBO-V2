@@ -240,7 +240,7 @@ class XpletCreatorLUXE:
         print(f"Time elapsed for creating doublets: "
               f"{self.doublet_creation_time}")
         print(f"Number of doublets found: {self.found_doublets}\n")
-        print(f"Number of tracks approximately possible to reconstruct with set doublet preselection parameters: "
+        print(f"Number of tracks approximately possible to reconstruct with set doublet preparation parameters: "
               f"{int(self.found_correct_doublets / 3)}\n")
         print(f"Doublet selection efficiency d_matched / d_max: "
               f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n"
@@ -277,7 +277,7 @@ class XpletCreatorLUXE:
         print(f"Time elapsed for creating triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.found_triplets}")
-        print(f"Number of tracks approximately possible to reconstruct with set triplet preselection parameters: "
+        print(f"Number of tracks approximately possible to reconstruct with set triplet preparation parameters: "
               f"{int(self.found_correct_triplets / 2)}\n")
         print(f"Triplet selection efficiency t_matched / t_max: "
               f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n"
@@ -339,10 +339,6 @@ class XpletCreatorLUXE:
         return x_end - dx * abs(z_end - z_ref) / dz
 
     @staticmethod
-    def second_element(elem):
-        return elem[1]
-
-    @staticmethod
     def hms_string(sec_elapsed):
         """Nicely formatted time string.
         :param sec_elapsed time in ms
@@ -373,7 +369,7 @@ class XpletCreatorLUXE:
             f.write(f"Time elapsed for creating doublets: "
                     f"{self.doublet_creation_time}\n")
             f.write(f"Number of doublets found: {self.found_doublets}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct with set doublet preselection parameters: "
+            f.write(f"Number of tracks approximately possible to reconstruct with set doublet preparation parameters: "
                     f"{int(self.found_correct_doublets / 3)}\n\n")
             f.write(f"Doublet selection efficiency d_matched / d_max: "
                     f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n"
@@ -383,7 +379,7 @@ class XpletCreatorLUXE:
             f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
             f.write(f"Number of triplets found: {self.found_triplets}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct with set triplet preselection parameters: "
+            f.write(f"Number of tracks approximately possible to reconstruct with set triplet preparation parameters: "
                     f"{int(self.found_correct_triplets / 2)}\n\n")
             f.write(f"Triplet selection efficiency t_matched / t_max: "
                     f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n"

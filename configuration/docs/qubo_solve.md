@@ -8,7 +8,7 @@ Defines the parameters of the quantum circuit used for the quantum part of the s
 * `layout:` "TwoLocal" (see qiskit documentation), "HamiltonianDriven" (only entangling if triplets have an 
   immediate connection) or null (either when using NumpyEigensolver or when not wanting any entanglements)
 * `circuit depth:` number of repetition blocks (int)
-* `rotation blocks:` single str or list of strings of parametrized gates, e.g "ry" or ["ry", "rx"]
+* `rotation blocks:` single string that represents a gate, or a list of strings of parametrized gates, e.g "ry" or ["ry", "rx"]
 * `entanglement blocks:` multi qubit gates, such as "cx" or "cxx" 
 * `skip final rotation layer:` True if rotation block should be skipped at the end of the circuit, else False
 * `skip unentangled qubits:` True, if the single qubit gates are only applied to qubits that are entangled, else False

@@ -5,27 +5,27 @@ ansatz:
   rotation blocks: null
   entanglement blocks: null
   entanglement: null
-  skip final rotation layer: False
-  skip unentangled qubits: False
+  skip final rotation layer: null
+  skip unentangled qubits: null
 
 solver:
   algorithm: null
   backend: null
-  optimizer: null
+  optimiser: null
   maxiter: null
   seed: null
   shots: null
-  optimization level: 2
+  optimisation level: null
 
 qubo:
-  optimization strategy: null
+  optimisation strategy: null
   hamiltonian rescaling: null
-  initial binary vector: zeros
-  search depth: 0
-  num qubits: 7
+  initial binary vector: null
+  search depth: null
+  num qubits: null
   error mitigation algorithm: null
-  compare to eigensolver: False
+  compare to eigensolver: null
 
-bit flip optimization:
+bit flip optimisation:
   iterations: 20
   reverse: True
