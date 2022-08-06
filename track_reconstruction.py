@@ -10,7 +10,6 @@ from src.doublet import Doublet
 from src.track import Track
 
 folder = sys.argv[1]
-print(folder.split("_"))
 xi = folder.split("_")[2]
 
 data = np.load(folder + "/qubo_log.npy", allow_pickle=True)
@@ -94,9 +93,6 @@ for k, n in zip(n_matched_energy, n_generated_energy):
 
 # fake rate
 fake_rate_e = [k / n for k, n in zip(n_fake_energy, n_reco_energy)]
-print(n_fake_energy)
-print(n_reco_energy)
-print(fake_rate_e)
 f_r_standard_deviation_lower = []
 for k, n in zip(n_fake_energy, n_reco_energy):
     f_r_standard_deviation_lower.append(
@@ -152,4 +148,3 @@ ax.legend(loc=[0.75, 0.4], fontsize=12)
 ax2.set_ylabel("counts / 400 MeV", fontsize=14)
 fig.savefig(f"efficiency_{xi}.pdf")
 ax.grid()
-plt.show()

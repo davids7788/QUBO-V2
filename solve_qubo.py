@@ -23,7 +23,7 @@ folder = sys.argv[2]
 
 file_extension = ""
 if config_file["solver"]["algorithm"] == "Numpy Eigensolver":
-    file_extension += "_numpy-eigensolver"
+    file_extension += "_eigensolver"
 elif config_file["solver"]["algorithm"] == "VQE":
     file_extension += "_vqe"
 elif config_file["solver"]["algorithm"] == "QAOA":
