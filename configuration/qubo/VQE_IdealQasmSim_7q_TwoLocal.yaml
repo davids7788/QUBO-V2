@@ -10,7 +10,7 @@ ansatz:
 
 solver:
   algorithm: "VQE"
-  backend: "Qasm Ideal Sim""
+  backend: "Qasm Ideal Sim"
   optimizer: NFT
   maxiter: 3000
   seed: 0

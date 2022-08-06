@@ -61,27 +61,27 @@ class QuboProcessing:
         # Create solver object
         self.exact_solver = MinimumEigenOptimizer(NumPyMinimumEigensolver())
 
-        # Performing initial bit flip optimization
-        if self.config["bit flip optimization"]["iterations"] > 0:
+        # Performing initial bit flip optimisation
+        if self.config["bit flip optimisation"]["iterations"] > 0:
             start_bit_flip = time.time()
-            for i in range(self.config["bit flip optimization"]["iterations"]):
-                new_solution_candidate, energy_change = self.bit_flip_optimization(self.triplets,
+            for i in range(self.config["bit flip optimisation"]["iterations"]):
+                new_solution_candidate, energy_change = self.bit_flip_optimisation(self.triplets,
                                                                                    self.solution_candidate,
                                                                                    self.make_impact_list(),
-                                                                                   self.config["bit flip optimization"]
+                                                                                   self.config["bit flip optimisation"]
                                                                                    ["reverse"])
                 self.energy_candidate += energy_change
                 self.qubo_logging.add_entry("solution vector", self.iteration, self.solution_candidate)
                 self.qubo_logging.add_entry("energy", self.iteration, self.energy_candidate)
                 self.iteration += 1
-                print(f"Energy after performing {i + 1} bit flip optimization(s): "
+                print(f"Energy after performing {i + 1} bit flip optimisation(s): "
                       f"{np.around(self.energy_candidate, 2)}")
             if self.config["qubo"]["search depth"] == 0:
                 self.create_tracks()
                 self.qubo_logging.save_results(self.save_folder)
                 self.write_results_to_file()
             end_bit_flip = time.time()
-            print(f"Bit flip optimization needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
+            print(f"Bit flip optimisation needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
 
         # Here starts the sub qubo algorithm
         self.loop_count = 0
@@ -91,18 +91,18 @@ class QuboProcessing:
     def impact_list_solve(self):
         """Performs impact list algorithm
         """
-        self.qubo_process(optimization_strategy=self.make_impact_list)
+        self.qubo_process(optimisation_strategy=self.make_impact_list)
         self.write_results_to_file()
 
     def qubo_process(self,
-                     optimization_strategy):
+                     optimisation_strategy):
         """Solves the QUBO with
-        :param optimization_strategy: function which is used to determine triplet ordering
+        :param optimisation_strategy: function which is used to determine triplet ordering
         """
         # timer
         start_solving_process_time = time.time()
 
-        # global optimization iterations
+        # global optimisation iterations
         while self.pass_count < self.config["qubo"]["search depth"]:
             start_loop = time.time()
             start_quantum_part = time.time()
@@ -110,7 +110,7 @@ class QuboProcessing:
             # triplet list ordering determines also how many subqubos are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
-            triplet_ordering = optimization_strategy()
+            triplet_ordering = optimisation_strategy()
 
             # Calculate number of sub qubos:
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] == 0:
@@ -221,7 +221,7 @@ class QuboProcessing:
         return list(np.argsort(impact_list_values))
 
     @staticmethod
-    def bit_flip_optimization(triplets,
+    def bit_flip_optimisation(triplets,
                               solution_candidate,
                               triplet_ordering,
                               reverse=True):

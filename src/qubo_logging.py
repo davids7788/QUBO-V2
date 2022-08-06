@@ -11,7 +11,7 @@ class QuboLogging:
                          "computed minimum energy": None,          # computed minimal energy
                          "time tracking complete": {},             # complete time needed for program execution
                          "time tracking quantum": {},              # quantum part
-                         "time tracking qubo iteration": {},       # one iteration of the global optimization algorithm
+                         "time tracking qubo iteration": {},       # one iteration of the global optimisation algorithm
                          "time tracking subQUBOs": {},             # time needed for solving a single subqubo
                          "time tracking bit flip search": {},      # time needed for one bit flip search
                          "compare to analytical solution": {},     # [True , False, ..., False] for each SubQUBO
