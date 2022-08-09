@@ -25,6 +25,6 @@ To add a function, ensure that it is added to the function dictionary with a nam
 
 # scaling:
 Rescaling QUBO parameters
-* `z_scores:` True if using z-scores on linear term (quality), else False
-* `quality:` interval [min (float), max (float)] if rescaling, else False
-* `interaction:` interval [min (float), max (float)] if rescaling, else False
+* `z_scores:` True if using z-scores on linear term (quality), else null
+* `quality:` interval [min (float), max (float)] if rescaling, else null
+* `interaction:` interval [min (float), max (float)] if rescaling, else null

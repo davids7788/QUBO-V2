@@ -76,7 +76,7 @@ class QuboProcessing:
                 self.iteration += 1
                 print(f"Energy after performing {i + 1} bit flip optimisation(s): "
                       f"{np.around(self.energy_candidate, 2)}")
-            if self.config["qubo"]["search depth"] == 0:
+            if self.config["qubo"]["search depth"] is None:
                 self.create_tracks()
                 self.qubo_logging.save_results(self.save_folder)
                 self.write_results_to_file()
