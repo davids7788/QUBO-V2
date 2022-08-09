@@ -16,5 +16,5 @@ qubo parameters:
 
 scale range parameters:
   z_scores: False
-  quality: False
-  interaction: False
+  quality: null
+  interaction: null
