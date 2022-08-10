@@ -1,13 +1,9 @@
 import sys
-import csv
-from typing import List, Any, Union
+
+sys.path.append("..")
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from src.triplet import Triplet
-from src.doublet import Doublet
-from src.track import Track
 
 folder = sys.argv[1]
 xi = folder.split("_")[2]

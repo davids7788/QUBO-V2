@@ -218,6 +218,7 @@ class QuboProcessing:
                     energy_change -= triplet.interactions[interaction]
 
             impact_list_values.append(abs(energy_change))
+        return np.random.randint()
         return list(np.argsort(impact_list_values))
 
     @staticmethod
