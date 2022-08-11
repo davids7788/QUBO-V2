@@ -1,0 +1,20 @@
+---
+detector:
+    radiation length: 220.0
+    rho: 2200.0
+    thickness: 0.000357
+    num pixel x : 1024
+    num pixel y : 512
+    layer positions x start: 0.05275912
+    layer positions x end: 0.55430088
+    layer positions y start: -0.00688128
+    layer positions y end: 0.00688128
+    layer positions z: [3.9560125, 4.0560125, 4.1560125, 4.2560125]
+
+dipole magnet:
+    dipole field: [0.95]
+    dipole start: 1.434
+    dipole end: 2.672
+
+settings:
+    scattering: False

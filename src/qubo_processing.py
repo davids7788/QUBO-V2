@@ -511,4 +511,4 @@ class QuboProcessing:
             if not ambiguities:
                 found_tracks_ambiguity_solved.append(track_1)
 
-            self.qubo_logging.set_value("reconstructed tracks", found_tracks_ambiguity_solved)
+        self.qubo_logging.set_value("reconstructed tracks", found_tracks_ambiguity_solved)

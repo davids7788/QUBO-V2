@@ -9,7 +9,11 @@ __pycache__
 venv
 virtualenv
 p2-venv
-test_files/
-test_results/
+test_files_csv/
+test_results_qubo/
 TrackingData/
 submit/
+/test_files_csv/*
+/test_results_qubo/*
+/test_results_simplified_simulation/
+/test_files_ptarmigan/
