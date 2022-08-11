@@ -52,7 +52,9 @@ else:
 if config_file["ansatz"]["layout"] == "TwoLocal":
     ansatz.set_two_local()
 elif config_file["ansatz"]["layout"] is None:
-    if config_file["solver"]["algorithm"] is not None:
+    if config_file["solver"]["algorithm"] == "QAOA":
+        pass
+    elif config_file["solver"]["algorithm"] is not None:
         if config_file["solver"]["algorithm"] != "Numpy Eigensolver":
             ansatz.set_no_entanglements()
 

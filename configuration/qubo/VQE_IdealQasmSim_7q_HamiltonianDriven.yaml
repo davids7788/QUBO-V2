@@ -9,10 +9,10 @@ ansatz:
   skip unentangled qubits: False
 
 solver:
-  algorithm: "QAOA"
+  algorithm: "VQE"
   backend: "Qasm Ideal Sim"
-  optimiser: "NFT"
-  maxiter: 3000
+  optimiser: NFT
+  maxiter: 30
   seed: 0
   shots: 50
   optimisation level: 2
@@ -21,7 +21,7 @@ qubo:
   optimisation strategy: "impact list"
   hamiltonian rescaling: null
   initial binary vector: "ones"
-  search depth: 3
+  search depth: 5
   num qubits: 7
   error mitigation algorithm: null
   compare to eigensolver: True

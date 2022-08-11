@@ -1,18 +1,18 @@
 ---
 ansatz:
-  layout: "TwoLocal"
+  layout: null
   circuit depth: 2
-  rotation blocks: "ry"
-  entanglement blocks: "cx"
-  entanglement: "linear"
+  rotation blocks: null
+  entanglement blocks: null
+  entanglement: null
   skip final rotation layer: False
   skip unentangled qubits: False
 
 solver:
-  algorithm: "VQE"
+  algorithm: "QAOA"
   backend: "Qasm Ideal Sim"
-  optimiser: NFT
-  maxiter: 30
+  optimiser: "NFT"
+  maxiter: 3000
   seed: 0
   shots: 50
   optimisation level: 2
@@ -21,7 +21,7 @@ qubo:
   optimisation strategy: "impact list"
   hamiltonian rescaling: null
   initial binary vector: "ones"
-  search depth: 5
+  search depth: 3
   num qubits: 7
   error mitigation algorithm: null
   compare to eigensolver: True

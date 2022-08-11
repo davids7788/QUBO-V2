@@ -7,6 +7,7 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
+from src.optimisation_strategy import *
 from src.solver import Solver
 from src.hamiltonian import Hamiltonian
 from src.ansatz import Ansatz
@@ -40,7 +41,7 @@ class QuboProcessing:
         self.solver = solver
         self.ansatz = ansatz
         if self.solver is not None:
-            self.configure_solver()
+            self.solver.configure_solver(self.ansatz)
         self.qubo_logging = qubo_logging
         self.error_mitigation = error_mitigation
         self.save_folder = save_folder
@@ -77,9 +78,8 @@ class QuboProcessing:
                 print(f"Energy after performing {i + 1} bit flip optimisation(s): "
                       f"{np.around(self.energy_candidate, 2)}")
             if self.config["qubo"]["search depth"] is None:
-                self.create_tracks()
                 self.qubo_logging.save_results(self.save_folder)
-                self.write_results_to_file()
+                self.write_setup_info_to_file()
             end_bit_flip = time.time()
             print(f"Bit flip optimisation needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
 
@@ -92,7 +92,7 @@ class QuboProcessing:
         """Performs impact list algorithm
         """
         self.qubo_process(optimisation_strategy=self.make_impact_list)
-        self.write_results_to_file()
+        self.write_setup_info_to_file()
 
     def qubo_process(self,
                      optimisation_strategy):
@@ -194,8 +194,7 @@ class QuboProcessing:
         print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
 
     def make_impact_list(self):
-        """
-        Creates an impact list based on how much influence on the energy a bit flip has
+        """Creates an impact list based on how much influence on the energy a bit flip has
         :return:
             list of indices ordered from lowest to highest impact of triplets in triplet list
         """
@@ -221,51 +220,6 @@ class QuboProcessing:
 
         return list(np.argsort(impact_list_values))
 
-    @staticmethod
-    def bit_flip_optimisation(triplets,
-                              solution_candidate,
-                              triplet_ordering,
-                              reverse=True):
-
-        """Looping over a list of triplet objects and a corresponding binary solution vector to compute if the energy
-        value would improve if the binary state of a triplet (keep <-> discard) should be changed. If the energy
-        decreases, the triplet state is flipped.
-        :param triplets: list of triplet objects
-        :param solution_candidate binary vector representing triplet states
-        :param triplet_ordering: index list of triplets
-        :param reverse: False if provided sorting order, else reversed
-        """
-        if reverse:
-            triplet_ordering.reverse()
-        energy_change_total = 0
-        for i, triplet in enumerate([triplets[index] for index in triplet_ordering]):
-            # energy change if this particular bit is flipped
-            energy_change = 0
-
-            # checking linear term
-            if solution_candidate[triplet_ordering[i]] == 0:
-                energy_change += triplet.quality
-            else:
-                energy_change -= triplet.quality
-
-            # Checking interactions with other triplets
-            for interaction in triplet.interactions.keys():
-                if solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[interaction] == 0:
-                    pass
-                elif solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[interaction] == 1:
-                    energy_change += triplet.interactions[interaction]
-                elif solution_candidate[triplet_ordering[i]] == 1 and solution_candidate[interaction] == 0:
-                    pass
-                else:
-                    energy_change -= triplet.interactions[interaction]
-
-            # flip if overall energy change is negative
-            if energy_change < 0:
-                solution_candidate[triplet_ordering[i]] = 1 - solution_candidate[triplet_ordering[i]]
-                energy_change_total += energy_change
-
-        return solution_candidate, energy_change_total
-
     def minimal_energy_and_solution(self):
         """Calculates the minimum energy state and value.
         :return:
@@ -279,8 +233,7 @@ class QuboProcessing:
         return minimum_energy_state, self.hamiltonian_energy(minimum_energy_state)
 
     def hamiltonian_energy(self, binary_vector):
-        """
-        Calculates the energy according to a binary vector matching the triplet list
+        """Calculates the energy according to a binary vector matching the triplet list
         :param binary_vector: binary solution candidate vector
         :return:
             energy value
@@ -410,24 +363,6 @@ class QuboProcessing:
         self.sub_qubo_counter += 1
         return result
 
-    def configure_solver(self):
-        """Configures the Solver object for VQE, QAOA or NumpyEigensolver.
-        """
-        # Set up the the chosen algorithm, VQE, QAOA or NumpyEigensolver
-        # VQE --> ansatz can be chosen
-        if self.config["solver"]["algorithm"] == "VQE":
-            self.solver.set_vqe(self.ansatz)
-
-        # QAOA --> ansatz determined by algorithm
-        elif self.config["solver"]["algorithm"] == "QAOA":
-            self.solver.set_qaoa()
-
-        # Numpy Eigensolver does not need further preselection
-        elif self.config["algorithm"] == "Numpy Eigensolver":
-            pass
-        else:
-            "No valid algorithm chosen!"
-
     @staticmethod
     def hms_string(sec_elapsed):
         """Nicely formatted time string.
@@ -437,7 +372,7 @@ class QuboProcessing:
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
-    def write_results_to_file(self):
+    def write_setup_info_to_file(self):
         """Writes configuration details and track efficiency and fake rate results into a .txt file.
         """
         with open(self.save_folder + "/qubo_info.txt", "w") as f:

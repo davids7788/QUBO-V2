@@ -53,6 +53,26 @@ class Solver:
         if self.config["solver"]["optimiser"] == "GSLS":
             return GSLS(maxiter=self.config["solver"]["maxiter"])
 
+    def configure_solver(self, ansatz):
+        """Configures the Solver object for VQE, QAOA or NumpyEigensolver.
+        :param ansatz: ansatz circuit
+        """
+        # Set up the the chosen algorithm, VQE, QAOA or NumpyEigensolver
+        # VQE --> ansatz can be chosen
+        if self.config["solver"]["algorithm"] == "VQE":
+            self.set_vqe(ansatz)
+
+        # QAOA --> ansatz determined by algorithm
+        elif self.config["solver"]["algorithm"] == "QAOA":
+            self.set_qaoa()
+
+        # Numpy Eigensolver does not need further preselection
+        elif self.config["algorithm"] == "Numpy Eigensolver":
+            pass
+        else:
+            print("No valid algorithm chosen!")
+            exit()
+
     def set_quantum_instance(self):
         """Sets the quantum instance used by the quantum algorithms with parameters of the config file.
         """
