@@ -7,7 +7,7 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from src.optimisation_strategy import *
+from src.optimisation import make_impact_list, bit_flip_optimisation
 from src.solver import Solver
 from src.hamiltonian import Hamiltonian
 from src.ansatz import Ansatz
@@ -27,7 +27,7 @@ class QuboProcessing:
                  qubo_logging: QuboLogging,
                  save_folder: str,
                  error_mitigation: ErrorMitigation):
-        """Processes the Qubo and provides solving functions like a solving process via an impact list.
+        """Processes the Qubo and provides solving functions like a solving process via a chosen optimisation strategy.
         :param triplet_list_file: .npy file with triplet objects
         :param config: dictionary with configuration parameters
         :param solver: solver object
@@ -44,6 +44,8 @@ class QuboProcessing:
             self.solver.configure_solver(self.ansatz)
         self.qubo_logging = qubo_logging
         self.error_mitigation = error_mitigation
+        if self.config["qubo"]["optimisation strategy"] == "impact list":
+            self.optimisation_strategy = make_impact_list
         self.save_folder = save_folder
 
         # Log truth minimum energy state and energy
@@ -66,11 +68,13 @@ class QuboProcessing:
         if self.config["bit flip optimisation"]["iterations"] is not None:
             start_bit_flip = time.time()
             for i in range(self.config["bit flip optimisation"]["iterations"]):
-                new_solution_candidate, energy_change = self.bit_flip_optimisation(self.triplets,
-                                                                                   self.solution_candidate,
-                                                                                   self.make_impact_list(),
-                                                                                   self.config["bit flip optimisation"]
-                                                                                   ["reverse"])
+                new_solution_candidate, energy_change = bit_flip_optimisation(self.triplets,
+                                                                              self.solution_candidate,
+                                                                              self.optimisation_strategy(
+                                                                                   self.triplets,
+                                                                                   self.solution_candidate),
+                                                                              self.config["bit flip optimisation"]
+                                                                              ["reverse"])
                 self.energy_candidate += energy_change
                 self.qubo_logging.add_entry("solution vector", self.iteration, self.solution_candidate)
                 self.qubo_logging.add_entry("energy", self.iteration, self.energy_candidate)
@@ -88,16 +92,8 @@ class QuboProcessing:
         self.pass_count = 0
         self.sub_qubo_counter = 0
 
-    def impact_list_solve(self):
-        """Performs impact list algorithm
-        """
-        self.qubo_process(optimisation_strategy=self.make_impact_list)
-        self.write_setup_info_to_file()
-
-    def qubo_process(self,
-                     optimisation_strategy):
-        """Solves the QUBO with
-        :param optimisation_strategy: function which is used to determine triplet ordering
+    def qubo_process(self):
+        """Solves the QUBO with the set optimisation strategy.
         """
         # timer
         start_solving_process_time = time.time()
@@ -110,7 +106,7 @@ class QuboProcessing:
             # triplet list ordering determines also how many subqubos are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
-            triplet_ordering = optimisation_strategy()
+            triplet_ordering = self.optimisation_strategy(self.triplets, self.solution_candidate)
 
             # Calculate number of sub qubos:
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] == 0:
@@ -191,34 +187,8 @@ class QuboProcessing:
                                     solving_process_time)
         self.create_tracks()
         self.qubo_logging.save_results(self.save_folder)
+        self.write_setup_info_to_file()
         print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
-
-    def make_impact_list(self):
-        """Creates an impact list based on how much influence on the energy a bit flip has
-        :return:
-            list of indices ordered from lowest to highest impact of triplets in triplet list
-        """
-        impact_list_values = []
-        for triplet, t_i in zip(self.triplets, self.solution_candidate):
-            energy_change = 0
-            if t_i == 0:
-                energy_change += triplet.quality
-            else:
-                energy_change -= triplet.quality
-
-            for interaction in triplet.interactions.keys():
-                if t_i == 0 and self.solution_candidate[interaction] == 0:
-                    pass
-                elif t_i == 0 and self.solution_candidate[interaction] == 1:
-                    energy_change += triplet.interactions[interaction]
-                elif t_i == 1 and self.solution_candidate[interaction] == 0:
-                    pass
-                else:
-                    energy_change -= triplet.interactions[interaction]
-
-            impact_list_values.append(abs(energy_change))
-
-        return list(np.argsort(impact_list_values))
 
     def minimal_energy_and_solution(self):
         """Calculates the minimum energy state and value.

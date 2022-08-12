@@ -5,7 +5,7 @@ import sys
 from numpy.linalg import norm
 
 folder = sys.argv[1]
-sys.path.append("..")
+sys.path.append("")
 
 os.chdir(folder)
 if not os.path.isdir("true"):

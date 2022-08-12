@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def bit_flip_optimisation(triplets,
                           solution_candidate,
                           triplet_ordering,
@@ -41,3 +44,33 @@ def bit_flip_optimisation(triplets,
             energy_change_total += energy_change
 
     return solution_candidate, energy_change_total
+
+
+def make_impact_list(triplet_list,
+                     solution_candidate):
+    """Creates an impact list based on how much influence on the energy a bit flip has
+    :param triplet_list: list of triplet objects
+    :param solution_candidate: binary solution vector, representing triplet state
+    :return:
+        list of indices ordered from lowest to highest impact of triplets in triplet list
+    """
+    impact_list_values = []
+    for triplet, t_i in zip(triplet_list, solution_candidate):
+        energy_change = 0
+        if t_i == 0:
+            energy_change += triplet.quality
+        else:
+            energy_change -= triplet.quality
+
+        for interaction in triplet.interactions.keys():
+            if t_i == 0 and solution_candidate[interaction] == 0:
+                pass
+            elif t_i == 0 and solution_candidate[interaction] == 1:
+                energy_change += triplet.interactions[interaction]
+            elif t_i == 1 and solution_candidate[interaction] == 0:
+                pass
+            else:
+                energy_change -= triplet.interactions[interaction]
+
+        impact_list_values.append(abs(energy_change))
+    return list(np.argsort(impact_list_values))

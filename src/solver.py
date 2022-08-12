@@ -35,7 +35,6 @@ class Solver:
         """Returns the optimiser with the maxiter value from the config file.
         :return Optimiser: the optimiser with the maxiter value from the config file
         """
-        print("3232323afaf")
         if self.config["solver"]["optimiser"] == "COBYLA":
             return COBYLA(maxiter=self.config["solver"]["maxiter"])
         if self.config["solver"]["optimiser"] == "L_BFGS_B":
