@@ -107,7 +107,6 @@ class TripletCreatorLUXE:
                                             {z_values_unique.index(row_converted[self.z_index]):
                                              row_converted[self.z_index]}})
 
-
                 segment_index_for_entry = segment_manager.get_segment_at_known_xz_value(row_converted[self.x_index],
                                                                                         row_converted[self.z_index])
                 # storing in segment

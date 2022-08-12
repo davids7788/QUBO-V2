@@ -212,7 +212,7 @@ class QuboCoefficients:
                     intersection += 1
 
         # check if triplet origin from same layer
-        if t1[0][2] == t2[0][2]:
+        if t1[0][2] == t2[0][2] or t1[2][2] == t2[0][2]:
             same_layer = True
         else:
             same_layer = False

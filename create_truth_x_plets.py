@@ -14,7 +14,7 @@ from src.triplet import Triplet
 tracking_data_file = sys.argv[1]
 geometry_file = sys.argv[2]
 save_to_folder = sys.argv[3]
-output_name = tracking_data_file.split("/")[-1].split(".")[0:-1]
+output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
 
 # extract information about last and first detector layer from .csv file
 with open(geometry_file, 'r') as file:
@@ -52,7 +52,6 @@ with open(tracking_data_file, 'r') as file:
 
     for row in csv_reader_tracking_file:
         rows.append(row)
-    print(len(rows))
     for i, row in enumerate(rows):
         if float(row[z_index]) not in first_layer:
             continue
