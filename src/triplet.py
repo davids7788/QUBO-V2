@@ -1,8 +1,11 @@
+from src.doublet import Doublet
+
+
 class Triplet:
 
     def __init__(self,
-                 doublet_1: object,
-                 doublet_2: object,
+                 doublet_1: Doublet,
+                 doublet_2: Doublet,
                  triplet_id: int):
         """Class for Creating Triplets out of doublets from the Doublet class.
         :param doublet_1: doublet object containing hit 1 and hit 2 of the then created triplet

@@ -7,7 +7,19 @@ class Track:
         """Class for handling track objects created from triplets.
         """
         self.triplets = []
+        self.event_number = None
+        self.track_ID = None
+
+        self.n_hits = 0
+        self.n_shared_hits = 0
+        self.n_majority_hits = 0
+        self.majority_particle_true_energy = None
+
         self.is_matched_track = True
+
+        self.particle_ids = {}
+        self.hit_ids = set()
+
 
     def check_match(self):
         """Checks if track has only entries stemming from a single particle and sets the corresponding attribute

@@ -1,29 +1,17 @@
 import csv
 import time
 import numpy as np
-import sys
 
 from src.doublet import Doublet
 from src.triplet import Triplet
-from src.track import Track
-from src.segment import Segment
 from src.segment_manager import SegmentManager
 
 
-class XpletCreatorLUXE:
+class TripletCreatorLUXE:
     def __init__(self,
                  configuration,
                  save_to_folder):
         """Class for creating x_plets from detector hits
-        :param luxe_tracking_data_file_name: .csv file name with tracking data from the LUXE positron detector:
-            hit_ID          : unique hit ID
-            x               : x value [m]
-            y               : y value [m]
-            z               : z value [m]
-            layer_ID        : layer ID, starting from 0
-            particle_ID     : number to identify particles
-            particle_energy : particle energy [MeV]
-        :param segment_manager : managing segments with hits
         :param configuration  : dictionary, configuration for detector setup and xplet selection
             {
             doublet: {dx/x0: <value>,
@@ -44,7 +32,6 @@ class XpletCreatorLUXE:
         self.save_to_folder = save_to_folder
         self.doublet_creation_time = None
         self.triplet_creation_time = None
-        self.complete_tracks = []
         self.num_particles = 0
 
         self.preselection_statistic_dx_x0 = []
@@ -68,12 +55,30 @@ class XpletCreatorLUXE:
 
     def load_tracking_data(self,
                            tracking_data_file: str,
-                           segment_manager: SegmentManager):
+                           segment_manager: SegmentManager,
+                           geometry_file: str):
         """Loads data from a .csv file and stores it into a 2-dim array. Also converts values which are used for
         calculations to float from string. The file structure is displayed in the class description.
         :param tracking_data_file: Luxe tracking data file
         :param segment_manager: SegmentManager object with already set segments and mapping
+        :param geometry_file: geometry .csv file
         """
+        with open(geometry_file, 'r') as file:
+            csv_reader_geometry_file = csv.reader(file)
+            csv_header_geometry_file = next(csv_reader_geometry_file)
+            z = csv_header_geometry_file.index("z")
+            z_values = []
+            for row in csv_reader_geometry_file:
+                z_values.append(float(row[z]))
+            z_values_unique = list(set(z_values))
+            z_values_unique.sort()
+            if len(z_values_unique) == 4:
+                last_layer = [z_values_unique[-1], z_values_unique[-1]]
+                first_layer = [z_values_unique[0], z_values_unique[0]]
+            else:
+                last_layer = [z_values_unique[-2], z_values_unique[-1]]
+                first_layer = [z_values_unique[0], z_values_unique[1]]
+
         particle_numbers = {}  # counting particle ID
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
@@ -94,90 +99,33 @@ class XpletCreatorLUXE:
                         row_converted.append(row[i])
                 # keeping track of possible full tracks
                 if row[self.particle_id_index] in particle_numbers:
-                    particle_numbers.update({row[self.particle_id_index]:
-                                             particle_numbers[row[self.particle_id_index]] + 1})
+                    particle_numbers[row[self.particle_id_index]].update(
+                                        {z_values_unique.index(row_converted[self.z_index]):
+                                         row_converted[self.z_index]})
                 else:
-                    particle_numbers.update({row[self.particle_id_index]: 1})
+                    particle_numbers.update({row[self.particle_id_index]:
+                                            {z_values_unique.index(row_converted[self.z_index]):
+                                             row_converted[self.z_index]}})
+
 
                 segment_index_for_entry = segment_manager.get_segment_at_known_xz_value(row_converted[self.x_index],
                                                                                         row_converted[self.z_index])
                 # storing in segment
                 segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
-            for key, value in particle_numbers.items():
-                if value == 4:
-                    self.num_complete_tracks += 1
-                    self.complete_tracks.append(key)
+
+            for key, outer_value in particle_numbers.items():
+                last = False
+                first = False
+                for inner_value in outer_value.values():
+                    if inner_value in last_layer:
+                        last = True
+                    if inner_value in first_layer:
+                        first = True
                 self.num_particles += 1
+                if last and first:
+                    self.num_complete_tracks += 1
 
             print(f"Total number of particles with at least one hit: {self.num_particles}")
-
-    def create_and_save_generated_tracks(self,
-                                         tracking_data_file: str):
-        """Creates the list of truth generated tracks and saves them in the folder with the triplet list.
-        :param tracking_data_file: file with tracking data
-        """
-        generated_tracks = []
-        rows = []
-        with open(tracking_data_file, 'r') as file:
-            csv_reader = csv.reader(file)
-            _ = next(csv_reader)  # access header, csv files should consist of one line of header
-            for row in csv_reader:
-                rows.append(row)
-            for i, row in enumerate(rows):
-                if row[self.layer_id_index] != "Plane 0":
-                    continue
-                track = []
-                p_id = row[self.particle_id_index]
-                track.append(row)
-                for row_2 in rows[i + 1:]:
-                    if row_2[self.particle_id_index] == p_id and row[self.hit_id_index] != row_2[self.hit_id_index]:
-                        track.append(row_2)
-                if len(track) == 4:
-                    d1 = Doublet(track[0][self.particle_id_index],
-                                 track[1][self.particle_id_index],
-                                 (float(track[0][self.x_index]),
-                                  float(track[0][self.y_index]),
-                                  float(track[0][self.z_index])),
-                                 (float(track[1][self.x_index]),
-                                  float(track[1][self.y_index]),
-                                  float(track[1][self.z_index])),
-                                 track[0][self.hit_id_index],
-                                 track[1][self.hit_id_index],
-                                 float(track[0][self.particle_energy_index]),
-                                 float(track[1][self.particle_energy_index]))
-                    d2 = Doublet(track[1][self.particle_id_index],
-                                 track[2][self.particle_id_index],
-                                 (float(track[1][self.x_index]),
-                                  float(track[1][self.y_index]),
-                                  float(track[1][self.z_index])),
-                                 (float(track[2][self.x_index]),
-                                  float(track[2][self.y_index]),
-                                  float(track[2][self.z_index])),
-                                 track[1][self.hit_id_index],
-                                 track[2][self.hit_id_index],
-                                 float(track[1][self.particle_energy_index]),
-                                 float(track[2][self.particle_energy_index]))
-                    d3 = Doublet(track[2][self.particle_id_index],
-                                 track[3][self.particle_id_index],
-                                 (float(track[2][self.x_index]),
-                                  float(track[2][self.y_index]),
-                                  float(track[2][self.z_index])),
-                                 (float(track[3][self.x_index]),
-                                  float(track[3][self.y_index]),
-                                  float(track[3][self.z_index])),
-                                 track[2][self.hit_id_index],
-                                 track[3][self.hit_id_index],
-                                 float(track[2][self.particle_energy_index]),
-                                 float(track[3][self.particle_energy_index]))
-                    t1 = Triplet(d1, d2, -1)
-                    t2 = Triplet(d2, d3, -1)
-                    truth_track = Track()
-                    truth_track.add_triplet_to_track(t1)
-                    truth_track.add_triplet_to_track(t2)
-                    generated_tracks.append(truth_track)
-
-        np.save(self.save_to_folder + "/track_list", generated_tracks)
-        print(f"Number of generated tracks: {len(generated_tracks)}\n")
 
     def create_x_plets(self,
                        segment_manager: SegmentManager):
@@ -236,7 +184,7 @@ class XpletCreatorLUXE:
                             self.found_doublets += 1
                             segment.doublet_data.append(doublet)
         doublet_list_end = time.time()  # doublet list timer
-        self.doublet_creation_time = XpletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
+        self.doublet_creation_time = TripletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
         print(f"Time elapsed for creating doublets: "
               f"{self.doublet_creation_time}")
         print(f"Number of doublets found: {self.found_doublets}\n")
@@ -272,7 +220,7 @@ class XpletCreatorLUXE:
             segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
         list_triplet_end = time.time()
-        self.triplet_creation_time = XpletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
+        self.triplet_creation_time = TripletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
 
         print(f"Time elapsed for creating triplets: "
               f"{self.triplet_creation_time}")
@@ -304,7 +252,7 @@ class XpletCreatorLUXE:
                                z1: float,
                                z2: float,
                                z_ref: float):
-        """Checks if hits may combined to doublets, applying dx/x0 criterion
+        """Checks if hits may be combined to doublets, applying dx/x0 criterion
         :param x1: x value first hit
         :param x2: x value second hit
         :param z1: z value first hit
@@ -313,7 +261,7 @@ class XpletCreatorLUXE:
         :return:
             True if criteria applies, else False
         """
-        if abs(((x2 - x1) / XpletCreatorLUXE.x0_at_z_ref(x1, x2, z1, z2, z_ref) -
+        if abs(((x2 - x1) / TripletCreatorLUXE.x0_at_z_ref(x1, x2, z1, z2, z_ref) -
                 self.configuration["doublet"]["dx/x0"])) > \
                 self.configuration["doublet"]["eps"]:
             return False
