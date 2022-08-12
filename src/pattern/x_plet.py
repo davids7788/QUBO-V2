@@ -1,4 +1,4 @@
-from src.triplet import Triplet
+from pattern.triplet import Triplet
 
 
 class Xplet:

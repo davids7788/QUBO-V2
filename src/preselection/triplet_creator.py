@@ -2,9 +2,9 @@ import csv
 import time
 import numpy as np
 
-from src.doublet import Doublet
-from src.triplet import Triplet
-from src.segment_manager import SegmentManager
+from pattern.doublet import Doublet
+from pattern.triplet import Triplet
+from preselection.segment_manager import SegmentManager
 
 
 class TripletCreatorLUXE:

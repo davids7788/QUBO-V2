@@ -4,9 +4,9 @@ import os
 
 from pathlib import Path
 
-from src.triplet_creator import TripletCreatorLUXE
-from src.segment_manager import SegmentManager
-from src.qubo_coefficients import QuboCoefficients
+from preselection.triplet_creator import TripletCreatorLUXE
+from preselection.segment_manager import SegmentManager
+from preselection.qubo_coefficients import QuboCoefficients
 
 # sys argv [1]: config file
 # sys argv [2]: tracking data, csv file

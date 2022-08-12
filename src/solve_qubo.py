@@ -5,15 +5,15 @@ import numpy as np
 
 from pathlib import Path
 
-from src.error_mitigation import ErrorMitigation
-from src.qubo_processing import QuboProcessing
-from src.qubo_logging import QuboLogging
-from src.ansatz import Ansatz
-from src.solver import Solver
+from qubo.error_mitigation import ErrorMitigation
+from qubo.qubo_processing import QuboProcessing
+from qubo.qubo_logging import QuboLogging
+from qubo.ansatz import Ansatz
+from qubo.solver import Solver
 
 
 # sys argv [1]: config file
-# sys argv [2]: folder with .npy file containing a triplet list
+# sys argv [2]: folder containing a .npy triplet list file
 
 with open(sys.argv[1], 'r') as f:
     config_file = yaml.safe_load(f)

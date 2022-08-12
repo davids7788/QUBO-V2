@@ -1,8 +1,8 @@
-from src.ptarmigan import PtargmiganSimData
-from src.experimental_results_MC_toy import ExperimentalResults
-from src.toy_experiment import MCToyExperiment
-from src.detector_plane import DetectorPlane
-from src.dipole_magnet import DipoleMagnet
+from simplified_simulation.ptarmigan import PtargmiganSimData
+from simplified_simulation.experimental_results_MC_toy import ExperimentalResults
+from simplified_simulation.toy_experiment import MCToyExperiment
+from simplified_simulation.detector_plane import DetectorPlane
+from simplified_simulation.dipole_magnet import DipoleMagnet
 
 import sys
 import yaml

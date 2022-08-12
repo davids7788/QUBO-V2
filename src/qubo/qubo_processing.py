@@ -7,13 +7,12 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from src.optimisation import make_impact_list, bit_flip_optimisation
-from src.solver import Solver
-from src.hamiltonian import Hamiltonian
-from src.ansatz import Ansatz
-from src.qubo_logging import QuboLogging
-from src.track import Track
-from src.error_mitigation import ErrorMitigation
+from qubo.optimisation import make_impact_list, bit_flip_optimisation
+from qubo.solver import Solver
+from qubo.hamiltonian import Hamiltonian
+from qubo.ansatz import Ansatz
+from qubo.qubo_logging import QuboLogging
+from qubo.error_mitigation import ErrorMitigation
 
 algorithm_globals.massive = True
 
@@ -185,7 +184,6 @@ class QuboProcessing:
         self.qubo_logging.add_entry("time tracking complete",
                                     "complete run",
                                     solving_process_time)
-        self.create_tracks()
         self.qubo_logging.save_results(self.save_folder)
         self.write_setup_info_to_file()
         print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
@@ -354,66 +352,3 @@ class QuboProcessing:
                 f.write("\n")
             f.write("\n\n")
             f.write("---\n")
-
-    def create_tracks(self):
-        """"Creates reco track list (for after preselection) and computed track list.
-        """
-        # Create all the correct tracks as reference
-        truth_solution = self.qubo_logging.qubo_log["truth solution vector"]
-        reco_tracks = []
-        for index, result in enumerate(truth_solution):
-            if result == 1:
-                for key, value in zip(self.triplets[index].interactions.keys(),
-                                      self.triplets[index].interactions.values()):
-                    if int(key) < int(self.triplets[index].triplet_id):  # to not create tracks two times
-                        if truth_solution[key] == 1:
-                            new_track = Track()
-                            new_track.add_triplet_to_track(self.triplets[index])
-                            new_track.add_triplet_to_track(self.triplets[key])
-                            reco_tracks.append(new_track)
-
-        self.qubo_logging.set_value("max reco tracks", reco_tracks)
-
-        solution = self.qubo_logging.qubo_log["computed solution vector"]
-        found_tracks = []
-        used_triplets_for_tracks = set()
-        for index, result in enumerate(solution):  # looping over triplet list
-            if result == 1:  # check if triplet is kept
-                best_interaction_key = None  # variable for best connection if ambiguities
-                best_value = 0  # variable for best connection value if ambiguities
-                for key, value in zip(self.triplets[index].interactions.keys(),
-                                      self.triplets[index].interactions.values()):
-                    if int(key) < int(self.triplets[index].triplet_id):  # to not create tracks two times
-                        if solution[key] == 1:  # only if possible partner triplet is kept, too
-                            if value < best_value:
-                                best_value = value
-                                best_interaction_key = key
-
-                if best_value < 0:  # if partner triplet was found
-                    new_track = Track()
-                    new_track.add_triplet_to_track(self.triplets[index])
-                    new_track.add_triplet_to_track(self.triplets[best_interaction_key])
-                    found_tracks.append(new_track)
-                    used_triplets_for_tracks.add(index)
-                    used_triplets_for_tracks.add(best_interaction_key)
-
-        found_tracks_ambiguity_solved = []
-        for i, track_1 in enumerate(found_tracks):
-            ambiguities = False
-            for j, track_2 in enumerate(found_tracks[i + 1:]):
-                if track_1.is_in_conflict(track_2):
-                    ambiguities = True
-                    sum_interactions_track_1 = 0
-                    sum_interactions_track_2 = 0
-                    for triplet_1, triplet_2 in zip(track_1.triplets[:-1], track_1.triplets[1:]):
-                        sum_interactions_track_1 += triplet_1.interactions[triplet_2.triplet_id]
-                    for triplet_1, triplet_2 in zip(track_2.triplets[:-1], track_2.triplets[1:]):
-                        sum_interactions_track_2 += triplet_1.interactions[triplet_2.triplet_id]
-                    if sum_interactions_track_2 > sum_interactions_track_1:
-                        found_tracks_ambiguity_solved.append(track_2)
-                    else:
-                        found_tracks_ambiguity_solved.append(track_1)
-            if not ambiguities:
-                found_tracks_ambiguity_solved.append(track_1)
-
-        self.qubo_logging.set_value("reconstructed tracks", found_tracks_ambiguity_solved)

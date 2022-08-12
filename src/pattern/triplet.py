@@ -1,4 +1,4 @@
-from src.doublet import Doublet
+from pattern.doublet import Doublet
 
 
 class Triplet:

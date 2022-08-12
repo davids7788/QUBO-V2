@@ -1,4 +1,4 @@
-from src.particle import Particle
+from simplified_simulation.particle import Particle
 
 
 class MCToyExperiment:

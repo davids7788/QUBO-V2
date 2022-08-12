@@ -1,9 +1,7 @@
 import pandas as pd
 import csv
 
-from src.segment import Segment
-
-from typing import List
+from preselection.segment import Segment
 
 
 class SegmentManager:

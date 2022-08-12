@@ -2,10 +2,7 @@ import sys
 import numpy as np
 import csv
 
-from src.x_plet import Xplet
-from src.doublet import Doublet
-from src.triplet import Triplet
-
+from pattern.x_plet import Xplet
 
 # sys argv[1]: qubo folder
 # sys argv[2]: geometry file

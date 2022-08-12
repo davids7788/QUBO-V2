@@ -2,9 +2,9 @@ import sys
 import csv
 import numpy as np
 
-from src.x_plet import Xplet
-from src.doublet import Doublet
-from src.triplet import Triplet
+from pattern.x_plet import Xplet
+from pattern.doublet import Doublet
+from pattern.triplet import Triplet
 
 # sys argv[1]: tracking data file
 # sys.argv[2]: geometry file
@@ -84,5 +84,5 @@ with open(tracking_data_file, 'r') as file:
                 truth_pattern.add_triplet(triplet)
             generated_x_plets.append(truth_pattern)
 
-    np.save(f"{save_to_folder}/{output_name}_track_list", generated_x_plets)
+    np.save(f"{save_to_folder}/{output_name}_gen_track_list", generated_x_plets)
     print(f"Number of generated tracks: {len(generated_x_plets)}\n")

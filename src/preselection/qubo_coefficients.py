@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src.segment_manager import SegmentManager
+from preselection.segment_manager import SegmentManager
 
 
 class QuboCoefficients:
@@ -9,7 +9,6 @@ class QuboCoefficients:
     def __init__(self,
                  configuration: dict,
                  save_to_folder: str):
-
         """Class for handling and setting QUBO coefficients
         :param configuration: dictionary, configuration for detector setup and xplet selection
             {
