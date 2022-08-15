@@ -70,7 +70,6 @@ TStyle* LuxeStyle()
   luxeStyle->SetMarkerStyle(20);
   luxeStyle->SetMarkerSize(1.2);
   luxeStyle->SetHistLineWidth(2.);
-  luxeStyle->SetLineWidth(3.);
   luxeStyle->SetLineStyleString(2,"[12 12]"); // postscript dashes
 
   // get rid of X error bars (as recommended in LUXE figure guidelines)
@@ -92,10 +91,10 @@ TStyle* LuxeStyle()
   //Legend style
   luxeStyle->SetLegendBorderSize(0);
   luxeStyle->SetLegendFillColor(0);
+  luxeStyle->SetFillStyle(0);
   luxeStyle->SetLegendFont(42);
   luxeStyle->SetLegendTextSize(0.);
 
   return luxeStyle;
 
 }
-
