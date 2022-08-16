@@ -29,6 +29,6 @@ leg.SetTextSize(0.04)
 leg.AddEntry(h1,"A LUXE Histo","f")
 leg.Draw()
 
-raw_input("Press enter to continue")
+input("Press enter to continue")
 
 canv.SaveAs("luxe.pdf")
