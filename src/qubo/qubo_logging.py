@@ -17,9 +17,7 @@ class QuboLogging:
                          "compare to analytical solution": {},     # [True , False, ..., False] for each SubQUBO
                          "hamiltonian": {},                        # [linear, quadratic] for 500 SubQUBOs
                          "energy": {},                             # energy level after each iteration
-                         "solution vector": {},                    # computed solution candidate after each iteration
-                         "max reco tracks": None,                  # Max tracks to reconstruct after preselection
-                         "reconstructed tracks": None}             # Tracks actually reconstructed
+                         "solution vector": {}}                    # Solution vector
 
     def add_entry(self,
                   sub_dict: str,

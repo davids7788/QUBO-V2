@@ -59,4 +59,4 @@ for i, t1 in enumerate(kept_triplets):
                 reco_pattern.add_triplet(triplet)
             reco_x_plets.append(reco_pattern)
 
-np.save(f"{folder}/reco_track_list", reco_x_plets)
+np.save(f"{folder}/reco_xplet_list", reco_x_plets)

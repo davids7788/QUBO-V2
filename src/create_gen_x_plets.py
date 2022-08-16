@@ -84,5 +84,5 @@ with open(tracking_data_file, 'r') as file:
                 truth_pattern.add_triplet(triplet)
             generated_x_plets.append(truth_pattern)
 
-    np.save(f"{save_to_folder}/{output_name}_gen_track_list", generated_x_plets)
-    print(f"Number of generated tracks: {len(generated_x_plets)}\n")
+    np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", generated_x_plets)
+    print(f"Number of generated xplets: {len(generated_x_plets)}\n")
