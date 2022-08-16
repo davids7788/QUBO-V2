@@ -6,3 +6,4 @@ pyyaml==6.0
 pandas==1.4.3
 ROOT==6.26/00
 h5py==3.7.0
+pylatexenc==2.10
