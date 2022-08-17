@@ -12,16 +12,16 @@ solver:
   algorithm: "QAOA"
   backend: "Qasm Ideal Sim"
   optimiser: "NFT"
-  maxiter: 3000
+  maxiter: 500
   seed: 0
-  shots: 50
-  optimisation level: 2
+  shots: 128
+  optimisation level: 3
 
 qubo:
   optimisation strategy: "impact list"
   hamiltonian rescaling: null
-  initial binary vector: "ones"
-  search depth: 3
+  initial binary vector: "zeros"
+  search depth: 5
   num qubits: 7
   error mitigation algorithm: null
   compare to eigensolver: True
