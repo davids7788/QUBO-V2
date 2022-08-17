@@ -20,8 +20,8 @@ solver:
 qubo:
   optimisation strategy: "impact list"
   hamiltonian rescaling: null
-  initial binary vector: "ones"
-  search depth: 3
+  initial binary vector: "zeros"
+  search depth: 5
   num qubits: 7
   error mitigation algorithm: null
   compare to eigensolver: null

@@ -1,6 +1,6 @@
 ---
 ansatz:
-  layout: "HamiltonianDriven"
+  layout: "TwoLocal"
   circuit depth: 1
   rotation blocks: "ry"
   entanglement blocks: "cx"
