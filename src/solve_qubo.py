@@ -21,7 +21,7 @@ with open(sys.argv[1], 'r') as f:
 # Create new folder
 folder = sys.argv[2]
 
-file_extension = config_file.split(".")[0]
+file_extension = sys.argv[1].split(".")[0]
 
 new_folder = folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
 if Path(new_folder).is_dir():
