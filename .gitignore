@@ -1,6 +1,6 @@
 .idea
 .pdf
-.ipynb_checkpints/
+.ipynb_checkpoints
 __pycache__
 venv
 virtualenv
