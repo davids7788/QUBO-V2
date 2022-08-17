@@ -21,16 +21,7 @@ with open(sys.argv[1], 'r') as f:
 # Create new folder
 folder = sys.argv[2]
 
-file_extension = ""
-if config_file["solver"]["algorithm"] == "Numpy Eigensolver":
-    file_extension += "_eigensolver"
-elif config_file["solver"]["algorithm"] == "VQE":
-    file_extension += "_vqe"
-elif config_file["solver"]["algorithm"] == "QAOA":
-    file_extension += "_qaoa"
-else:
-    file_extension += "_bit_flip_only"
-
+file_extension = config_file.split(".")[0]
 
 new_folder = folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
 if Path(new_folder).is_dir():
