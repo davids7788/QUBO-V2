@@ -150,7 +150,7 @@ leg.Draw()
 
 canv2.Update()
 canv2.Draw()
-canv2.SaveAs(f"{folder}/2Dfake_xplets_xi_{xi}.pdf")
+canv2.SaveAs(f"{folder}/2Dfake_xplets_xi_{xi}{save_extension}.pdf")
 
 try:
     canv2.Close(); 
@@ -178,4 +178,4 @@ leg.SetHeader("#splitline{#xi = " + xi + "}{xplets fake rate}")
 leg.Draw()
 
 canv3.Draw()
-canv3.SaveAs(f"{folder}/2Dxplet_fake_rate_xi_{xi}.pdf")
+canv3.SaveAs(f"{folder}/2Dxplet_fake_rate_xi_{xi}{save_extension}.pdf")
