@@ -14,6 +14,21 @@ folder = sys.argv[1]
 gen = "-".join("/".join(folder.split("/")[0:-1]).split("-")[0:-1])
 xi = folder.split("e0gpc_")[1].split("_")[0]
 
+region = int(sys.argv[2])
+#  0: all xplets
+#  1: y > 0
+# -1: y < 0
+
+if region == 0:
+    save_extension = "_all"
+elif region == 1:
+    save_extension = "_upper"
+elif region == -1:
+    save_extension = "_lower"
+else:
+    print("No valid region selected!")
+    exit()
+
 gen_x = np.load(gen + "_gen_xplet_list.npy", allow_pickle=True)
 reco_x = np.load(f"{folder}/reco_xplet_list.npy", allow_pickle=True)
 
@@ -48,18 +63,42 @@ h_frame = TH1F('frame',
 
 
 for g_x in gen_x:
+    if region == -1:
+        if g_x.coordinates[0][1] > 0:
+            continue
+    elif region == 1:
+        if g_x.coordinates[0][1] < 0:
+            continue  
     gen_xplets.Fill(g_x.coordinates[0][0])
 
 
 for m_x in matched:
+    if region == -1:
+        if m_x.coordinates[0][1] > 0:
+            continue
+    if region == 1:
+        if m_x.coordinates[0][1] < 0:
+            continue
     matched_xplets.Fill(m_x.coordinates[0][0])
 
 
 for f_x in fake:
+    if region == -1:
+        if f_x.coordinates[0][1] > 0:
+            continue
+    if region == 1:
+        if f_x.coordinates[0][1] < 0:
+            continue
     fake_xplets.Fill(f_x.coordinates[0][0])
     
 
 for r_x in reco_x:
+    if region == -1:
+        if r_x.coordinates[0][1] > 0:
+            continue
+    if region == 1:
+        if r_x.coordinates[0][1] < 0:
+            continue
     reco_xplets.Fill(r_x.coordinates[0][0])
     
 Teff_error = TEfficiency(matched_xplets, gen_xplets)
@@ -123,4 +162,4 @@ leg.SetTextSize(0.04)
 leg.SetHeader(f"#xi = {xi}")
 leg.Draw()
 
-canv.SaveAs(f"{folder}/1Dxplet_efficiency_xi_{xi}.pdf")
+canv.SaveAs(f"{folder}/1Dxplet_efficiency_xi_{xi}{save_extension}.pdf")
