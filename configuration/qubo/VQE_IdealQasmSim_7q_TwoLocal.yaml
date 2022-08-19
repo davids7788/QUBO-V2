@@ -12,7 +12,8 @@ solver:
   algorithm: "VQE"
   backend: "Qasm Ideal Sim"
   optimiser: NFT
-  maxiter: 500
+  maxiter: 4000
+  maxfev: 250
   seed: 0
   shots: 128
   optimisation level: 3

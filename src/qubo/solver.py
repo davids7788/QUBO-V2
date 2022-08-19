@@ -44,7 +44,8 @@ class Solver:
         if self.config["solver"]["optimiser"] == "SLSQP":
             return SLSQP(maxiter=self.config["solver"]["maxiter"])
         if self.config["solver"]["optimiser"] == "NFT":
-            return NFT(maxiter=self.config["solver"]["maxiter"])
+            return NFT(maxiter=self.config["solver"]["maxiter"],
+                       maxfev=self.config["solver"]["maxfev"])
         if self.config["solver"]["optimiser"] == "NELDER_MEAD":
             return NELDER_MEAD(maxiter=self.config["solver"]["maxiter"])
         if self.config["solver"]["optimiser"] == "ADAM":
