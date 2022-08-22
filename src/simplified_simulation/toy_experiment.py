@@ -4,7 +4,6 @@ from simplified_simulation.particle import Particle
 class MCToyExperiment:
     """Class for accumulating infos about the experiment and executing it. Results are stored inside the result object.
     :param
-        name                       : Toy Experiment name, e.g. "test series 1: gauss distributed"
         particle_source            : particle source object : hdf5 file in a Ptarmigan class wrapper
         species                    : 'photon, 'electron' or 'positron
         detector_plane_list        : list of detectors, list has to be ordered by z-coordinate of the detectors
@@ -13,7 +12,6 @@ class MCToyExperiment:
         scattering                 : True or False
     """
     def __init__(self,
-                 name,
                  particle_source,
                  species,
                  detector_plane_list,
@@ -21,7 +19,6 @@ class MCToyExperiment:
                  result,
                  scattering):
 
-        self.name = name
         self.particle_source = particle_source
         self.species = species
         self.detector_plane_list = detector_plane_list

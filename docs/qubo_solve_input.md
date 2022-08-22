@@ -19,7 +19,8 @@ Parameters for the solver, the used algorithm and backend.
 * `algorithm:` "NumpyEigensolver", "VQE" or "QAOA" or null (for using bit flip optimisation only)
 * `backend:` "Qasm Ideal Sim", "FakeAthens" (5Q), "FakeCasablanca" (7Q), "FakeJakarta" (7Q) and "FakeGuadalupe" (16Q)
 * `optimiser:` "ADAM", "COBYLA", "GSLS", "L_BFGS_B", NELDER_MEAD", "NFT", "SLSQP" or "SPSA" 
-* `maxiter:` max number of iterations of the optimising step (int)
+* `maxiter:` max number of function evaluations (int)
+* `maxfev` max number of iterations of the optimising step, NFT only (int)
 * `seed:` some number for setting a defined seed (int)
 * `shots:` number of evaluations of the quantum circuit (int)
 * `optimisation level:` 0 (no optimisation), 1 (light optimisation), 2 (heavy optimisation) or 3 
