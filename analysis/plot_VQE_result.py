@@ -13,7 +13,7 @@ ideal_sim = np.load("../../SummerStudent/result_ideal_sim.npy", allow_pickle=Tru
 fake_nairobi = np.load("../../SummerStudent/result_vqe_fake_nairobi.npy", allow_pickle=True)[()].eigenstate
 ibm_nairobi = np.load("../../SummerStudent/result_vqe_ibm_nairobi.npy", allow_pickle=True)[()]
 
-num_states = 16
+num_states = 6
 
 list_ideal_sim = list(ideal_sim.items())
 list_ideal_sim.sort(key=lambda x: x[1], reverse=True)
@@ -39,7 +39,7 @@ try:
 except:
     sorted_list_ibm_nairobi = list_ibm_nairobi[0: len(list_ibm_nairobi)]
     
-states = [""]
+states = []
 
 for s1 in sorted_ideal_sim:
     if s1[0] not in states:
@@ -52,9 +52,6 @@ for s3 in sorted_list_ibm_nairobi:
         states.append(s3[0])
 
 num_states = 2**len(states[0]) 
-
-
-
 
 
 values_list_ideal_sim = []
@@ -70,11 +67,10 @@ for state in states:
                 values_list_ideal_sim.append(value**2)
     else:
         values_list_ideal_sim.append(0.0)
-for key, value in list_ideal_sim:
+for key, value in list_ideal_sim: 
     if key not in states:
-        ideal_sim_dump += value**2
-values_list_ideal_sim.append(ideal_sim_dump)
-
+        if value**2 > ideal_sim_dump:
+            ideal_sim_dump = value**2
 
 
 fake_nairobi_dump = 0
@@ -88,7 +84,8 @@ for state in states:
         values_list_fake_nairobi.append(0.0)
 for key, value in list_fake_nairobi:
     if key not in states:
-        fake_nairobi_dump += value**2
+        if value**2 > fake_nairobi_dump:
+            fake_nairobi_dump = value**2
 values_list_fake_nairobi.append(fake_nairobi_dump)
         
 ibm_nairobi_dump = 0
@@ -102,10 +99,10 @@ for state in states:
         values_list_ibm_nairobi.append(0.0)
 for key, value in list_ibm_nairobi:
     if key not in states:
-        ibm_nairobi_dump += value**2
+        if value**2 > ibm_nairobi_dump:
+            ibm_nairobi_dump = value**2
 values_list_ibm_nairobi.append(ibm_nairobi_dump)
-states.append('rest')
-states.append("")
+states.append('max rest')
 
 values_list_ideal_sim.append(0.0)
 values_list_fake_nairobi.append(0.0)
@@ -132,7 +129,7 @@ ideal_sim_hist.SetStats(0)
 ideal_sim_hist.SetMinimum(0.0)
 ideal_sim_hist.SetMaximum(1.05)
 
-ideal_sim_hist.GetYaxis().SetTitle("probability")
+ideal_sim_hist.GetYaxis().SetTitle("Predictions")
 
 
 fake_nairobi_hist.SetFillColor(8)
