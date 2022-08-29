@@ -12,7 +12,6 @@ from qubo.solver import Solver
 from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
 from qubo.qubo_logging import QuboLogging
-from qubo.error_mitigation import ErrorMitigation
 
 algorithm_globals.massive = True
 
@@ -24,8 +23,7 @@ class QuboProcessing:
                  solver: Solver,
                  ansatz: Ansatz,
                  qubo_logging: QuboLogging,
-                 save_folder: str,
-                 error_mitigation: ErrorMitigation):
+                 save_folder: str):
         """Processes the Qubo and provides solving functions like a solving process via a chosen optimisation strategy.
         :param triplet_list_file: .npy file with triplet objects
         :param config: dictionary with configuration parameters
@@ -42,7 +40,6 @@ class QuboProcessing:
         if self.solver is not None:
             self.solver.configure_solver(self.ansatz)
         self.qubo_logging = qubo_logging
-        self.error_mitigation = error_mitigation
         if self.config["qubo"]["optimisation strategy"] == "impact list":
             self.optimisation_strategy = make_impact_list
         self.save_folder = save_folder
@@ -247,10 +244,6 @@ class QuboProcessing:
         :return
             result of the solving process"""
         result_quantum = dict(self.solver.quantum_algorithm.compute_minimum_eigenvalue(hamiltonian).eigenstate)
-        if self.config["qubo"]["error mitigation algorithm"] == "algebraic":
-            result_quantum_vector = ErrorMitigation.dict_to_vector(result_quantum)
-            result_quantum_vector_mitigated = np.dot(self.error_mitigation.meas_filter_matrix, result_quantum_vector)
-            result_quantum = ErrorMitigation.vector_to_dict(result_quantum_vector_mitigated)
 
         def get_result_in_correct_order(res):
             """Returns the result with the highest probability in the correct ordering of the qubits.

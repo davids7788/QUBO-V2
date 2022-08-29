@@ -5,7 +5,6 @@ import numpy as np
 
 from pathlib import Path
 
-from qubo.error_mitigation import ErrorMitigation
 from qubo.qubo_processing import QuboProcessing
 from qubo.qubo_logging import QuboLogging
 from qubo.ansatz import Ansatz
@@ -55,20 +54,13 @@ if config_file["solver"]["algorithm"] != "Numpy Eigensolver" and config_file["so
 else:
     solver = None
 
-if config_file["qubo"]["error mitigation algorithm"] is not None:
-    error_mitigation = ErrorMitigation(solver.get_backend())
-    error_mitigation.algebraic_mitigation(ansatz.circuit)
-else:
-    error_mitigation = None
-
 # Create and configure solving process
 qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
                                 config=config_file,
                                 solver=solver,
                                 ansatz=ansatz,
                                 qubo_logging=qubo_logger,
-                                save_folder=new_folder,
-                                error_mitigation=error_mitigation)
+                                save_folder=new_folder)
 
 # Select solving method
 if config_file["qubo"]["optimisation strategy"] == "impact list":
