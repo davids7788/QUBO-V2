@@ -119,7 +119,10 @@ for i in range(1, len(states) + 1):
     fake_nairobi_hist.SetBinContent(i, values_list_fake_nairobi[i - 1])
     ibm_nairobi_hist.SetBinContent(i, values_list_ibm_nairobi[i - 1])
     ideal_sim_hist.GetXaxis().SetBinLabel(i, states[i - 1])
-    ideal_sim_hist.GetXaxis().ChangeLabel(i, 290, -1)
+    ideal_sim_hist.GetXaxis().ChangeLabel(i, 290, 0.05)
+for j in range(7):
+    ideal_sim_hist.GetYaxis().ChangeLabel(j, -1, 0.05)
+    
 
     
 ideal_sim_hist.SetFillColor(9)
@@ -129,12 +132,13 @@ ideal_sim_hist.SetStats(0)
 ideal_sim_hist.SetMinimum(0.0)
 ideal_sim_hist.SetMaximum(1.05)
 
-ideal_sim_hist.GetYaxis().SetTitle("Predictions")
+ideal_sim_hist.GetYaxis().SetTitle("Probabilities")
 
 
 fake_nairobi_hist.SetFillColor(8)
 fake_nairobi_hist.SetBarWidth(0.3)
 fake_nairobi_hist.SetBarOffset(0.35)
+
 fake_nairobi_hist.SetStats(0)
 
 ibm_nairobi_hist.SetFillColor(46)
@@ -143,19 +147,25 @@ ibm_nairobi_hist.SetBarOffset(0.65)
 ibm_nairobi_hist.SetStats(0)
 
 
-
 canv = TCanvas("hbar plot", "hbar plot", 800, 600)
 ideal_sim_hist.Draw("b")
 fake_nairobi_hist.Draw("same b")
 ibm_nairobi_hist.Draw("same b")
+gPad.SetBottomMargin(0.2)
+gPad.Draw()
+
+latex = TLatex()
+latex.SetTextSize(0.05)
+latex.SetTextFont(42)
+latex.DrawLatex(4.65,.45,"N_{shots} = 512")
+            
 
 
-leg = TLegend(0.6, 0.6, 0.9, 0.9)
+leg = TLegend(0.55, 0.6, 0.95, 0.9)
 
 leg.AddEntry(ideal_sim_hist, "Ideal Simulation", "f")
 leg.AddEntry(fake_nairobi_hist, "Fake Nairobi", "f")
 leg.AddEntry(ibm_nairobi_hist, "IBM Nairobi", "f")
-leg.SetHeader(f"Backends")
 leg.Draw()
 canv.Draw()
 
