@@ -13,11 +13,6 @@ a tracking detector. To run the simulation the following arguments are needed:
 ```bash
 python simplified_simulation.py configuration particles geometry save_to
 ```
-Converting the results into a .csv format similar to [TrackML challenge](https://www.kaggle.com/c/trackml-particle-identification)
-can be done by calling the converter script with a folder containing .npy results of the simulation
-```bash
-python convert_to_csv.py folder_with_simulation_results
-```
 
 ## Preselection
 In the preselection, possible parts of track candidates, doublets and triplets, are created. To reduce the computational

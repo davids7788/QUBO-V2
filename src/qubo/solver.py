@@ -1,6 +1,7 @@
 from qiskit.algorithms import VQE, QAOA
 from qiskit.algorithms.optimizers import COBYLA, L_BFGS_B, SPSA, SLSQP, NFT, NELDER_MEAD, ADAM, GSLS
 from qiskit.utils import QuantumInstance
+from qiskit.utils.mitigation import CompleteMeasFitter
 from qiskit import Aer
 from qiskit.providers.aer import QasmSimulator
 from qiskit.providers.fake_provider import FakeAthens, FakeCasablanca, FakeJakarta, FakeGuadalupe
@@ -15,6 +16,10 @@ class Solver:
         self.config = config
         self.quantum_instance = None
         self.quantum_algorithm = None
+        if self.config["qubo"]["error mitigation algorithm"] == "algebraic":
+            self.error_mitigation = CompleteMeasFitter
+        else:
+            self.error_mitigation = None
         self.set_quantum_instance()
 
     def get_backend(self):
@@ -80,7 +85,8 @@ class Solver:
                                                 seed_simulator=self.config["solver"]["seed"],
                                                 seed_transpiler=self.config["solver"]["seed"],
                                                 shots=self.config["solver"]["shots"],
-                                                optimization_level=self.config["solver"]["optimisation level"])
+                                                optimization_level=self.config["solver"]["optimisation level"],
+                                                measurement_error_mitigation_cls=self.error_mitigation)
 
     def set_vqe(self, ansatz):
         """Set VQE with a specific ansatz.
