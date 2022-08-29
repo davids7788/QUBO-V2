@@ -5,6 +5,10 @@ __pycache__
 venv
 virtualenv
 submit/
-/test_files*
-/test_results*
+
+
 /TrackingData/*
+/ptarmigan_files*
+/simplified_simulation_files*
+/qubo_files*
+
