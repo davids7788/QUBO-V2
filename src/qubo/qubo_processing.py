@@ -103,6 +103,7 @@ class QuboProcessing:
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
             triplet_ordering = self.optimisation_strategy(self.triplets, self.solution_candidate)
+            triplet_ordering.reverse()
 
             # Calculate number of sub qubos:
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] == 0:
