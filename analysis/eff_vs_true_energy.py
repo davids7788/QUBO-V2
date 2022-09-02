@@ -18,36 +18,36 @@ folder_eigensolver_14q = sys.argv[5]
 folder_eigensolver_18q = sys.argv[6]
 folder_bit_flip = sys.argv[7]
 
-
 gen_folder = "-".join("/".join(folder_eigensolver_7q.split("/")[0:-1]).split("-")[0:-1])
 xi = folder_eigensolver_7q.split("e0gpc_")[1].split("_")[0]
+
 
 # Load data sets
 gen = np.load(gen_folder + "_gen_xplet_list.npy", allow_pickle=True)
 print(f"Generated tracks: {len(gen)}\n")
-edges_left = [0.05, 0.07, 0.085]
-edges_mid = [0.1 + 0.01 * i for i in range(24)]
-edges_right = [0.35, 0.38, 0.42]
+edges_left = [1.5]
+edges_mid = [2.0 + 0.4 * i for i in range(15)]
+edges_right = [8.0, 8.5, 9.5]
 edges = np.array(edges_left + edges_mid + edges_right)
 
-gen_xplets = TH1F('gen xplets', 'x', len(edges) - 1, edges)
-
-
-
+gen_xplets = TH1F('gen xplets', 'energy', len(edges) - 1, edges)
 
 gStyle.SetPadTickY(0)
 canv = TCanvas("example","xplet efficiency ", 800, 600)
 
+h_frame = TH1F('frame', 'x', len(edges) - 1, edges)
 h_frame.GetYaxis().SetTitle("fraction of counts")
-h_frame.GetXaxis().SetTitle("x [m]")
+h_frame.GetXaxis().SetTitle("energy [GeV]")
 h_frame.GetXaxis().SetNdivisions(105)
 h_frame.SetMaximum(1.18)
 h_frame.GetXaxis().SetLabelOffset(0.02)
-h_frame.GetXaxis().SetRangeUser(0.05, 0.51)
+h_frame.GetXaxis().SetRangeUser(0.0, 11.0)
 h_frame.Draw()
 
+
 for g_x in gen:
-    gen_xplets.Fill(g_x.coordinates[0][0])
+    gen_xplets.Fill(g_x.energy[0] / 1000)
+
 
 if folder_eigensolver_7q != "-1":
     reco_eigensolver_7q = np.load(f"{folder_eigensolver_7q}/reco_xplet_list.npy",
@@ -67,11 +67,11 @@ if folder_eigensolver_7q != "-1":
     fully_mismatched_xplets_eigensolver_7q = TH1F('mismatched Numpy Eigensolver 7q', 'x', len(edges) - 1, edges)
     reco_xplets_eigensolver_7q = TH1F('reco xplets Numpy Eigensolver 7q', 'x', len(edges) - 1, edges)
     for m_x in matched_eigensolver_7q:
-        matched_xplets_eigensolver_7q.Fill(m_x.coordinates[0][0])
+        matched_xplets_eigensolver_7q.Fill(m_x.energy[0] / 1000)
     for m_x in fully_mismatched_eigensolver_7q:
-        fully_mismatched_xplets_eigensolver_7q.Fill(m_x.coordinates[0][0])
+        fully_mismatched_xplets_eigensolver_7q.Fill(m_x.energy[0] / 1000)
     for r_x in reco_eigensolver_7q:
-        reco_xplets_eigensolver_7q.Fill(r_x.coordinates[0][0])
+        reco_xplets_eigensolver_7q.Fill(r_x.energy[0] / 1000)
     Teff_eigensolver_7q = TEfficiency(matched_xplets_eigensolver_7q, gen_xplets)
     Teff_fully_mis_eigensolver_7q = TEfficiency(fully_mismatched_xplets_eigensolver_7q, reco_xplets_eigensolver_7q)
     Teff_eigensolver_7q.SetMarkerStyle(20)
@@ -105,11 +105,11 @@ if folder_eigensolver_12q != "-1":
     fully_mismatched_xplets_eigensolver_12q = TH1F('mismatched Numpy Eigensolver 12q', 'x', len(edges) - 1, edges)
     reco_xplets_eigensolver_12q = TH1F('reco xplets Numpy Eigensolver 12q', 'x', len(edges) - 1, edges)
     for m_x in matched_eigensolver_12q:
-        matched_xplets_eigensolver_12q.Fill(m_x.coordinates[0][0])
+        matched_xplets_eigensolver_12q.Fill(m_x.energy[0] / 1000)
     for m_x in fully_mismatched_eigensolver_12q:
-        fully_mismatched_xplets_eigensolver_12q.Fill(m_x.coordinates[0][0])
+        fully_mismatched_xplets_eigensolver_12q.Fill(m_x.energy[0] / 1000)
     for r_x in reco_eigensolver_12q:
-        reco_xplets_eigensolver_12q.Fill(r_x.coordinates[0][0])
+        reco_xplets_eigensolver_12q.Fill(r_x.energy[0] / 1000)
     Teff_eigensolver_12q = TEfficiency(matched_xplets_eigensolver_12q, gen_xplets)
     Teff_fully_mis_eigensolver_12q = TEfficiency(fully_mismatched_xplets_eigensolver_12q, reco_xplets_eigensolver_12q)
 
@@ -142,11 +142,11 @@ if folder_eigensolver_14q != "-1":
     fully_mismatched_xplets_eigensolver_14q = TH1F('mismatched Numpy Eigensolver 14q', 'x', len(edges) - 1, edges)
     reco_xplets_eigensolver_14q = TH1F('reco xplets Numpy Eigensolver 14q', 'x', len(edges) - 1, edges)
     for m_x in matched_eigensolver_14q:
-        matched_xplets_eigensolver_14q.Fill(m_x.coordinates[0][0])
+        matched_xplets_eigensolver_14q.Fill(m_x.energy[0] / 1000)
     for m_x in fully_mismatched_eigensolver_14q:
-        fully_mismatched_xplets_eigensolver_14q.Fill(m_x.coordinates[0][0])
+        fully_mismatched_xplets_eigensolver_14q.Fill(m_x.energy[0] / 1000)
     for r_x in reco_eigensolver_14q:
-        reco_xplets_eigensolver_14q.Fill(r_x.coordinates[0][0])
+        reco_xplets_eigensolver_14q.Fill(r_x.energy[0] / 1000)
     Teff_eigensolver_14q = TEfficiency(matched_xplets_eigensolver_14q, gen_xplets)
     Teff_fully_mis_eigensolver_14q = TEfficiency(fully_mismatched_xplets_eigensolver_14q, reco_xplets_eigensolver_14q)
 
@@ -159,9 +159,6 @@ if folder_eigensolver_14q != "-1":
     Teff_fully_mis_eigensolver_14q.SetMarkerColorAlpha(4, 0.85)
     Teff_fully_mis_eigensolver_14q.SetMarkerSize(1.5)
     Teff_fully_mis_eigensolver_14q.Draw("PSAME")
-
-
-
 if folder_eigensolver_18q != "-1":
     reco_eigensolver_18q = np.load(f"{folder_eigensolver_18q}/reco_xplet_list.npy",
                                    allow_pickle=True)
@@ -180,11 +177,11 @@ if folder_eigensolver_18q != "-1":
     fully_mismatched_xplets_eigensolver_18q = TH1F('mismatched Numpy Eigensolver 18q', 'x', len(edges) - 1, edges)
     reco_xplets_eigensolver_18q = TH1F('reco xplets Numpy Eigensolver 18q', 'x', len(edges) - 1, edges)
     for m_x in matched_eigensolver_18q:
-        matched_xplets_eigensolver_18q.Fill(m_x.coordinates[0][0])
+        matched_xplets_eigensolver_18q.Fill(m_x.energy[0] / 1000)
     for m_x in fully_mismatched_eigensolver_18q:
-        fully_mismatched_xplets_eigensolver_18q.Fill(m_x.coordinates[0][0])
+        fully_mismatched_xplets_eigensolver_18q.Fill(m_x.energy[0] / 1000)
     for r_x in reco_eigensolver_18q:
-        reco_xplets_eigensolver_18q.Fill(r_x.coordinates[0][0])
+        reco_xplets_eigensolver_18q.Fill(r_x.energy[0] / 1000)
     Teff_eigensolver_18q = TEfficiency(matched_xplets_eigensolver_18q, gen_xplets)
     Teff_fully_mis_eigensolver_18q = TEfficiency(fully_mismatched_xplets_eigensolver_18q, reco_xplets_eigensolver_18q)
 
@@ -219,11 +216,11 @@ if folder_vqe_ideal_qasm_sim_TwoLocal != "-1":
                                                                edges)
     reco_xplets_vqe_ideal_qasm_sim_TwoLocal = TH1F('reco xplets VQE Ideal Sim TwoLocal', 'x', len(edges) - 1, edges)
     for m_x in matched_vqe_ideal_qasm_sim_TwoLocal:
-        matched_xplets_vqe_ideal_qasm_sim_TwoLocal.Fill(m_x.coordinates[0][0])
+        matched_xplets_vqe_ideal_qasm_sim_TwoLocal.Fill(m_x.energy[0] / 1000)
     for m_x in fully_mismatched_vqe_ideal_qasm_sim_TwoLocal:
-        fully_mismatched_xplets_vqe_ideal_qasm_sim_TwoLocal.Fill(m_x.coordinates[0][0])
+        fully_mismatched_xplets_vqe_ideal_qasm_sim_TwoLocal.Fill(m_x.energy[0] / 1000)
     for r_x in reco_vqe_ideal_qasm_sim_TwoLocal:
-        reco_xplets_vqe_ideal_qasm_sim_TwoLocal.Fill(r_x.coordinates[0][0])
+        reco_xplets_vqe_ideal_qasm_sim_TwoLocal.Fill(r_x.energy[0] / 1000)
     Teff_vqe_ideal_qasm_sim_TwoLocal = TEfficiency(matched_xplets_vqe_ideal_qasm_sim_TwoLocal, gen_xplets)
     Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal = TEfficiency(fully_mismatched_xplets_vqe_ideal_qasm_sim_TwoLocal,
                                                              reco_xplets_vqe_ideal_qasm_sim_TwoLocal)
@@ -255,11 +252,11 @@ if folder_bit_flip != "-1":
     fully_mismatched_xplets_bit_flip = TH1F('mismatched bit flip search', 'x', len(edges) - 1, edges)
     reco_xplets_bit_flip = TH1F('reco xplets bit flip search', 'x', len(edges) - 1, edges)
     for m_x in matched_bit_flip:
-        matched_xplets_bit_flip.Fill(m_x.coordinates[0][0])
+        matched_xplets_bit_flip.Fill(m_x.energy[0] / 1000)
     for m_x in fully_mismatched_bit_flip:
-        fully_mismatched_xplets_bit_flip.Fill(m_x.coordinates[0][0])
+        fully_mismatched_xplets_bit_flip.Fill(m_x.energy[0] / 1000)
     for r_x in reco_bit_flip:
-        reco_xplets_bit_flip.Fill(r_x.coordinates[0][0])
+        reco_xplets_bit_flip.Fill(r_x.energy[0] / 1000)
     Teff_bit_flip = TEfficiency(matched_xplets_bit_flip, gen_xplets)
     Teff_fully_mis_bit_flip = TEfficiency(fully_mismatched_xplets_bit_flip, reco_xplets_bit_flip)
 
@@ -274,6 +271,7 @@ if folder_bit_flip != "-1":
     Teff_fully_mis_bit_flip.Draw("PSAME")
 
 
+
 gPad.SetRightMargin(0.13)
 gPad.Draw()
 
@@ -286,7 +284,7 @@ gen_xplets.Scale(scale)
 gen_xplets.Draw("HISTSAME")
 
 axis = TGaxis(gPad.GetUxmax(),
-              gPad.GetUymin(), 
+              gPad.GetUymin(),
               gPad.GetUxmax(),
               gPad.GetUymax(),
               0,
@@ -309,7 +307,7 @@ leg = TLegend(0.63, 0.23, 0.78, 0.65)
 latex = TLatex()
 latex.SetTextSize(0.05)
 latex.SetTextFont(42)
-latex.DrawLatex(0.16, 1.07, f"e-laser, #xi = {xi}, N_{{xplets,gen}}={len(gen)}")
+latex.DrawLatex(3.7, 1.07, f"e-laser, #xi = {xi}, N_{{xplets,gen}}={len(gen)}")
 
 if folder_eigensolver_7q != "-1":
     leg.AddEntry(Teff_eigensolver_7q, "Eigensolver (Q7)", "p")
@@ -341,5 +339,7 @@ leg.SetFillColor(0)
 leg.SetTextSize(0.03)
 leg.Draw()
 
+
+
 gen_out = "/".join(gen_folder.split("/")[0:-1])
-canv.SaveAs(f"{gen_out}/1Dxplet_efficiency_comparison_xi_{xi}_detector_position.pdf")
+canv.SaveAs(f"{gen_out}/1Dxplet_efficiency_comparison_xi_{xi}_energy.pdf")
