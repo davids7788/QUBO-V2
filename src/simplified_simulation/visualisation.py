@@ -86,7 +86,7 @@ class Visualisation:
                        f'\n$\sigma$ = {np.round(sigma_x, 4)}' + '\nnum_bins = ' +
                        str(num_bins[0]))
 
-        plt.xlabel('px [MeV]')
+        plt.xlabel('px [GeV]')
         plt.ylabel('hit counts')
         plt.legend(loc='best', fontsize=12)
 
@@ -104,7 +104,7 @@ class Visualisation:
                        f'\n$\sigma$ = {np.round(sigma_y, 4)}' + '\nnum_bins = ' +
                        str(num_bins[1]))
 
-        plt.xlabel('py [MeV]')
+        plt.xlabel('py [GeV]')
         plt.ylabel('hit counts')
         plt.legend(loc='best', fontsize=12)
 
@@ -121,7 +121,7 @@ class Visualisation:
                        f'\n$\sigma$ = {np.round(sigma_pt, 4)}' + '\nnum_bins = ' +
                        str(num_bins[2]))
 
-        plt.xlabel('pt [MeV]')
+        plt.xlabel('pt [GeV]')
         plt.ylabel('hit counts')
         plt.legend(loc='best', fontsize=12)
         plt.savefig('beam_source_visualisation/px_py_pt_beam_source.pdf')
