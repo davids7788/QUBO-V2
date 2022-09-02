@@ -102,12 +102,11 @@ for key, value in list_ibm_nairobi:
         if value**2 > ibm_nairobi_dump:
             ibm_nairobi_dump = value**2
 values_list_ibm_nairobi.append(ibm_nairobi_dump)
-states.append('max rest')
+states.append('max(rest)')
 
 values_list_ideal_sim.append(0.0)
 values_list_fake_nairobi.append(0.0)
 values_list_ibm_nairobi.append(0.0)
-
 
 
 ideal_sim_hist = TH1F("h1b", "ideal sim hist", len(states), 0, len(states))
@@ -124,8 +123,7 @@ for j in range(7):
     ideal_sim_hist.GetYaxis().ChangeLabel(j, -1, 0.05)
     
 
-    
-ideal_sim_hist.SetFillColor(9)
+ideal_sim_hist.SetFillColor(1)
 ideal_sim_hist.SetBarWidth(0.3)
 ideal_sim_hist.SetBarOffset(0.05)
 ideal_sim_hist.SetStats(0)
@@ -141,7 +139,7 @@ fake_nairobi_hist.SetBarOffset(0.35)
 
 fake_nairobi_hist.SetStats(0)
 
-ibm_nairobi_hist.SetFillColor(46)
+ibm_nairobi_hist.SetFillColor(9)
 ibm_nairobi_hist.SetBarWidth(0.3)
 ibm_nairobi_hist.SetBarOffset(0.65)
 ibm_nairobi_hist.SetStats(0)
@@ -158,14 +156,18 @@ latex = TLatex()
 latex.SetTextSize(0.05)
 latex.SetTextFont(42)
 latex.DrawLatex(4.65,.45,"N_{shots} = 512")
-            
+latex = TLatex()
+latex.SetTextSize(0.05)
+latex.SetTextFont(42)
+latex.DrawLatex(4.65,.35,"no error mitigation")
 
 
-leg = TLegend(0.55, 0.6, 0.95, 0.9)
+leg = TLegend(0.55, 0.6, 0.9, 0.9)
 
 leg.AddEntry(ideal_sim_hist, "Ideal Simulation", "f")
 leg.AddEntry(fake_nairobi_hist, "Fake Nairobi", "f")
 leg.AddEntry(ibm_nairobi_hist, "IBM Nairobi", "f")
+leg.SetHeader("Backends, 7 qubit systems")
 leg.Draw()
 canv.Draw()
 
