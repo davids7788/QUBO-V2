@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import ROOT
 from ROOT import *
 import numpy as np
