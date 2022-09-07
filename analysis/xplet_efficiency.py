@@ -37,6 +37,7 @@ x_distribution_generated = [get_xplet_x(xplet) for xplet in generated_xplets]
 x_distribution_matched = [get_xplet_x(xplet) for xplet in matched_xplets]
 x_distribution_fake = [get_xplet_x(xplet) for xplet in fake_xplets]
 
+print(np.around(len( matched_xplets) / len(generated_xplets), 3))
 
 # x dependent part
 n_matched_x, bins_matched_x, patches_matched_x = plt.hist(x_distribution_matched,

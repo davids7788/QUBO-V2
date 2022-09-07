@@ -11,7 +11,7 @@ binning:
 
 qubo parameters:
   b_ij conflict: 1.0
-  b_ij match: -1
+  b_ij match: two norm angle standard deviation
   a_i: 0
 
 scale range parameters:

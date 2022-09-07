@@ -56,8 +56,10 @@ for file in os.listdir():
         writer.writeheader()
         
         for key, plane in zip(data['Plane list'].keys(), data['Plane list'].values()):
-            sigma_x_resolution = (plane.limits_x[1] - plane.limits_x[0]) / (plane.num_bins[0]) / np.sqrt(12)
-            sigma_y_resolution = (plane.limits_y[1] - plane.limits_y[0]) / (plane.num_bins[1]) / np.sqrt(12)
+            # sigma_x_resolution = (plane.limits_x[1] - plane.limits_x[0]) / (plane.num_bins[0]) / np.sqrt(12)
+            # sigma_y_resolution = (plane.limits_y[1] - plane.limits_y[0]) / (plane.num_bins[1]) / np.sqrt(12)
+            sigma_x_resolution = 5e-6
+            sigma_y_resolution = 5e-6
             for particle, hit in zip(plane.true_hits_dictionary.keys(), plane.true_hits_dictionary.values()):
                 smeared_x = np.random.normal(hit[0], sigma_x_resolution)
                 smeared_y = np.random.normal(hit[0], sigma_y_resolution)
