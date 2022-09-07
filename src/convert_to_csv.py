@@ -62,7 +62,7 @@ for file in os.listdir():
             sigma_y_resolution = 5e-6
             for particle, hit in zip(plane.true_hits_dictionary.keys(), plane.true_hits_dictionary.values()):
                 smeared_x = np.random.normal(hit[0], sigma_x_resolution)
-                smeared_y = np.random.normal(hit[0], sigma_y_resolution)
+                smeared_y = np.random.normal(hit[1], sigma_y_resolution)
                 writer.writerow({'hit_ID': hit_id,
                                  'x': smeared_x,
                                  'y': smeared_y,

@@ -11,7 +11,7 @@ SetLuxeStyle()
 
 ideal_sim = np.load("../../SummerStudent/result_ideal_sim.npy", allow_pickle=True)[()].eigenstate
 fake_nairobi = np.load("../../SummerStudent/result_vqe_fake_nairobi.npy", allow_pickle=True)[()].eigenstate
-ibm_nairobi = np.load("../../SummerStudent/result_vqe_ibm_nairobi.npy", allow_pickle=True)[()]
+ibm_nairobi = np.load("../../SummerStudent/result_vqe_ibm.npy", allow_pickle=True)[()].eigenstate
 
 num_states = 6
 
@@ -159,7 +159,7 @@ latex.DrawLatex(4.65,.45,"N_{shots} = 512")
 latex = TLatex()
 latex.SetTextSize(0.05)
 latex.SetTextFont(42)
-latex.DrawLatex(4.65,.35,"no error mitigation")
+latex.DrawLatex(4.65,.35,"error mitigation applied")
 
 
 leg = TLegend(0.55, 0.6, 0.9, 0.9)

@@ -23,6 +23,7 @@ sum_w_xi_4 = sum(file_xi_4["/final-state/positron/weight"])
 sum_w_xi_5 = sum(file_xi_5["/final-state/positron/weight"])
 sum_w_xi_7 = sum(file_xi_7["/final-state/positron/weight"])
 
+
 for entry, weight in zip(file_xi_4["/final-state/positron/momentum"], file_xi_4["/final-state/positron/weight"]):
     xi_4.Fill(entry[0], weight)
 for entry, weight in zip(file_xi_5["/final-state/positron/momentum"], file_xi_5["/final-state/positron/weight"]):
@@ -50,11 +51,11 @@ xi_7.DrawNormalized("EHISTSAME")
 
 LUXELabel(0.2, 0.85)
 
-
-leg = TLegend(0.5, 0.7, 0.7, 0.9)
-leg.AddEntry(xi_4, "phase-0, e-laser, #xi = 4.0", "l")
-leg.AddEntry(xi_5, "phase-0, e-laser, #xi = 5.0", "l")
-leg.AddEntry(xi_7, "phase-0, e-laser, #xi = 7.0", "l")
+leg = TLegend(0.6, 0.7, 0.8, 0.9)
+leg.AddEntry(xi_4, f"#xi = 4.0", "l")
+leg.AddEntry(xi_5, f"#xi = 5.0", "l")
+leg.AddEntry(xi_7, f"#xi = 7.0", "l")
+leg.SetHeader("e-laser, phase-0")
 leg.SetBorderSize(0)
 leg.SetFillColor(0)
 leg.SetTextSize(0.05)
