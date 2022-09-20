@@ -32,10 +32,10 @@ class Xplet:
             self.energy.update({2: triplet.doublet_2.energy_2})
 
         else:
-            insert_position = len(self.triplet_ids) + 2
+            insert_position = len(self.triplet_ids) + 1
             self.hit_ids.update({insert_position: triplet.doublet_2.hit_2_id})
             self.particle_ids.update({insert_position: triplet.doublet_2.hit_2_particle_key})
             self.coordinates.update({insert_position: triplet.doublet_2.hit_2_position})
-            self.energy.update({2: triplet.doublet_2.energy_2})
+            self.energy.update({insert_position - 1: triplet.doublet_2.energy_2})
 
         self.is_empty = False
