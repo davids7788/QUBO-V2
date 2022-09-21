@@ -12,7 +12,7 @@ SetLuxeStyle()
 
 file_xi_4 = h5py.File("/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/phase0/gpc/4.0/e0gpc_4.0_0000_particles.h5", 'r')
 file_xi_5 = h5py.File("/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/phase0/gpc/5.0/e0gpc_5.0_0000_particles.h5", 'r')
-file_xi_7 = h5py.File("/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/phase0/gpc/7.0/e0gpc_7.0_0000_particles.h5", 'r')
+file_xi_7 = h5py.File("/nfs/dust/luxe/user/kropfann/7.0_phase0_dt0.5/00/e0gpc_7.0_0000_particles.h5", 'r')
 
 h_frame = TH1F('xi', 'energy', 40, 1, 11)
 xi_4 = TH1F('xi 4', 'energy xi 4', 40, 1, 11)

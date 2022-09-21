@@ -9,11 +9,11 @@ ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
 
 SetLuxeStyle()
 
-ideal_sim = np.load("../../SummerStudent/result_ideal_sim.npy", allow_pickle=True)[()].eigenstate
-fake_nairobi = np.load("../../SummerStudent/result_vqe_fake_nairobi.npy", allow_pickle=True)[()].eigenstate
-ibm_nairobi = np.load("../../SummerStudent/result_vqe_ibm.npy", allow_pickle=True)[()].eigenstate
+ideal_sim = np.load("../../SummerStudent/result_ideal_simH.npy", allow_pickle=True)[()].eigenstate
+fake_nairobi = np.load("../../SummerStudent/result_vqe_fake_nairobiH.npy", allow_pickle=True)[()].eigenstate
+ibm_nairobi = np.load("../../SummerStudent/result_vqe_ibmH.npy", allow_pickle=True)[()].eigenstate
 
-num_states = 6
+num_states = 7
 
 list_ideal_sim = list(ideal_sim.items())
 list_ideal_sim.sort(key=lambda x: x[1], reverse=True)

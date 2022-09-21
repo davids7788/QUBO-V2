@@ -2,7 +2,7 @@ import ROOT
 from ROOT import *
 import numpy as np
 import sys
-sys.path.append("../src")
+sys.path.append("../src/simplified_simulation")
 
 ROOT.gROOT.LoadMacro("macros/LuxeStyle.C")
 ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
@@ -13,7 +13,7 @@ file = sys.argv[1]
 data = np.load(file, allow_pickle=True)[()]['True detector hits']['Plane 0']
 xi = file.split("e0gpc_")[1].split("_")[0]
 
-# Setup as of beginning of September 2021
+# Setup as of beginning of September 2021, information not needed, jsut added for completeness
 CHIPS_SIZE_X = 0.02994176
 CHIPS_SIZE_Y = 0.01376256
 
@@ -32,7 +32,7 @@ CHIPS_SIZE_Y_SIMPLE = CHIPS_SIZE_Y
 Z_POSITIONS_SIMPLE = [(Z_POSITIONS[0] + Z_POSITIONS[1]) / 2,
                       (Z_POSITIONS[2] + Z_POSITIONS[3]) / 2,
                       (Z_POSITIONS[4] + Z_POSITIONS[5]) / 2,
-                      (Z_POSITIONS[6] + Z_POSITIONS[7]) / 2]
+                       (Z_POSITIONS[6] + Z_POSITIONS[7]) / 2]
 
 PIXEL_X_SIMPLE = 18 * PIXEL_X
 PIXEL_Y_SIMPLE = PIXEL_Y
@@ -44,22 +44,38 @@ Y_START_POSITION_SIMPLE = - 0.5 * CHIPS_SIZE_Y_SIMPLE
 Y_END_POSITION_SIMPLE = 0.5 * CHIPS_SIZE_Y_SIMPLE
 
 
-occupancy = ROOT.TH2F('detector occupancy', 
+
+
+occupancy = ROOT.TH2F('detector occupancy',        # actual pixels taken into account
                       'x vs y', 
-                      1816, 
+                      1536, 
                       X_START_POSITION_SIMPLE, 
                       X_END_POSITION_SIMPLE, 
-                      52, 
+                      64, 
                       Y_START_POSITION_SIMPLE, 
                       Y_END_POSITION_SIMPLE)
 
+# occupancy = ROOT.TH2F('detector occupancy',               # per mm²
+#                       'x vs y', 
+#                       500, 
+#                       0.050, 
+#                       0.5500, 
+#                       14, 
+#                       - 0.007, 
+#                       + 0.007)
+
 for value in data.values():
     occupancy.Fill(value[0], value[1])
-    
+     
 canv = TCanvas("example1", "xplet efficiency ", 600, 400)
 
 occupancy.GetYaxis().SetTitle("y [m]")
 occupancy.GetXaxis().SetTitle("x [m]")
+occupancy.GetYaxis().SetNdivisions(211)
+occupancy.GetXaxis().SetNdivisions(211)
+# for i in range(15):
+#     occupancy.GetYaxis().ChangeLabel(i,-1,-1,-1,-1,-1,f"{7-i}")
+
 occupancy.Draw("COLZ")
 LUXELabel(0.2, 0.82)
 
@@ -72,7 +88,7 @@ latex = TLatex()
 latex.SetTextSize(0.045)
 latex.SetTextFont(42)
 latex.SetTextAngle(90)
-latex.DrawLatex(0.645, -0.0008, "occupancy / 100 pixel")
+latex.DrawLatex(0.645, -0.003, "occupancy /  100 pixel")
 
 
 gPad.SetRightMargin(0.15)

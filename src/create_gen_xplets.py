@@ -49,9 +49,12 @@ with open(tracking_data_file, 'r') as file:
     particle_id_index = csv_header_tracking_file.index("particle_ID")
     layer_id_index = csv_header_tracking_file.index("layer_ID")
     particle_energy_index = csv_header_tracking_file.index("particle_energy")
-
+    
     for row in csv_reader_tracking_file:
         rows.append(row)
+    
+
+    
     for i, row in enumerate(rows):
         if float(row[z_index]) not in first_layer:
             continue
@@ -78,7 +81,7 @@ with open(tracking_data_file, 'r') as file:
                                             float(x_plet_pieces[j + 1][particle_energy_index])))
             triplet_list = []
             for k in range(len(doublet_list) - 1):
-                triplet_list.append(Triplet(doublet_list[k], doublet_list[k], -1))
+                triplet_list.append(Triplet(doublet_list[k], doublet_list[k + 1], -1))
             truth_pattern = Xplet()
             for triplet in triplet_list:
                 truth_pattern.add_triplet(triplet)
