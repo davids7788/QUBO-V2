@@ -37,10 +37,10 @@ gStyle.SetPadTickY(0)
 canv = TCanvas("example","xplet efficiency ", 800, 600)
 
 h_frame = TH1F('frame', 'x', len(edges) - 1, edges)
-h_frame.GetYaxis().SetTitle("efficiency")
+h_frame.GetYaxis().SetTitle("fake rate")
 h_frame.GetXaxis().SetTitle("energy [GeV]")
 h_frame.GetXaxis().SetNdivisions(215)
-h_frame.SetMaximum(1.18)
+h_frame.SetMaximum(0.68)
 
 h_frame.GetXaxis().SetLabelOffset(0.02)
 h_frame.GetXaxis().SetRangeUser(0.0, 11.0)
@@ -88,12 +88,12 @@ if folder_eigensolver_7q != "-1":
     Teff_eigensolver_7q.SetMarkerStyle(20)
     Teff_eigensolver_7q.SetMarkerColorAlpha(2, 0.85)
     Teff_eigensolver_7q.SetMarkerSize(1.5)
-    Teff_eigensolver_7q.Draw("PSAME")
+    # Teff_eigensolver_7q.Draw("PSAME")
 
     Teff_fully_mis_eigensolver_7q.SetMarkerStyle(24)
     Teff_fully_mis_eigensolver_7q.SetMarkerColorAlpha(2, 0.85)
     Teff_fully_mis_eigensolver_7q.SetMarkerSize(1.5)
-    # Teff_fully_mis_eigensolver_7q.Draw("PSAME")
+    Teff_fully_mis_eigensolver_7q.Draw("PSAME")
 
 
 
@@ -135,12 +135,12 @@ if folder_eigensolver_12q != "-1":
     Teff_eigensolver_12q.SetMarkerStyle(21)
     Teff_eigensolver_12q.SetMarkerColorAlpha(3, 0.85)
     Teff_eigensolver_12q.SetMarkerSize(1.5)
-    Teff_eigensolver_12q.Draw("PSAME")
+    # Teff_eigensolver_12q.Draw("PSAME")
 
     Teff_fully_mis_eigensolver_12q.SetMarkerStyle(25)
     Teff_fully_mis_eigensolver_12q.SetMarkerColorAlpha(3, 0.85)
     Teff_fully_mis_eigensolver_12q.SetMarkerSize(1.5)
-    # Teff_fully_mis_eigensolver_12q.Draw("PSAME")
+    Teff_fully_mis_eigensolver_12q.Draw("PSAME")
 
 
 if folder_eigensolver_14q != "-1":
@@ -180,12 +180,12 @@ if folder_eigensolver_14q != "-1":
     Teff_eigensolver_14q.SetMarkerStyle(22)
     Teff_eigensolver_14q.SetMarkerColorAlpha(4, 0.85)
     Teff_eigensolver_14q.SetMarkerSize(1.5)
-    Teff_eigensolver_14q.Draw("PSAME")
+    # Teff_eigensolver_14q.Draw("PSAME")
 
     Teff_fully_mis_eigensolver_14q.SetMarkerStyle(26)
     Teff_fully_mis_eigensolver_14q.SetMarkerColorAlpha(4, 0.85)
     Teff_fully_mis_eigensolver_14q.SetMarkerSize(1.5)
-    # Teff_fully_mis_eigensolver_14q.Draw("PSAME")
+    Teff_fully_mis_eigensolver_14q.Draw("PSAME")
     
 if folder_eigensolver_18q != "-1":
     reco_eigensolver_18q = np.load(f"{folder_eigensolver_18q}/reco_xplet_list.npy",
@@ -224,12 +224,12 @@ if folder_eigensolver_18q != "-1":
     Teff_eigensolver_18q.SetMarkerStyle(23)
     Teff_eigensolver_18q.SetMarkerColorAlpha(6, 0.85)
     Teff_eigensolver_18q.SetMarkerSize(1.5)
-    Teff_eigensolver_18q.Draw("PSAME")
+    # Teff_eigensolver_18q.Draw("PSAME")
 
     Teff_fully_mis_eigensolver_18q.SetMarkerStyle(32)
     Teff_fully_mis_eigensolver_18q.SetMarkerColorAlpha(6, 0.85)
     Teff_fully_mis_eigensolver_18q.SetMarkerSize(1.5)
-    # Teff_fully_mis_eigensolver_18q.Draw("PSAME")
+    Teff_fully_mis_eigensolver_18q.Draw("PSAME")
 
 
 if folder_vqe_ideal_qasm_sim_TwoLocal != "-1":
@@ -272,12 +272,12 @@ if folder_vqe_ideal_qasm_sim_TwoLocal != "-1":
     Teff_vqe_ideal_qasm_sim_TwoLocal.SetMarkerStyle(33)
     Teff_vqe_ideal_qasm_sim_TwoLocal.SetMarkerColorAlpha(7, 0.85)
     Teff_vqe_ideal_qasm_sim_TwoLocal.SetMarkerSize(1.5)
-    Teff_vqe_ideal_qasm_sim_TwoLocal.Draw("PSAME")
+    # Teff_vqe_ideal_qasm_sim_TwoLocal.Draw("PSAME")
 
     Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal.SetMarkerStyle(27)
     Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal.SetMarkerColorAlpha(7, 0.85)
     Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal.SetMarkerSize(1.5)
-    # Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal.Draw("PSAME")
+    Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal.Draw("PSAME")
 
 if folder_bit_flip != "-1":
     reco_bit_flip = np.load(f"{folder_bit_flip}/reco_xplet_list.npy", allow_pickle=True)
@@ -316,20 +316,20 @@ if folder_bit_flip != "-1":
     Teff_bit_flip.SetMarkerStyle(34)
     Teff_bit_flip.SetMarkerColorAlpha(1, 0.85)
     Teff_bit_flip.SetMarkerSize(1.5)
-    Teff_bit_flip.Draw("PSAME")
+    # Teff_bit_flip.Draw("PSAME")
 
     Teff_fully_mis_bit_flip.SetMarkerStyle(28)
     Teff_fully_mis_bit_flip.SetMarkerColorAlpha(1, 0.85)
     Teff_fully_mis_bit_flip.SetMarkerSize(1.5)
-    # Teff_fully_mis_bit_flip.Draw("PSAME")
+    Teff_fully_mis_bit_flip.Draw("PSAME")
 
 
 
 gPad.SetRightMargin(0.13)
 gPad.Draw()
 
-rightmax = gen_xplets.GetMaximum() * 1.18
-scale = gPad.GetUymax() / rightmax
+rightmax = gen_xplets.GetMaximum() * 0.68 * 2
+scale = gPad.GetUymax() / rightmax 
 
 gen_xplets.SetLineColorAlpha(33, 0.99)
 gen_xplets.SetLineWidth(2)
@@ -360,31 +360,31 @@ leg = TLegend(0.55, 0.4, 0.8, 0.65)
 latex = TLatex()
 latex.SetTextSize(0.05)
 latex.SetTextFont(42)
-latex.DrawLatex(7.5, 1.07, f"N_{{xplets,gen}}={len(gen)}")
+latex.DrawLatex(7.5, 0.615, f"N_{{xplets,gen}}={len(gen)}")
 
 if folder_eigensolver_7q != "-1":
-    leg.AddEntry(Teff_eigensolver_7q, "Eigensolver (Q7)", "p")
-    # leg.AddEntry(Teff_fully_mis_eigensolver_7q, "Eigensolver (Q7)", "p")
+    # leg.AddEntry(Teff_eigensolver_7q, "Eigensolver (Q7)", "p")
+    leg.AddEntry(Teff_fully_mis_eigensolver_7q, "Eigensolver (Q7)", "p")
 
 if folder_eigensolver_12q != "-1":
-    leg.AddEntry(Teff_eigensolver_12q, "Eigensolver (Q12)", "p")
-    # leg.AddEntry(Teff_fully_mis_eigensolver_12q, "Eigensolver (Q12)", "p")
+    # leg.AddEntry(Teff_eigensolver_12q, "Eigensolver (Q12)", "p")
+    leg.AddEntry(Teff_fully_mis_eigensolver_12q, "Eigensolver (Q12)", "p")
 
 if folder_eigensolver_14q != "-1":
-    leg.AddEntry(Teff_eigensolver_14q, "Eigensolver (Q14)", "p")
-    # leg.AddEntry(Teff_fully_mis_eigensolver_14q, "Eigensolver (Q14)", "p")
+    # leg.AddEntry(Teff_eigensolver_14q, "Eigensolver (Q14)", "p")
+    leg.AddEntry(Teff_fully_mis_eigensolver_14q, "Eigensolver (Q14)", "p")
 
 if folder_eigensolver_18q != "-1":
-    leg.AddEntry(Teff_eigensolver_18q, "Eigensolver (Q18)", "p")
-    # leg.AddEntry(Teff_fully_mis_eigensolver_18q, "Eigensolver (Q18)", "p")
+    # leg.AddEntry(Teff_eigensolver_18q, "Eigensolver (Q18)", "p")
+    leg.AddEntry(Teff_fully_mis_eigensolver_18q, "Eigensolver (Q18)", "p")
 
 if folder_vqe_ideal_qasm_sim_TwoLocal != "-1":
-    leg.AddEntry(Teff_vqe_ideal_qasm_sim_TwoLocal, "VQE (Q7)", "p")
-    # leg.AddEntry(Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal, "VQE (Q7)", "p")
+    # leg.AddEntry(Teff_vqe_ideal_qasm_sim_TwoLocal, "VQE (Q7)", "p")
+    leg.AddEntry(Teff_fully_mis_vqe_ideal_qasm_sim_TwoLocal, "VQE (Q7)", "p")
 
 if folder_bit_flip != "-1":
-    leg.AddEntry(Teff_bit_flip, "bit flip search", "p")
-    # leg.AddEntry(Teff_fully_mis_bit_flip, "bit flip search", "p")
+    # leg.AddEntry(Teff_bit_flip, "bit flip search", "p")
+    leg.AddEntry(Teff_fully_mis_bit_flip, "bit flip search", "p")
 
 leg.AddEntry(gen_xplets, "gen xplets", "l")
 leg.SetBorderSize(0)
@@ -395,4 +395,4 @@ leg.Draw()
 
 
 gen_out = "/".join(gen_folder.split("/")[0:-1])
-canv.SaveAs(f"1Dxplet_efficiency_comparison_xi_{xi}_energy.pdf")
+canv.SaveAs(f"1Dxplet_frate_comparison_xi_{xi}_energy.pdf")

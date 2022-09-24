@@ -22,7 +22,7 @@ xi = preselection_folder.split("e0gpc_")[1].split("_")[0]
 gen_particles = set()
 
 doublet_angles = TH1F('gen doublets', 'energy', 50, 0.0526 - 0.0012, 0.0526 + 0.0012)
-triplet_angles = TH1F('gen triplets passed doublets', 'energy', 50, 0.0, 1.1e-3)
+triplet_angles = TH1F('gen triplets passed doublets', 'energy', 50, 0.0, 1.2e-3)
 
 
 
@@ -134,7 +134,7 @@ canv = TCanvas("example", "doublet angle", 800, 600)
 
 h_frame = TH1F('frame', 'energy', 50, 0.0526 - 0.0012, 0.0526 + 0.0012)
 h_frame.GetYaxis().SetTitle("fraction of counts")
-h_frame.GetXaxis().SetTitle("[a.u]")
+h_frame.GetXaxis().SetTitle("dx/x_{0}")
 h_frame.GetYaxis().SetTitleSize(0.055)
 h_frame.GetXaxis().SetTitleSize(0.055)
 h_frame.GetXaxis().SetLabelOffset(0.02)
@@ -152,11 +152,10 @@ lower_bound_doublets.Draw("SAME")
 upper_bound_doublets.Draw("SAME")
 
 
-LUXELabel(0.7, 0.8)
+LUXELabel(0.7, 0.85)
 
-leg = TLegend(0.45, 0.25, 0.6, 0.4)
-leg.AddEntry(doublet_angles, "dx/x_{0}", "l")
-leg.AddEntry(lower_bound_doublets, "selection: #mu #pm 3 #sigma", "l")
+leg = TLegend(0.7, 0.75, 0.85, 0.85)
+
 leg.SetBorderSize(0)
 leg.SetHeader(f"#xi = {xi}")
 leg.SetFillColor(0)
@@ -173,7 +172,7 @@ canv2 = TCanvas("example", "triplet angle", 800, 600)
 
 h_frame = TH1F('frame', 'energy', 50, -0.0001, 1.1e-3)
 h_frame.GetYaxis().SetTitle("fraction of counts")
-h_frame.GetXaxis().SetTitle("angle [rad]")
+h_frame.GetXaxis().SetTitle("#sqrt{#theta_{xz}^{2} + #theta_{yz}^{2}}")
 h_frame.GetYaxis().SetTitleSize(0.055)
 h_frame.GetXaxis().SetTitleSize(0.055)
 h_frame.GetXaxis().SetLabelOffset(0.02)
@@ -188,12 +187,9 @@ triplet_angles.Draw("HISTSAME")
 
 upper_bound_triplets.Draw("SAME")
 
+LUXELabel(0.6, 0.85, "e-laser, phase-0")
+leg = TLegend(0.7, 0.75, 0.85, 0.85)
 
-LUXELabel(0.7, 0.8)
-
-leg = TLegend(0.55, 0.4, 0.7, 0.6)
-leg.AddEntry(triplet_angles, "#sqrt{xz_{angle}^{2} + yz_{angle}^{2}}", "l")
-leg.AddEntry(lower_bound_doublets, "selection: #leq 0.001", "l")
 leg.SetBorderSize(0)
 leg.SetHeader(f"#xi = {xi}")
 leg.SetFillColor(0)

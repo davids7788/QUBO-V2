@@ -153,54 +153,92 @@ gStyle.SetPadTickY(0)
 canv = TCanvas("example", "preselection efficiency ", 800, 600)
 
 h_frame = TH1F('frame', 'energy', len(edges) - 1, edges)
-h_frame.GetYaxis().SetTitle("fraction of counts")
+h_frame.GetYaxis().SetTitle("efficiency")
 h_frame.GetXaxis().SetTitle("true energy [GeV]")
 h_frame.GetYaxis().SetTitleSize(0.055)
 h_frame.GetXaxis().SetTitleSize(0.055)
-h_frame.GetXaxis().SetNdivisions(105)
-h_frame.GetYaxis().SetNdivisions(105)
+# h_frame.GetXaxis().SetNdivisions(115)
+# h_frame.GetYaxis().SetNdivisions(115)
 h_frame.SetMaximum(1.01)
 h_frame.SetMinimum(0.8)
 h_frame.GetXaxis().SetLabelOffset(0.02)
 h_frame.GetXaxis().SetRangeUser(0.0, 12.0)
-h_frame.Draw("PSAME")
+h_frame.Draw()
 
 # Teff
 eff_doublets = TEfficiency(matched_doublets, gen_doublets)
 eff_doublets.SetMarkerStyle(8)
 eff_doublets.SetMarkerColor(kRed)
-eff_doublets.SetMarkerSize(1.95)
-eff_doublets.Draw("PSAME")
+eff_doublets.SetMarkerSize(1.0)
+eff_doublets.Draw("PSAME X0")
+gPad.Update()
+
+eff_d_gr = eff_doublets.GetPaintedGraph().Clone()
+for i in range(eff_d_gr.GetN()):
+    eff_d_gr.GetEXlow()[i] = 0
+    eff_d_gr.GetEXhigh()[i] = 0 
+eff_d_gr.SetMarkerStyle(8)
+eff_d_gr.SetMarkerColor(kRed)
+eff_d_gr.SetLineColor(kRed)
+eff_d_gr.SetMarkerSize(1.0)
+eff_d_gr.Draw("PSAME")
 
 matched_triplets_clone = matched_triplets.Clone()
 
 eff_triplets = TEfficiency(matched_triplets, gen_triplets_passed_doublets)
 eff_triplets.SetMarkerStyle(8)
 eff_triplets.SetMarkerColor(kBlue)
-eff_triplets.SetMarkerSize(1.95)
-eff_triplets.Draw("PSAME")
+eff_triplets.SetMarkerSize(1.0)
+eff_triplets.Draw("PSAME X0")
+gPad.Update()
+
+eff_tr_gr = eff_triplets.GetPaintedGraph().Clone()
+for i in range(eff_tr_gr.GetN()):
+    eff_tr_gr.GetEXlow()[i] = 0
+    eff_tr_gr.GetEXhigh()[i] = 0 
+eff_tr_gr.SetMarkerStyle(8)
+eff_tr_gr.SetLineColor(kBlue)
+eff_tr_gr.SetMarkerSize(1.0)
+eff_tr_gr.Draw("PSAME")
+
 
 # Teff total
 
 eff_total = TEfficiency(matched_triplets_clone, gen_triplets)
 eff_total.SetMarkerStyle(8)
 eff_total.SetMarkerColor(kBlack)
-eff_total.SetMarkerSize(1.95)
-eff_total.Draw("PSAME")
+eff_total.SetMarkerSize(1.0)
+eff_total.Draw("PSAME X0")
+gPad.Update()
+
+eff_t_gr = eff_total.GetPaintedGraph().Clone()
+for i in range(eff_t_gr.GetN()):
+    eff_t_gr.GetEXlow()[i] = 0
+    eff_t_gr.GetEXhigh()[i] = 0 
+eff_t_gr.SetMarkerStyle(8)
+eff_t_gr.SetLineColor(kBlack)
+eff_t_gr.SetMarkerSize(1.0)
+eff_t_gr.Draw("PSAME")
 
 
 
-LUXELabel(0.8, 0.2)
+LUXELabel(0.8, 0.75)
 
 leg = TLegend(0.6, 0.4, 0.85, 0.65)
-leg.AddEntry(eff_doublets, "doublet efficiency", "p")
-leg.AddEntry(eff_triplets, "triplet efficiency", "p")
-leg.AddEntry(eff_total, "total efficiency", "p")
+leg.AddEntry(eff_doublets, "doublet", "p")
+leg.AddEntry(eff_triplets, "triplet", "p")
+leg.AddEntry(eff_total, "total", "p")
 leg.SetBorderSize(0)
 leg.SetFillColor(0)
 leg.SetTextSize(0.04)
-leg.SetHeader(f"#xi = {xi}")
 leg.Draw()
+
+leg2 = TLegend(0.8, 0.65, 0.9, 0.75)
+leg2.SetBorderSize(0)
+leg2.SetFillColor(0)
+leg2.SetTextSize(0.04)
+leg2.SetHeader(f"#xi = {xi}")
+leg2.Draw()
 
 
 canv.SaveAs(f"preselection_efficiency_{xi}.pdf")

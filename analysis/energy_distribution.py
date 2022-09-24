@@ -33,7 +33,7 @@ for entry, weight in zip(file_xi_7["/final-state/positron/momentum"], file_xi_7[
 
 canv = TCanvas("example","xplet efficiency ", 800, 600)    
 h_frame.GetYaxis().SetTitle("fraction of counts / 250 MeV")
-h_frame.GetXaxis().SetTitle("energy [GeV]")
+h_frame.GetXaxis().SetTitle("positron energy [GeV]")
 h_frame.SetMaximum(0.085)
 h_frame.Draw()
 

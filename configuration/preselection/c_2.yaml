@@ -1,0 +1,20 @@
+---
+doublet:
+  dx/x0 : 0.0526
+  eps: 0.0009
+
+triplet:
+  max scattering: 0.0010
+
+binning:
+  num bins x: 2000
+
+qubo parameters:
+  b_ij conflict: 1.0
+  b_ij match: two norm angle standard deviation
+  a_i: two norm angle standard deviation
+
+scale range parameters:
+  z_scores: True
+  quality: [-0.01, 0.01]
+  interaction: [-1.0, -0.9]

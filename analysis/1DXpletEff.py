@@ -108,7 +108,7 @@ Tfake_error = TEfficiency(fake_xplets, reco_xplets)
 gStyle.SetPadTickY(0)   
 canv = TCanvas("example","xplet efficiency ", 800, 600)
 
-h_frame.GetYaxis().SetTitle("fraction of counts")
+h_frame.GetYaxis().SetTitle("efficiency")
 h_frame.GetXaxis().SetTitle("x [m]")
 h_frame.Draw()
 
@@ -150,7 +150,7 @@ axis.SetTitleOffset(1.4)
 axis.Draw()
 
 
-LUXELabel(0.75, 0.85);
+LUXELabel(0.75, 0.85, "e-laser, phase-0")
 
 leg = TLegend(0.55, 0.7, 0.75, 0.9)
 leg.AddEntry(Teff_error, "efficiency", "p")
