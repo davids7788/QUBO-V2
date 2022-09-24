@@ -15,7 +15,7 @@ solver:
   maxiter: 4000
   maxfev: 250
   seed: 0
-  shots: 128
+  shots: 10
   optimisation level: 3
 
 qubo:

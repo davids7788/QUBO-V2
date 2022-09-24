@@ -9,7 +9,7 @@ ansatz:
   skip unentangled qubits: null
 
 solver:
-  algorithm: "Numpy Eigensolver"
+  algorithm: null
   backend: null
   optimiser: null
   maxiter: null
@@ -22,11 +22,11 @@ qubo:
   optimisation strategy: "impact list"
   hamiltonian rescaling: null
   initial binary vector: "ones"
-  search depth: 5
-  num qubits: 12
+  search depth: 0
+  num qubits: null
   error mitigation algorithm: null
   compare to eigensolver: null
 
 bit flip optimisation:
-  iterations: null
-  reverse: null
+  iterations: 25
+  reverse: False

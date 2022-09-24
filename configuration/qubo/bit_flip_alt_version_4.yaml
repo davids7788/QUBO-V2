@@ -21,7 +21,7 @@ solver:
 qubo:
   optimisation strategy: "impact list"
   hamiltonian rescaling: null
-  initial binary vector: "ones"
+  initial binary vector: "random"
   search depth: 0
   num qubits: null
   error mitigation algorithm: null
