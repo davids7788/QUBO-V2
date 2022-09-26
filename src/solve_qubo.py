@@ -63,5 +63,5 @@ qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
                                 save_folder=new_folder)
 
 # Select solving method
-if config_file["qubo"]["optimisation strategy"] == "impact list":
+if "impact list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_process()
