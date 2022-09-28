@@ -12,3 +12,4 @@ submit/
 /simplified_simulation_files*
 /qubo_files*
 /*csv
+/test_files_qubo/
