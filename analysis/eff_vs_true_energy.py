@@ -14,17 +14,16 @@ matched_def = int(sys.argv[1])
 folder_eigensolver_7q = sys.argv[2]
 folder_vqe_ideal_qasm_sim_TwoLocal = sys.argv[3]
 folder_eigensolver_12q = sys.argv[4]
-folder_eigensolver_14q = sys.argv[5]
+folder_eigensolver_16q = sys.argv[5]
 folder_eigensolver_18q = sys.argv[6]
 folder_bit_flip = sys.argv[7]
+gen_x_plets = sys.argv[8]
 
-gen_folder = "-".join("/".join(folder_bit_flip.split("/")[0:-1]).split("-")[0:-1])
-print(gen_folder)
-xi = folder_bit_flip.split("e0gpc_")[1].split("_")[0]
+xi = folder_eigensolver_7q.split("e0gpc_")[1].split("_")[0]
 
 
 # Load data sets
-gen = np.load(gen_folder + "_gen_xplet_list.npy", allow_pickle=True)
+gen = np.load(gen_x_plets, allow_pickle=True)
 print(f"Generated tracks: {len(gen)}\n")
 edges_left = [1.5]
 edges_mid = [2.0 + 0.4 * i for i in range(15)]
@@ -143,49 +142,49 @@ if folder_eigensolver_12q != "-1":
     # Teff_fully_mis_eigensolver_12q.Draw("PSAME")
 
 
-if folder_eigensolver_14q != "-1":
-    reco_eigensolver_14q = np.load(f"{folder_eigensolver_14q}/reco_xplet_list.npy",
+if folder_eigensolver_16q != "-1":
+    reco_eigensolver_16q = np.load(f"{folder_eigensolver_16q}/reco_xplet_list.npy",
                                    allow_pickle=True)
-    matched_eigensolver_14q = []
-    fully_mismatched_eigensolver_14q = []
-    for xplet in reco_eigensolver_14q:
+    matched_eigensolver_16q = []
+    fully_mismatched_eigensolver_16q = []
+    for xplet in reco_eigensolver_16q:
         matched = False
         for particle in set(xplet.particle_ids.values()):
             if list(xplet.particle_ids.values()).count(particle) >= matched_def:
-                matched_eigensolver_14q.append(xplet)
+                matched_eigensolver_16q.append(xplet)
                 matched = True
         if not matched:
-            fully_mismatched_eigensolver_14q.append(xplet)
-    print(f"Efficiency on xplets for Numpy Eigensolver 14 qubits: "
-          f"{np.around(len(matched_eigensolver_14q) / len(gen), 3)}")
-    print(f"Mismatched (> {4 - matched_def} particle IDs / xplet) for Numpy Eigensolver 14 qubits: "
-          f"{np.around(len(fully_mismatched_eigensolver_14q) / len(reco_eigensolver_14q), 3)}")
-    matched_xplets_eigensolver_14q = TH1F('matched xplets Numpy Eigensolver 14q', 'x', len(edges) - 1, edges)
-    fully_mismatched_xplets_eigensolver_14q = TH1F('mismatched Numpy Eigensolver 14q', 'x', len(edges) - 1, edges)
-    reco_xplets_eigensolver_14q = TH1F('reco xplets Numpy Eigensolver 14q', 'x', len(edges) - 1, edges)
-    for m_x in matched_eigensolver_14q:
-        matched_xplets_eigensolver_14q.Fill(m_x.energy[0] / 1000)
-    for m_x in fully_mismatched_eigensolver_14q:
-        fully_mismatched_xplets_eigensolver_14q.Fill(m_x.energy[0] / 1000)
-    for r_x in reco_eigensolver_14q:
-        reco_xplets_eigensolver_14q.Fill(r_x.energy[0] / 1000)
+            fully_mismatched_eigensolver_16q.append(xplet)
+    print(f"Efficiency on xplets for Numpy Eigensolver 16 qubits: "
+          f"{np.around(len(matched_eigensolver_16q) / len(gen), 3)}")
+    print(f"Mismatched (> {4 - matched_def} particle IDs / xplet) for Numpy Eigensolver 16 qubits: "
+          f"{np.around(len(fully_mismatched_eigensolver_16q) / len(reco_eigensolver_16q), 3)}")
+    matched_xplets_eigensolver_16q = TH1F('matched xplets Numpy Eigensolver 16q', 'x', len(edges) - 1, edges)
+    fully_mismatched_xplets_eigensolver_16q = TH1F('mismatched Numpy Eigensolver 16q', 'x', len(edges) - 1, edges)
+    reco_xplets_eigensolver_16q = TH1F('reco xplets Numpy Eigensolver 16q', 'x', len(edges) - 1, edges)
+    for m_x in matched_eigensolver_16q:
+        matched_xplets_eigensolver_16q.Fill(m_x.energy[0] / 1000)
+    for m_x in fully_mismatched_eigensolver_16q:
+        fully_mismatched_xplets_eigensolver_16q.Fill(m_x.energy[0] / 1000)
+    for r_x in reco_eigensolver_16q:
+        reco_xplets_eigensolver_16q.Fill(r_x.energy[0] / 1000)
     
-    for i in range(matched_xplets_eigensolver_14q.GetNbinsX() + 1):
-        if matched_xplets_eigensolver_14q.GetBinContent(i) > gen_xplets.GetBinContent(i):
-            matched_xplets_eigensolver_14q.SetBinContent(i, gen_xplets.GetBinContent(i))
+    for i in range(matched_xplets_eigensolver_16q.GetNbinsX() + 1):
+        if matched_xplets_eigensolver_16q.GetBinContent(i) > gen_xplets.GetBinContent(i):
+            matched_xplets_eigensolver_16q.SetBinContent(i, gen_xplets.GetBinContent(i))
             
-    Teff_eigensolver_14q = TEfficiency(matched_xplets_eigensolver_14q, gen_xplets)
-    Teff_fully_mis_eigensolver_14q = TEfficiency(fully_mismatched_xplets_eigensolver_14q, reco_xplets_eigensolver_14q)
+    Teff_eigensolver_16q = TEfficiency(matched_xplets_eigensolver_16q, gen_xplets)
+    Teff_fully_mis_eigensolver_16q = TEfficiency(fully_mismatched_xplets_eigensolver_16q, reco_xplets_eigensolver_16q)
 
-    Teff_eigensolver_14q.SetMarkerStyle(22)
-    Teff_eigensolver_14q.SetMarkerColorAlpha(4, 0.85)
-    Teff_eigensolver_14q.SetMarkerSize(1.5)
-    Teff_eigensolver_14q.Draw("PSAME")
+    Teff_eigensolver_16q.SetMarkerStyle(22)
+    Teff_eigensolver_16q.SetMarkerColorAlpha(4, 0.85)
+    Teff_eigensolver_16q.SetMarkerSize(1.5)
+    Teff_eigensolver_16q.Draw("PSAME")
 
-    Teff_fully_mis_eigensolver_14q.SetMarkerStyle(26)
-    Teff_fully_mis_eigensolver_14q.SetMarkerColorAlpha(4, 0.85)
-    Teff_fully_mis_eigensolver_14q.SetMarkerSize(1.5)
-    # Teff_fully_mis_eigensolver_14q.Draw("PSAME")
+    Teff_fully_mis_eigensolver_16q.SetMarkerStyle(26)
+    Teff_fully_mis_eigensolver_16q.SetMarkerColorAlpha(4, 0.85)
+    Teff_fully_mis_eigensolver_16q.SetMarkerSize(1.5)
+    # Teff_fully_mis_eigensolver_16q.Draw("PSAME")
     
 if folder_eigensolver_18q != "-1":
     reco_eigensolver_18q = np.load(f"{folder_eigensolver_18q}/reco_xplet_list.npy",
@@ -370,9 +369,9 @@ if folder_eigensolver_12q != "-1":
     leg.AddEntry(Teff_eigensolver_12q, "Eigensolver (Q12)", "p")
     # leg.AddEntry(Teff_fully_mis_eigensolver_12q, "Eigensolver (Q12)", "p")
 
-if folder_eigensolver_14q != "-1":
-    leg.AddEntry(Teff_eigensolver_14q, "Eigensolver (Q14)", "p")
-    # leg.AddEntry(Teff_fully_mis_eigensolver_14q, "Eigensolver (Q14)", "p")
+if folder_eigensolver_16q != "-1":
+    leg.AddEntry(Teff_eigensolver_16q, "Eigensolver (Q16)", "p")
+    # leg.AddEntry(Teff_fully_mis_eigensolver_16q, "Eigensolver (Q16)", "p")
 
 if folder_eigensolver_18q != "-1":
     leg.AddEntry(Teff_eigensolver_18q, "Eigensolver (Q18)", "p")
@@ -392,7 +391,4 @@ leg.SetFillColor(0)
 leg.SetTextSize(0.03)
 leg.Draw()
 
-
-
-gen_out = "/".join(gen_folder.split("/")[0:-1])
 canv.SaveAs(f"1Dxplet_efficiency_comparison_xi_{xi}_energy.pdf")
