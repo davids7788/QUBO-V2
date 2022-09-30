@@ -9,13 +9,18 @@ class Hamiltonian:
     def __init__(self,
                  triplet_slice,
                  solution_candidate,
-                 rescaling=None):
+                 rescaling=None,
+                 only_specified_connections=None):
         """Class for handling the Hamiltonian
         :param triplet_slice: slice of triplets participating in the SubQUBO
-        :param rescaling: "complete"    : (sum(outer_terms_bij) + a_i) / (#outer_terms_bij + 1)
-                            "outer terms" : a_i + (sum(outer_terms_bij) / #outer_terms_bij)
-                            "None"        : a_i + sum(outer_terms_bij)
+        :param rescaling: "complete"    : (a_i + sum(outer_terms_bij)) / (#outer_terms_bij + 1)
+                          "outer terms" : a_i + (sum(outer_terms_bij) / #outer_terms_bij)
+                          "None"        : a_i + sum(outer_terms_bij)
+        :param only_specified_connections: dictionary of triplet ids which have to be considered for accumulating
+                                           relations from outside the (sub)qubo
+
         """
+        self.only_specified_connections = only_specified_connections
         self.triplet_slice = triplet_slice
         self.solution_candidate = solution_candidate
         self.triplet_ids = [triplet.triplet_id for triplet in triplet_slice]
@@ -35,10 +40,18 @@ class Hamiltonian:
             lin_out = 0
             lin_out_counter = 0
             for interaction_key in triplet.interactions.keys():
-                if interaction_key not in self.triplet_ids:
-                    if self.solution_candidate[interaction_key] == 1:
-                        lin_out += triplet.interactions[interaction_key]
-                        lin_out_counter += 1
+                if self.only_specified_connections is None:
+                    if interaction_key not in self.triplet_ids:
+                        if self.solution_candidate[interaction_key] == 1:
+                            lin_out += triplet.interactions[interaction_key]
+                            lin_out_counter += 1
+                    else:
+                        if interaction_key not in self.triplet_ids:
+                            if interaction_key in self.only_specified_connections:
+                                if self.solution_candidate[interaction_key] == 1:
+                                    lin_out += triplet.interactions[interaction_key]
+                                    lin_out_counter += 1
+
             if self.rescaling == "complete":
                 linear[i] += lin_out
                 linear[i] /= (lin_out_counter + 1)

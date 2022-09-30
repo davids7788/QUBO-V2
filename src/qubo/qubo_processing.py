@@ -88,7 +88,60 @@ class QuboProcessing:
         self.pass_count = 0
         self.sub_qubo_counter = 0
 
-    def qubo_process(self):
+    def qubo_process_merged_cluster(self):
+        # detector has 512 vs. 1024 * 18 pixel -->
+        # start with 128 * 4608 bins (size 4*4)
+        y_bins = 2**7
+        x_bins = 2**7 * 18 * 2
+
+        t_x = []   # first hit of triplet, x value
+        t_y = []   # first hit of triplet, y value
+
+        t_index = []  # index in triplet list
+
+        # hardcoded, see LUXE_sl.csv --> maybe fix later...
+        x_min = 0.05275912
+        x_max = 0.55430088
+        y_min = - 0.00688128
+        y_max = 0.00688128
+        z_start = 3.9560125
+
+        for i, t_entry in enumerate(self.triplets):
+            if t_entry.doublet_1.hit_position[2] == z_start:
+                t_index.append(i)
+                t_x.append(t_entry.doublet_1.hit_position[0])
+                t_y.append(t_entry.doublet_1.hit_position[1])
+
+        iterations = 1
+        while x_bins >= 1 and y_bins >= 18 * 2:
+            start_loop = time.time()
+            start_quantum_part = time.time()
+            print(f"Starting iteration {iteration} of 16")
+
+            detector_stats = binned_statistic_2d(x, y, None, "count",
+                                                 bins=[x_bins, y_bins],
+                                                 range=[[x_min, x_max], [y_min, y_max]])
+            # map for faster access o bins
+            bin_mapping = {}
+            for triplet_index, bin_index in zip(detector_stats.binnumber):
+                if bin_index in bin_mapping.keys():
+                    bin_mapping[bin_index].append(triplet_index)
+                else:
+                    bin_mapping[bin_index] = [triplet_index]
+
+            # collecting locally connected triplets
+            for bin_entry in bin_mapping:
+                participating_triplets = bin_mapping[bin_entry]
+                for triplet in participating_triplets:
+                    for connection in triplet.interactions.keys():
+                        if connection not in participating_triplets:
+                            participating_triplets.append(connection)
+
+
+
+
+
+    def qubo_process_impact_list(self):
         """Solves the QUBO with the set optimisation strategy.
         """
         # timer
