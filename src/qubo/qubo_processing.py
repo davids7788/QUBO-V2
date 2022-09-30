@@ -31,7 +31,6 @@ class QuboProcessing:
         :param ansatz: ansatz circuit
         :param qubo_logging: object for handling information about the solving process of class QuboLogging
         :param save_folder: folder to which results are stored
-        :param error_mitigation: class to help mitigate errors
         """
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
         self.config = config
@@ -104,7 +103,9 @@ class QuboProcessing:
         x_max = 0.55430088
         y_min = - 0.00688128
         y_max = 0.00688128
-        z_start = 3.9560125
+        z_start = 3.9560125\
+
+        sub_optimisation_strategy = make_impact_list
 
         for i, t_entry in enumerate(self.triplets):
             if t_entry.doublet_1.hit_position[2] == z_start:
@@ -131,11 +132,17 @@ class QuboProcessing:
 
             # collecting locally connected triplets
             for bin_entry in bin_mapping:
+                # here the triplets taking part in the local optimisation are chosen
                 participating_triplets = bin_mapping[bin_entry]
                 for triplet in participating_triplets:
                     for connection in triplet.interactions.keys():
                         if connection not in participating_triplets:
                             participating_triplets.append(connection)
+
+                local_energy = self.hamiltonian_energy(b)
+
+
+
 
 
 
@@ -252,22 +259,32 @@ class QuboProcessing:
                 minimum_energy_state.append(0)
         return minimum_energy_state, self.hamiltonian_energy(minimum_energy_state)
 
-    def hamiltonian_energy(self, binary_vector):
+    def hamiltonian_energy(self, binary_vector, triplet_subset=None):
         """Calculates the energy according to a binary vector matching the triplet list
         :param binary_vector: binary solution candidate vector
+        :param triplet_subset: subset of triplet, represented by indices
         :return:
             energy value
         """
         hamiltonian_energy = 0
         for i, b1 in enumerate(binary_vector):
             if b1 == 1:
-                hamiltonian_energy += self.triplets[i].quality
+                if triplet_subset is not None:
+                    hamiltonian_energy += self.triplets[triplet_subset[i]].quality
+                else:
+                    hamiltonian_energy += self.triplets[i].quality
             for j in self.triplets[i].interactions.keys():
                 if j < i:
                     continue
+                if binary_vector[i] != 1  or binary_vector[j] != 1:
+                    continue
+                if triplet_subset is not None:
+                    if j not in triplet_subset:
+                        continue
+                    else:
+                        hamiltonian_energy += self.triplets[triplet_subset[i]].interactions[j]
                 else:
-                    if binary_vector[i] == binary_vector[j] == 1:
-                        hamiltonian_energy += self.triplets[i].interactions[j]
+                    hamiltonian_energy += self.triplets[i].interactions[j]
         return hamiltonian_energy
 
     def log_truth_energy(self):
