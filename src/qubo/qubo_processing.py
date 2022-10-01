@@ -3,6 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.stats import binned_statistic_2d
 from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
@@ -87,11 +88,13 @@ class QuboProcessing:
         self.pass_count = 0
         self.sub_qubo_counter = 0
 
-    def qubo_process_merged_cluster(self):
+    def qubo_process_merged_zones(self):
+        """Solves the QUBO with the merged"""
+        start_solving_process_time = time.time()
         # detector has 512 vs. 1024 * 18 pixel -->
         # start with 128 * 4608 bins (size 4*4)
-        y_bins = 2**7
-        x_bins = 2**7 * 18 * 2
+        y_bins = 32
+        x_bins = 32
 
         t_x = []   # first hit of triplet, x value
         t_y = []   # first hit of triplet, y value
@@ -108,23 +111,25 @@ class QuboProcessing:
         sub_optimisation_strategy = make_impact_list
 
         for i, t_entry in enumerate(self.triplets):
-            if t_entry.doublet_1.hit_position[2] == z_start:
+            if t_entry.doublet_1.hit_1_position[2] == z_start:
                 t_index.append(i)
-                t_x.append(t_entry.doublet_1.hit_position[0])
-                t_y.append(t_entry.doublet_1.hit_position[1])
+                t_x.append(t_entry.doublet_1.hit_1_position[0])
+                t_y.append(t_entry.doublet_1.hit_1_position[1])
 
-        iterations = 1
-        while x_bins >= 1 and y_bins >= 18 * 2:
+        for loop in range(11):
+            print(f"Starting iteration {loop + 1} of 16")
+            print(f"Number of bins in x: {x_bins}")
+            print(f"Number of bins in x: {y_bins}")
             start_loop = time.time()
             start_quantum_part = time.time()
-            print(f"Starting iteration {iteration} of 16")
 
-            detector_stats = binned_statistic_2d(x, y, None, "count",
+            detector_stats = binned_statistic_2d(t_x, t_y, None, "count",
                                                  bins=[x_bins, y_bins],
                                                  range=[[x_min, x_max], [y_min, y_max]])
+
             # map for faster access o bins
             bin_mapping = {}
-            for triplet_index, bin_index in zip(detector_stats.binnumber):
+            for triplet_index, bin_index in zip(t_index, detector_stats.binnumber):
                 if bin_index in bin_mapping.keys():
                     bin_mapping[bin_index].append(triplet_index)
                 else:
@@ -135,18 +140,92 @@ class QuboProcessing:
                 # here the triplets taking part in the local optimisation are chosen
                 participating_triplets = bin_mapping[bin_entry]
                 for triplet in participating_triplets:
-                    for connection in triplet.interactions.keys():
+                    for connection in self.triplets[triplet].interactions.keys():
                         if connection not in participating_triplets:
                             participating_triplets.append(connection)
 
-                local_energy = self.hamiltonian_energy(b)
+                if len(participating_triplets) <= 2* self.config["qubo"]["num qubits"]:
+                    continue
+                local_solution = [self.solution_candidate[k] for k in participating_triplets]
+                local_energy = self.hamiltonian_energy(local_solution, participating_triplets)
+                pass_count_merge_zones = 0
+                while pass_count_merge_zones < self.config["qubo"]["search depth"]:
+                    triplet_ordering = sub_optimisation_strategy([self.triplets[t] for t in participating_triplets],
+                                                                 local_solution,
+                                                                 local=True)
+                    triplet_ordering.reverse()
+                    # iterating over parts parts areas
+                    for i in range(int(len(participating_triplets) / self.config["qubo"]["num qubits"])):
+                        result = self.solve_subqubos([self.triplets[i] for i in
+                                                      triplet_ordering[self.config["qubo"]["num qubits"] * i:
+                                                                       self.config["qubo"]["num qubits"] * (i + 1)]])
+                        if result is None:
+                            continue
+                        for k, entry in enumerate(triplet_ordering[self.config["qubo"]["num qubits"] * i:
+                                                  self.config["qubo"]["num qubits"] * (i + 1)]):
+                            self.solution_candidate[entry] = result[k]
+                    if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
+                        result = self.solve_subqubos([self.triplets[i] for i in
+                                                      triplet_ordering[- self.config["qubo"]["num qubits"]:]])
+                        if result is None:
+                            pass
+                        else:
+                            for k, entry in enumerate(triplet_ordering[- self.config["qubo"]["num qubits"]:]):
+                                self.solution_candidate[entry] = result[k]
 
+                    local_solution = [self.solution_candidate[k] for k in participating_triplets]
+                    if self.hamiltonian_energy(local_solution, participating_triplets) < local_energy:
+                        local_energy = self.hamiltonian_energy(local_solution, participating_triplets)
+                    else:
+                        pass_count_merge_zones += 1
 
+                end_quantum_part = time.time()
+                quantum_time = end_quantum_part - start_quantum_part
+                self.qubo_logging.add_entry("time tracking quantum",
+                                            str(self.loop_count),
+                                            quantum_time)
 
+            # update energy
+            self.energy_candidate = self.hamiltonian_energy(self.solution_candidate)
 
+            self.qubo_logging.add_entry("solution vector",
+                                        str(self.loop_count),
+                                        self.solution_candidate)
+            self.qubo_logging.add_entry("energy",
+                                        str(self.loop_count),
+                                        self.energy_candidate)
 
+            # check if new solution candidate has a lower energy value than the one before
+            if self.energy_candidate < self.qubo_logging.qubo_log["computed minimum energy"]:
+                self.qubo_logging.set_value("computed minimum energy",
+                                            self.energy_candidate)
+                self.qubo_logging.set_value("computed solution vector",
+                                            self.solution_candidate)
+            print(f"Energy after iteration {self.loop_count} at pass count {self.pass_count}: "
+                  f"{np.around(self.energy_candidate, 2)}")
 
+            if loop % 2 == 0:
+                x_bins = int(x_bins / 2)
+            else:
+                y_bins = int(y_bins / 2)
+            # increasing overall loop count
+            self.loop_count += 1
+            end_loop = time.time()
+            loop_time = end_loop - start_loop
+            self.qubo_logging.add_entry("time tracking qubo iteration",
+                                        str(self.loop_count),
+                                        loop_time)
 
+            self.qubo_logging.save_results(self.save_folder)
+
+        end_solving_process_time = time.time()
+        solving_process_time = end_solving_process_time - start_solving_process_time
+        self.qubo_logging.add_entry("time tracking complete",
+                                    "complete run",
+                                    solving_process_time)
+        self.qubo_logging.save_results(self.save_folder)
+        self.write_setup_info_to_file()
+        print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
 
     def qubo_process_impact_list(self):
         """Solves the QUBO with the set optimisation strategy.
@@ -174,7 +253,7 @@ class QuboProcessing:
 
             # Sub-qubos with full size
             for i in range(int(len(self.triplets) / self.config["qubo"]["num qubits"])):
-                # print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
+                print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                              triplet_ordering[self.config["qubo"]["num qubits"] * i:
                                                               self.config["qubo"]["num qubits"] * (i + 1)]])
@@ -186,7 +265,7 @@ class QuboProcessing:
 
             # Check if triplets are left -> take the last <sub_qubo_size> triplets and perform a vqe
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
-                # print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
+                print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                               triplet_ordering[- self.config["qubo"]["num qubits"]:]])
                 if result is None:
@@ -266,25 +345,23 @@ class QuboProcessing:
         :return:
             energy value
         """
+        if triplet_subset is None:
+            triplet_subset = [0 + i for i in range(len(self.triplets))]
+
         hamiltonian_energy = 0
         for i, b1 in enumerate(binary_vector):
             if b1 == 1:
-                if triplet_subset is not None:
-                    hamiltonian_energy += self.triplets[triplet_subset[i]].quality
-                else:
-                    hamiltonian_energy += self.triplets[i].quality
-            for j in self.triplets[i].interactions.keys():
-                if j < i:
+                hamiltonian_energy += self.triplets[triplet_subset[i]].quality
+
+            for j in self.triplets[triplet_subset[i]].interactions.keys():
+                if j < triplet_subset[i]:
                     continue
-                if binary_vector[i] != 1  or binary_vector[j] != 1:
+                if j not in triplet_subset:
                     continue
-                if triplet_subset is not None:
-                    if j not in triplet_subset:
-                        continue
-                    else:
-                        hamiltonian_energy += self.triplets[triplet_subset[i]].interactions[j]
-                else:
-                    hamiltonian_energy += self.triplets[i].interactions[j]
+                position = triplet_subset.index(j)
+                if binary_vector[i] == binary_vector[position] == 1:
+                    hamiltonian_energy += self.triplets[triplet_subset[i]].interactions[j]
+
         return hamiltonian_energy
 
     def log_truth_energy(self):
@@ -336,9 +413,11 @@ class QuboProcessing:
         return get_result_in_correct_order(result_quantum)
 
     def solve_subqubos(self,
-                       triplet_slice):
+                       triplet_slice,
+                       subsequent_list=None):
         """Function for solving a SubQUBO
         :param triplet_slice: slice of triplets used for the SubQUBO
+        :param subsequent_list if only triplets in a certain area should be considered
         :return
             result of computation
         """
@@ -349,7 +428,8 @@ class QuboProcessing:
 
         hamiltonian = Hamiltonian(triplet_slice=triplet_slice,
                                   solution_candidate=self.solution_candidate,
-                                  rescaling=self.config["qubo"]["hamiltonian rescaling"])
+                                  rescaling=self.config["qubo"]["hamiltonian rescaling"],
+                                  only_specified_connections=subsequent_list)
         if self.loop_count == 0:  # Uses a lot of disk space, so just results of first iteration
             self.qubo_logging.add_entry("hamiltonian",
                                         self.sub_qubo_counter,

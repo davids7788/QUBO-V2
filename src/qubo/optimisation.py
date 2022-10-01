@@ -47,14 +47,20 @@ def bit_flip_optimisation(triplets,
 
 
 def make_impact_list(triplet_list,
-                     solution_candidate):
+                     solution_candidate,
+                     local=False):
     """Creates an impact list based on how much influence on the energy a bit flip has
     :param triplet_list: list of triplet objects
     :param solution_candidate: binary solution vector, representing triplet state
+    :param local: if True, then triplets outside of the given triplet subset are not considered
     :return:
         list of indices ordered from lowest to highest impact of triplets in triplet list
     """
     impact_list_values = []
+    # mapping = {}
+    # for i, value in enumerate(solution_candidate):
+    #     mapping.update({value: i})
+
     for triplet, t_i in zip(triplet_list, solution_candidate):
         energy_change = 0
         if t_i == 0:
@@ -63,6 +69,9 @@ def make_impact_list(triplet_list,
             energy_change -= triplet.quality
 
         for interaction in triplet.interactions.keys():
+            if local:
+                if interaction not in triplet_list:
+                    continue
             if t_i == 0 and solution_candidate[interaction] == 0:
                 pass
             elif t_i == 0 and solution_candidate[interaction] == 1:
