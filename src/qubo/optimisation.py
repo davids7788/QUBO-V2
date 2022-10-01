@@ -57,9 +57,9 @@ def make_impact_list(triplet_list,
         list of indices ordered from lowest to highest impact of triplets in triplet list
     """
     impact_list_values = []
-    # mapping = {}
-    # for i, value in enumerate(solution_candidate):
-    #     mapping.update({value: i})
+    t_indices = []
+    for triplet in triplet_list:
+        t_indices.append(triplet.triplet_id)
 
     for triplet, t_i in zip(triplet_list, solution_candidate):
         energy_change = 0
@@ -69,8 +69,10 @@ def make_impact_list(triplet_list,
             energy_change -= triplet.quality
 
         for interaction in triplet.interactions.keys():
+
             if local:
-                if interaction not in triplet_list:
+                if interaction not in t_indices:
+                    print("yo")
                     continue
             if t_i == 0 and solution_candidate[interaction] == 0:
                 pass

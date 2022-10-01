@@ -45,12 +45,12 @@ class Hamiltonian:
                         if self.solution_candidate[interaction_key] == 1:
                             lin_out += triplet.interactions[interaction_key]
                             lin_out_counter += 1
-                    else:
-                        if interaction_key not in self.triplet_ids:
-                            if interaction_key in self.only_specified_connections:
-                                if self.solution_candidate[interaction_key] == 1:
-                                    lin_out += triplet.interactions[interaction_key]
-                                    lin_out_counter += 1
+                else:
+                    if interaction_key not in self.triplet_ids:
+                        if interaction_key in self.only_specified_connections:
+                            if self.solution_candidate[interaction_key] == 1:
+                                lin_out += triplet.interactions[interaction_key]
+                                lin_out_counter += 1
 
             if self.rescaling == "complete":
                 linear[i] += lin_out
