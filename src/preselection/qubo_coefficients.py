@@ -343,7 +343,8 @@ class QuboCoefficients:
                  linewidth=3,
                  histtype='step',
                  label=f"Number of particles: {num_particles}\n"
-                       f"Number of triplets: {len(self.triplet_list)}\n")
+                       f"Number of triplets: {len(self.triplet_list)}\n"
+                       f"Number of interactions: {int(len(interactions_list))}\n")
         plt.yscale("log")
         plt.legend(loc="best", fontsize=20)
 
