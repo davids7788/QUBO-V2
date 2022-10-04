@@ -15,7 +15,8 @@ class TripletCreatorLUXE:
         :param configuration  : dictionary, configuration for detector setup and xplet selection
             {
             doublet: {dx/x0: <value>,
-                      eps:   <value>},
+                      eps:   <value>,
+                      dy: <value>},
             triplet: {angle diff x: <value>,
                       angle diff y: <value>},
             binning: {num bins x: <value>},
@@ -43,6 +44,7 @@ class TripletCreatorLUXE:
         self.found_correct_triplets = 0
         self.found_doublets = 0
         self.found_triplets = 0
+        self.xplet_numbers = set()
 
         # indices from .csv file, code gets not messed up if some information might be added in the future to them
         self.x_index = None
@@ -123,8 +125,10 @@ class TripletCreatorLUXE:
                 self.num_particles += 1
                 if last and first:
                     self.num_complete_tracks += 1
+                    self.xplet_numbers.add(key)
 
-            print(f"Total number of particles with at least one hit: {self.num_particles}")
+            print(f"Number of particles with at least one hit: {self.num_particles}")
+            print(f"Number of complete tracks: {self.num_complete_tracks}")
 
     def create_x_plets(self,
                        segment_manager: SegmentManager):
@@ -151,7 +155,13 @@ class TripletCreatorLUXE:
             for first_hit in segment.data:
                 for target_segment in next_segments:
                     for second_hit in target_segment.data:
-                        if abs(second_hit[self.y_index] - first_hit[self.y_index]) > 0.0003:
+                        x0 = self.x0_at_z_ref(first_hit[self.x_index],
+                                              second_hit[self.x_index],
+                                              first_hit[self.z_index],
+                                              second_hit[self.z_index],
+                                              segment_manager.reference_layer_z)
+                        if abs(second_hit[self.y_index] - first_hit[self.y_index]) / x0 > \
+                                self.configuration["doublet"]["dy"]:
                             continue
                         if self.doublet_criteria_check(first_hit[self.x_index],
                                                        second_hit[self.x_index],
@@ -170,7 +180,7 @@ class TripletCreatorLUXE:
                                               second_hit[self.hit_id_index],
                                               first_hit[self.particle_energy_index],
                                               second_hit[self.particle_energy_index])
-                            if doublet.is_correct_match:
+                            if doublet.is_correct_match and doublet.hit_1_particle_key in self.xplet_numbers:
                                 self.found_correct_doublets += 1
                                 self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
                                                                           doublet.hit_1_position[0]) /
@@ -211,7 +221,7 @@ class TripletCreatorLUXE:
                             segment.triplet_data.append(triplet)
 
                             # filling lists for statistical purposes
-                            if triplet.is_correct_match:
+                            if triplet.is_correct_match and triplet.doublet_1.hit_1_particle_key in self.xplet_numbers:
                                 self.preselection_statistic_scattering.append(
                                     np.sqrt(triplet.angles_between_doublets()[0]**2 +
                                             triplet.angles_between_doublets()[1]**2))

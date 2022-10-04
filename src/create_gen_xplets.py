@@ -52,9 +52,7 @@ with open(tracking_data_file, 'r') as file:
     
     for row in csv_reader_tracking_file:
         rows.append(row)
-    
 
-    
     for i, row in enumerate(rows):
         if float(row[z_index]) not in first_layer:
             continue
