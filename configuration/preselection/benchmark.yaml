@@ -2,7 +2,7 @@
 doublet:
   dx/x0 : 0.0526
   eps: 0.0011
-  dy: 0.001
+  dy/x0: 0.001
 
 triplet:
   max scattering: 0.001

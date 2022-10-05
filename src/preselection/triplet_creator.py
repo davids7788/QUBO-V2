@@ -161,7 +161,7 @@ class TripletCreatorLUXE:
                                               second_hit[self.z_index],
                                               segment_manager.reference_layer_z)
                         if abs(second_hit[self.y_index] - first_hit[self.y_index]) / x0 > \
-                                self.configuration["doublet"]["dy"]:
+                                self.configuration["doublet"]["dy/x0"]:
                             continue
                         if self.doublet_criteria_check(first_hit[self.x_index],
                                                        second_hit[self.x_index],
