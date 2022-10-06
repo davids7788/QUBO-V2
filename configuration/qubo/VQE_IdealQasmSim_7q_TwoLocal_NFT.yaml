@@ -19,7 +19,7 @@ solver:
   optimisation level: 3
 
 qubo:
-  optimisation strategy: "impact list"
+  optimisation strategy: "impact list reverse"
   hamiltonian rescaling: null
   initial binary vector: "ones"
   search depth: 5
