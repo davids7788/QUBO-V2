@@ -106,7 +106,7 @@ class QuboProcessing:
         x_max = 0.55430088
         y_min = - 0.00688128
         y_max = 0.00688128
-        z_start = 3.9560125\
+        z_start = 3.9560125
 
         sub_optimisation_strategy = make_impact_list
 
