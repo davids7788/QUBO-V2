@@ -359,24 +359,34 @@ class QuboProcessing:
         :return:
             energy value
         """
-        if triplet_subset is None:
-            triplet_subset = [0 + i for i in range(len(self.triplets))]
-
         hamiltonian_energy = 0
-        for i, b1 in enumerate(binary_vector):
-            if b1 == 1:
-                hamiltonian_energy += self.triplets[triplet_subset[i]].quality
+        if triplet_subset is None:
+            for i, b1 in enumerate(binary_vector):
+                print(f"{i} of {len(binary_vector)}", end="\r")
+                if b1 == 1:
+                    hamiltonian_energy += self.triplets[i].quality
+                for j in self.triplets[i].interactions.keys():
+                    if j < i:
+                        continue
+                    else:
+                        if binary_vector[i] == binary_vector[j] == 1:
+                            hamiltonian_energy += self.triplets[i].interactions[j]
+            return hamiltonian_energy
 
-            for j in self.triplets[triplet_subset[i]].interactions.keys():
-                if j < triplet_subset[i]:
-                    continue
-                if j not in triplet_subset:
-                    continue
-                position = triplet_subset.index(j)
-                if binary_vector[i] == binary_vector[position] == 1:
-                    hamiltonian_energy += self.triplets[triplet_subset[i]].interactions[j]
+        else:
+            for i, b1 in enumerate(binary_vector):
+                if b1 == 1:
+                    hamiltonian_energy += self.triplets[triplet_subset[i]].quality
 
-        return hamiltonian_energy
+                for j in self.triplets[triplet_subset[i]].interactions.keys():
+                    if j < triplet_subset[i]:
+                        continue
+                    if j not in triplet_subset:
+                        continue
+                    position = triplet_subset.index(j)
+                    if binary_vector[i] == binary_vector[position] == 1:
+                        hamiltonian_energy += self.triplets[triplet_subset[i]].interactions[j]
+            return hamiltonian_energy
 
     def log_truth_energy(self):
         """Obtaining minimal energy solution and minimal energy printing information about ideal solution and energy.
