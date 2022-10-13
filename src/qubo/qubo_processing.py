@@ -362,7 +362,6 @@ class QuboProcessing:
         hamiltonian_energy = 0
         if triplet_subset is None:
             for i, b1 in enumerate(binary_vector):
-                print(f"{i} of {len(binary_vector)}", end="\r")
                 if b1 == 1:
                     hamiltonian_energy += self.triplets[i].quality
                 for j in self.triplets[i].interactions.keys():
