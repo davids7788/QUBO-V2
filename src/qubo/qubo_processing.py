@@ -267,7 +267,7 @@ class QuboProcessing:
 
             # Sub-qubos with full size
             for i in range(int(len(self.triplets) / self.config["qubo"]["num qubits"])):
-                print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
+                # print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                              triplet_ordering[self.config["qubo"]["num qubits"] * i:
                                                               self.config["qubo"]["num qubits"] * (i + 1)]])
@@ -279,7 +279,7 @@ class QuboProcessing:
 
             # Check if triplets are left -> take the last <sub_qubo_size> triplets and perform a vqe
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
-                print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
+                # print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                               triplet_ordering[- self.config["qubo"]["num qubits"]:]])
                 if result is None:
