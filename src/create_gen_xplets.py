@@ -64,7 +64,7 @@ with open(tracking_data_file, 'r') as file:
     x_plet_pieces = []
     current_particle_id = None
     for entry in rows:
-        if not current_particle_id:
+        if current_particle_id is None:
             x_plet_pieces.append(entry)
             current_particle_id = int(entry[particle_id_index])
         else:
@@ -92,6 +92,9 @@ with open(tracking_data_file, 'r') as file:
                 truth_pattern = Xplet()
                 for triplet in triplet_list:
                     truth_pattern.add_triplet(triplet)
+                if len(list(truth_pattern.particle_ids)) > 4:
+                    print(truth_pattern.particle_ids)
+                    exit()
                 generated_x_plets.append(truth_pattern)
                 x_plet_pieces = [entry]
                 current_particle_id = int(entry[particle_id_index])

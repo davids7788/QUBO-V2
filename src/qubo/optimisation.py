@@ -72,7 +72,6 @@ def make_impact_list(triplet_list,
 
             if local:
                 if interaction not in t_indices:
-                    print("yo")
                     continue
             if t_i == 0 and solution_candidate[interaction] == 0:
                 pass
