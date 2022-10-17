@@ -20,31 +20,41 @@ for triplet in data:
             connections.append(connection)
     connections.sort()
     if correct is not None:
-        all_connections.append(len(connections))
         correct_connections.append(1 + connections.index(correct))
+    all_connections.append(len(connections))
 
-fig, ax = plt.subplots()
+print(correct_connections.count(4) / len(correct_connections))
+print((all_connections.count(4) +
+       all_connections.count(5) +
+       all_connections.count(6) +
+       all_connections.count(7) +
+       all_connections.count(8)) / len(all_connections))
+fig, ax = plt.subplots(figsize=(8,6), dpi=200)
 ax.hist(correct_connections,
         bins=4,
         range=(1, 5),
         label=r"phase-0, $\xi=7.0$",
-        align="left",
+        histtype="bar",
         color="teal",
+        align="left",
         rwidth=0.5)
+ax.set_xticks([1, 2, 3, 4])
 ax.set_xlabel("Position of correct match in interaction list", fontsize=16)
 ax.set_ylabel("Number of triplets", fontsize=16)
 ax.tick_params(axis='both', labelsize=16)
 
 ax.legend(loc="best", fontsize=16)
 plt.savefig("position_of_correct_match.pdf", bbox_inches='tight')
+plt.savefig("position_of_correct_match.png", bbox_inches='tight')
 
-fig2, ax = plt.subplots()
+fig2, ax = plt.subplots(figsize=(8,6), dpi=200)
 ax.hist(all_connections,
         bins=8,
         range=(1, 9),
         label=r"phase-0, $\xi=7.0$",
+        histtype="bar",
+        color="firebrick",
         align="left",
-        color="darkkhaki",
         rwidth=0.5)
 ax.set_xlabel("Number of partner triplets to form a quadruplet", fontsize=16)
 ax.set_ylabel("Number of triplets", fontsize=16)
@@ -53,3 +63,4 @@ ax.tick_params(axis='both', labelsize=16)
 
 ax.legend(loc="best", fontsize=16)
 plt.savefig("number_connections.pdf", bbox_inches='tight')
+plt.savefig("number_connections.png", bbox_inches='tight')
