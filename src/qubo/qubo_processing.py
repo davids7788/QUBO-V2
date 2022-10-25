@@ -267,7 +267,7 @@ class QuboProcessing:
 
             # Sub-qubos with full size
             for i in range(int(len(self.triplets) / self.config["qubo"]["num qubits"])):
-                # print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
+                print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                              triplet_ordering[self.config["qubo"]["num qubits"] * i:
                                                               self.config["qubo"]["num qubits"] * (i + 1)]])
@@ -279,7 +279,7 @@ class QuboProcessing:
 
             # Check if triplets are left -> take the last <sub_qubo_size> triplets and perform a vqe
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
-                # print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
+                print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                               triplet_ordering[- self.config["qubo"]["num qubits"]:]])
                 if result is None:
@@ -478,11 +478,12 @@ class QuboProcessing:
             sub_qubo_time = end_sub_qubo - start_sub_qubo
 
             # Check if comparing to Eigensolver
-            if self.config["qubo"]["compare to eigensolver"] and self.loop_count == 0:  # one iteration
+            if self.config["qubo"]["compare to eigensolver"]: # and self.loop_count == 0:  # one iteration
                 exact_result = self.exact_solver.solve(hamiltonian.qubo_representation()).x
                 self.qubo_logging.add_entry("compare to analytical solution",
                                             self.sub_qubo_counter,
-                                            ([float(r) for r in result] == exact_result))
+                                            list([float(r) for r in result] == exact_result).
+                                            count(True) == self.config["qubo"]["num qubits"])
 
         elif self.config["solver"]["algorithm"] == "Numpy Eigensolver":
             start_sub_qubo = time.time()
