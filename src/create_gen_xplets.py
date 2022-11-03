@@ -92,7 +92,8 @@ with open(tracking_data_file, 'r') as file:
                 truth_pattern = Xplet()
                 for triplet in triplet_list:
                     truth_pattern.add_triplet(triplet)
-                generated_x_plets.append(truth_pattern)
+                if not truth_pattern.is_empty:
+                    generated_x_plets.append(truth_pattern)
                 x_plet_pieces = [entry]
                 current_particle_id = int(entry[particle_id_index])
 

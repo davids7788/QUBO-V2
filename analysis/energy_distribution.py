@@ -10,26 +10,32 @@ ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
 
 SetLuxeStyle()
 
-file_xi_4 = h5py.File("/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/phase0/gpc/4.0/e0gpc_4.0_0000_particles.h5", 'r')
-file_xi_5 = h5py.File("/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/phase0/gpc/5.0/e0gpc_5.0_0000_particles.h5", 'r')
-file_xi_7 = h5py.File("/nfs/dust/luxe/user/kropfann/7.0_phase0_dt0.5/00/e0gpc_7.0_0000_particles.h5", 'r')
-
 h_frame = TH1F('xi', 'energy', 40, 1, 11)
 xi_4 = TH1F('xi 4', 'energy xi 4', 40, 1, 11)
 xi_5 = TH1F('xi 5', 'energy xi 5', 40, 1, 11)
 xi_7 = TH1F('xi 7', 'energy xi 7', 40, 1, 11)
 
-sum_w_xi_4 = sum(file_xi_4["/final-state/positron/weight"])
-sum_w_xi_5 = sum(file_xi_5["/final-state/positron/weight"])
-sum_w_xi_7 = sum(file_xi_7["/final-state/positron/weight"])
+sum_w_xi_4 = 0
+sum_w_xi_5 = 0
+sum_w_xi_7 = 0
 
-
-for entry, weight in zip(file_xi_4["/final-state/positron/momentum"], file_xi_4["/final-state/positron/weight"]):
-    xi_4.Fill(entry[0], weight)
-for entry, weight in zip(file_xi_5["/final-state/positron/momentum"], file_xi_5["/final-state/positron/weight"]):
-    xi_5.Fill(entry[0], weight)
-for entry, weight in zip(file_xi_7["/final-state/positron/momentum"], file_xi_7["/final-state/positron/weight"]):
-    xi_7.Fill(entry[0], weight)
+for i in range(10):
+    print(i)
+    file_xi_4 = h5py.File(f"/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/"
+                          f"e-laser/phase0/gpc/4.0/e0gpc_4.0_000{i}_particles.h5", 'r')
+    file_xi_5 = h5py.File(f"/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/"
+                          f"/phase0/adt/BX100_5.0_phase0_dt0.05/e0gpc_5.0_000{i}_particles.h5", 'r')
+    file_xi_7 = h5py.File(f"/nfs/dust/luxe/group/MCProduction/Signal/ptarmigan-v0.8.1/e-laser/"
+                          f"/phase0/adt/BX100_7.0_phase0_dt0.05/e0gpc_7.0_000{i}_particles.h5", 'r')
+    for entry, weight in zip(file_xi_4["/final-state/positron/momentum"], file_xi_4["/final-state/positron/weight"]):
+        xi_4.Fill(entry[0], weight)
+        sum_w_xi_4 += weight
+    for entry, weight in zip(file_xi_5["/final-state/positron/momentum"], file_xi_5["/final-state/positron/weight"]):
+        xi_5.Fill(entry[0], weight)
+        sum_w_xi_5 += weight
+    for entry, weight in zip(file_xi_7["/final-state/positron/momentum"], file_xi_7["/final-state/positron/weight"]):
+        xi_7.Fill(entry[0], weight)
+        sum_w_xi_7 += weight
 
 canv = TCanvas("example","xplet efficiency ", 800, 600)    
 h_frame.GetYaxis().SetTitle("fraction of counts / 250 MeV")

@@ -13,20 +13,23 @@ ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
 
 SetLuxeStyle()
 
-preselection_folder = sys.argv[1]
-gen_x = np.load(preselection_folder.split("e0gpc_")[0] + "/e0gpc_5.0_0000_sl_gen_xplet_list.npy", allow_pickle=True)
-print(len(gen_x))
-xi = preselection_folder.split("e0gpc_")[1].split("_")[0]
+gen_x = np.load("/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase-0/gpc/7.0/e0gpc_7.0_0000_sl_gen_xplet_list.npy", allow_pickle=True)[()]
+
+xi = 7
 
 # only full gen particle tracks are considered --> all layers have to be hit
 gen_particles = set()
 
-doublet_angles = TH1F('gen doublets', 'energy', 50, 0.0526 - 0.0012, 0.0526 + 0.0012)
-triplet_angles = TH1F('gen triplets passed doublets', 'energy', 50, 0.0, 1.2e-3)
+dx_x0 = 0.0526
+three_sigma = 0.0011
 
+doublet_angles_low_energy = TH1F('gen doublets low', 'energy', 50, 0.0526 - 0.0013, 0.0526 + 0.0013)
+doublet_angles_high_energy = TH1F('gen doublets high', 'energy', 50, 0.0526 - 0.0013, 0.0526 + 0.0013)
 
+triplet_angles_low_energy = TH1F('gen triplets passed doublets low eergy', 'energy', 50, 0.0, 1.2e-3)
+triplet_angles_high_energy = TH1F('gen triplets passed doublets high energy', 'energy', 50, 0.0, 1.2e-3)
 
-
+energy_split = 3
 
 def x0_at_z_ref(x_end: float,
                 x_start: float,
@@ -61,12 +64,13 @@ def doublet_criteria_check(x1: float,
         True if criteria applies, else False
     """
     if abs(((x2 - x1) / x0_at_z_ref(x1, x2, z1, z2, z_ref) -
-            0.0526)) > 0.0009:
+            0.0526)) > three_sigma:
         return False
     return True
 
 for xplet in gen_x:
-    d1 = Doublet(-1, 
+    try:
+        d1 = Doublet(-1, 
                  -1,
                  xplet.coordinates[0],
                  xplet.coordinates[1],
@@ -74,7 +78,10 @@ for xplet in gen_x:
                  -1,
                  xplet.energy[0] / 1000,
                  xplet.energy[1] / 1000)
-    d2 = Doublet(-1, 
+    except:
+        pass
+    try:
+        d2 = Doublet(-1, 
                  -1,
                  xplet.coordinates[1],
                  xplet.coordinates[2],
@@ -82,8 +89,11 @@ for xplet in gen_x:
                  -1,
                  xplet.energy[1] / 1000,
                  xplet.energy[2] / 1000)
+    except:
+        pass
 
-    d3 = Doublet(-1, 
+    try:
+        d3 = Doublet(-1, 
                  -1,
                  xplet.coordinates[2],
                  xplet.coordinates[3],
@@ -91,33 +101,62 @@ for xplet in gen_x:
                  -1,
                  xplet.energy[2] / 1000,
                  xplet.energy[3] / 1000)
-    doublet_angles.Fill((d1.hit_2_position[0] - d1.hit_1_position[0]) / x0_at_z_ref(d1.hit_1_position[0],
-                                                                                    d1.hit_2_position[0],
-                                                                                    d1.hit_1_position[2],
-                                                                                    d1.hit_2_position[2]))
-    doublet_angles.Fill((d2.hit_2_position[0] - d2.hit_1_position[0]) / x0_at_z_ref(d2.hit_1_position[0],
-                                                                                    d2.hit_2_position[0],
-                                                                                    d2.hit_1_position[2],
-                                                                                    d2.hit_2_position[2]))   
-    doublet_angles.Fill((d3.hit_2_position[0] - d3.hit_1_position[0]) / x0_at_z_ref(d3.hit_1_position[0],
-                                                                                    d3.hit_2_position[0],
-                                                                                    d3.hit_1_position[2],
-                                                                                    d3.hit_2_position[2]))                       
+    except:
+        pass
+
+    if d1.energy_1 > 3:
+        doublet_angles_low_energy.Fill((d1.hit_2_position[0] - d1.hit_1_position[0]) / x0_at_z_ref(d1.hit_1_position[0],
+                                                                                        d1.hit_2_position[0],
+                                                                                        d1.hit_1_position[2],
+                                                                                        d1.hit_2_position[2])) 
+    else:    
+        doublet_angles_high_energy.Fill((d1.hit_2_position[0] - d1.hit_1_position[0]) / x0_at_z_ref(d1.hit_1_position[0],
+                                                                                        d1.hit_2_position[0],
+                                                                                        d1.hit_1_position[2],
+                                                                                        d1.hit_2_position[2])) 
+    
+    if d2.energy_1 > 3:
+        doublet_angles_low_energy.Fill((d2.hit_2_position[0] - d2.hit_1_position[0]) / x0_at_z_ref(d2.hit_1_position[0],
+                                                                                       d2.hit_2_position[0],
+                                                                                       d2.hit_1_position[2],
+                                                                                       d2.hit_2_position[2])) 
+    else:    
+        doublet_angles_high_energy.Fill((d2.hit_2_position[0] - d2.hit_1_position[0]) / x0_at_z_ref(d2.hit_1_position[0],
+                                                                                        d2.hit_2_position[0],
+                                                                                        d2.hit_1_position[2],
+                                                                                        d2.hit_2_position[2]))  
+        
+    if d3.energy_1 > 3:
+        doublet_angles_low_energy.Fill((d3.hit_2_position[0] - d3.hit_1_position[0]) / x0_at_z_ref(d3.hit_1_position[0],
+                                                                                       d3.hit_2_position[0],
+                                                                                       d3.hit_1_position[2],
+                                                                                       d3.hit_2_position[2])) 
+    else:    
+        doublet_angles_high_energy.Fill((d3.hit_2_position[0] - d3.hit_1_position[0]) / x0_at_z_ref(d3.hit_1_position[0],
+                                                                                        d3.hit_2_position[0],
+                                                                                        d3.hit_1_position[2],
+                                                                                        d3.hit_2_position[2]))                        
                         
     t1 = Triplet(d1, d2, -1)
     t2 = Triplet(d2, d3, -1)
 
     angles = t1.angles_between_doublets()
-    triplet_angles.Fill(np.sqrt(angles[0]**2 + angles[1]**2))
+    if d1.energy_1 < 3:
+        triplet_angles_low_energy.Fill(np.sqrt(angles[0]**2 + angles[1]**2))
+    else:
+        triplet_angles_high_energy.Fill(np.sqrt(angles[0]**2 + angles[1]**2))
 
     angles = t2.angles_between_doublets()
-    triplet_angles.Fill(np.sqrt(angles[0]**2 + angles[1]**2))           
+    if d1.energy_1 < 3:
+        triplet_angles_low_energy.Fill(np.sqrt(angles[0]**2 + angles[1]**2))
+    else:
+        triplet_angles_high_energy.Fill(np.sqrt(angles[0]**2 + angles[1]**2))          
 
-lower_bound_doublets = TLine(0.0517, 0.0, 0.0517, 0.065)
+lower_bound_doublets = TLine(0.0515, 0.0, 0.0515, 0.065)
 lower_bound_doublets.SetLineWidth(2)
 lower_bound_doublets.SetLineColor(kRed)
 lower_bound_doublets.SetLineStyle(7)
-upper_bound_doublets = TLine(0.0535, 0.0, 0.0535, 0.065)
+upper_bound_doublets = TLine(0.0537, 0.0, 0.0537, 0.065)
 upper_bound_doublets.SetLineWidth(2)
 upper_bound_doublets.SetLineColor(kRed)
 upper_bound_doublets.SetLineStyle(7)
@@ -132,7 +171,7 @@ gStyle.SetPadTickY(0)
 
 canv = TCanvas("example", "doublet angle", 800, 600)
 
-h_frame = TH1F('frame', 'energy', 50, 0.0526 - 0.0012, 0.0526 + 0.0012)
+h_frame = TH1F('frame', 'energy', 50, 0.0526 - 0.0013, 0.0526 + 0.0013)
 h_frame.GetYaxis().SetTitle("fraction of counts")
 h_frame.GetXaxis().SetTitle("dx/x_{0}")
 h_frame.GetYaxis().SetTitleSize(0.055)
@@ -142,24 +181,32 @@ h_frame.SetMaximum(0.065)
 h_frame.Draw("P")
 
 # Teff
-doublet_angles.Scale(1 / doublet_angles.GetEntries())
-doublet_angles.SetMarkerStyle(8)
-doublet_angles.SetMarkerColor(kBlack)
-doublet_angles.SetMarkerSize(1.95)
-doublet_angles.Draw("HISTSAME")
+doublet_angles_low_energy.Scale(1 / (doublet_angles_low_energy.GetEntries())) # + doublet_angles_high_energy.GetEntries()))
+doublet_angles_low_energy.SetMarkerStyle(8)
+doublet_angles_low_energy.SetLineColor(kBlack)
+doublet_angles_low_energy.SetMarkerSize(1.95)
+doublet_angles_low_energy.Draw("HISTSAME")
+
+doublet_angles_high_energy.Scale(1 / (doublet_angles_high_energy.GetEntries())) # + doublet_angles_low_energy.GetEntries()))
+doublet_angles_high_energy.SetMarkerStyle(8)
+doublet_angles_high_energy.SetLineColor(kBlue)
+doublet_angles_high_energy.SetMarkerSize(1.95)
+doublet_angles_high_energy.Draw("HISTSAME")
 
 lower_bound_doublets.Draw("SAME")
 upper_bound_doublets.Draw("SAME")
 
 
-LUXELabel(0.7, 0.85)
+LUXELabel(0.25, 0.85, "e-laser, phase-0")
 
-leg = TLegend(0.7, 0.75, 0.85, 0.85)
+leg = TLegend(0.7, 0.65, 0.85, 0.85)
 
 leg.SetBorderSize(0)
 leg.SetHeader(f"#xi = {xi}")
+leg.AddEntry(doublet_angles_low_energy, " < 3GeV", "l")
+leg.AddEntry(doublet_angles_high_energy, " > 3GeV", "l")
 leg.SetFillColor(0)
-leg.SetTextSize(0.04)
+leg.SetTextSize(0.05)
 leg.Draw()
 
 
@@ -179,21 +226,30 @@ h_frame.GetXaxis().SetLabelOffset(0.02)
 h_frame.SetMaximum(0.065)
 h_frame.Draw("P")
 
-triplet_angles.Scale(1 / doublet_angles.GetEntries())
-triplet_angles.SetMarkerStyle(8)
-triplet_angles.SetMarkerColor(kBlack)
-triplet_angles.SetMarkerSize(1.95)
-triplet_angles.Draw("HISTSAME")
+
+triplet_angles_low_energy.Scale(1 / (triplet_angles_low_energy.GetEntries())) # + triplet_angles_high_energy.GetEntries()))
+triplet_angles_low_energy.SetMarkerStyle(8)
+triplet_angles_low_energy.SetLineColor(kBlack)
+triplet_angles_low_energy.SetMarkerSize(1.95)
+triplet_angles_low_energy.Draw("HISTSAME")
+
+triplet_angles_high_energy.Scale(1 / (triplet_angles_high_energy.GetEntries())) # + triplet_angles_low_energy.GetEntries()))
+triplet_angles_high_energy.SetMarkerStyle(8)
+triplet_angles_high_energy.SetLineColor(kBlue)
+triplet_angles_high_energy.SetMarkerSize(1.95)
+triplet_angles_high_energy.Draw("HISTSAME")
 
 upper_bound_triplets.Draw("SAME")
 
-LUXELabel(0.6, 0.85, "e-laser, phase-0")
-leg = TLegend(0.7, 0.75, 0.85, 0.85)
+LUXELabel(0.45, 0.85, "e-laser, phase-0")
+leg = TLegend(0.65, 0.6, 0.8, 0.8)
 
 leg.SetBorderSize(0)
 leg.SetHeader(f"#xi = {xi}")
+leg.AddEntry(triplet_angles_low_energy, " < 3GeV", "l")
+leg.AddEntry(triplet_angles_high_energy, " > 3GeV", "l")
 leg.SetFillColor(0)
-leg.SetTextSize(0.04)
+leg.SetTextSize(0.05)
 leg.Draw()
 
 canv2.SaveAs(f"triplet_angles_{xi}.pdf")
