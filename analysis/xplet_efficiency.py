@@ -12,8 +12,36 @@ xi = folder.split("e0gpc_")[1].split("_")[0]
 generated_xplets = np.load(gen + "_gen_xplet_list.npy", allow_pickle=True)
 reconstructed_xplets = np.load(f"{folder}/reco_xplet_list.npy", allow_pickle=True)
 
-matched_xplets = [xplet for xplet in reconstructed_xplets if len(set(xplet.particle_ids.values())) == 1]
-fake_xplets = [xplet for xplet in reconstructed_xplets if len(set(xplet.particle_ids.values())) > 1]
+def get_efficiency(reco, gen, num_hits_from_same_particle):
+    remove_shared = set()
+    shared_hits = []
+    reco = np.load(reco, allow_pickle=True)
+    gen = np.load(gen, allow_pickle=True)
+    fake = 0
+    matched = set()
+    for xplet in reco:
+        matched_xplet = False
+        intersection = set(xplet.hit_ids.values()).intersection(remove_shared)
+        if remove_shared == set():
+            pass
+        else:
+            if intersection != set():
+                shared_hits.append(intersection)
+                continue
+        for hit in xplet.hit_ids.values():
+            remove_shared.add(hit)
+        for particle in set(xplet.particle_ids.values()):
+            if list(xplet.particle_ids.values()).count(particle) >= num_hits_from_same_particle:
+                matched_xplet = True
+        if matched_xplet:
+            matched.add(particle)
+        else:
+            fake += 1
+    # print(shared_hits)
+    return len(matched) / len(gen), fake / len(reco)
+
+matched_xplets, fake_xplets = get_efficiency(f"{folder}/reco_xplet_list.npy", gen + "_gen_xplet_list.npy", 3)
+print(matched_xplets, fake_xplets)
 
 
 def get_xplet_x(xplet_for_x):
