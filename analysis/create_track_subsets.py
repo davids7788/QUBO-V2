@@ -21,6 +21,7 @@ for slicing in range(10):
     x_max = 0.55430088
     y_min = - 0.00688128
     y_max = 0.00688128
+
     z1 = 3.9560125
     z2 = 4.0560125
     z3 = 4.1560125
@@ -43,7 +44,7 @@ for slicing in range(10):
             if float(row[z_index]) == z1:
                 t_x.append(float(row[x_index]))
                 t_y.append(float(row[y_index]))
-                p_numbers.append(row[particle_energy_index])
+                p_numbers.append(row[particle_id_index])
 
     x_bins = 18 * 32
     y_bins = 16
@@ -61,32 +62,49 @@ for slicing in range(10):
         a = bin_number[0]
         b = bin_number[1]
         bin_number = [a[0], b[0]]
+    print(bin_number)
 
     number_list = []
 
-    for i, b_number_x, b_number_y in zip([0 + i for i in range(len(detector_stats.binnumber[0]))],
+    x_range = [10, -10]
+    y_range = [10, -10]
+
+    for i, b_number_x, b_number_y in zip([i for i in range(len(detector_stats.binnumber[0]))],
                                          detector_stats.binnumber[0],
                                          detector_stats.binnumber[1]):
         if b_number_x == bin_number[0] + 1 and b_number_y == bin_number[1] + 1:
-            number_list.append(i)
+            number_list.append(p_numbers[i])
 
-    z1_x_range = []
-    z1_y_range = []
-    z2_x_range = []
-    z2_y_range = []
-    z3_x_range = []
-    z3_y_range = []
-    z4_x_range = []
-    z4_y_range = []
+            if t_x[i] < x_range[0]:
+                x_range[0] = t_x[i]
+            if t_x[i] > x_range[1]:
+                x_range[1] = t_x[i]
+
+            if t_y[i] < y_range[0]:
+                y_range[0] = t_y[i]
+            if t_y[i] > y_range[1]:
+                y_range[1] = t_y[i]
+
+    z1_x_range = [10, -10]
+    z1_y_range = [10, -10]
+    z2_x_range = [10, -10]
+    z2_y_range = [10, -10]
+    z3_x_range = [10, -10]
+    z3_y_range = [10, -10]
+    z4_x_range = [10, -10]
+    z4_y_range = [10, -10]
 
     with open(outfile_folder + "/" + file_name, 'w', newline='') as csvfile:
         fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
+        l_1 = []
+        l_2 = []
+        l_3 = []
+        l_4 = []
         for row in rows:
-            row[particle_id_index]
-            if int(row[particle_id_index]) in number_list:
+            if row[particle_id_index] in number_list:
                 writer.writerow({'hit_ID': row[hit_id_index],
                                  'x': row[x_index],
                                  'y': row[y_index],
@@ -94,49 +112,28 @@ for slicing in range(10):
                                  'layer_ID': row[layer_id_index],
                                  'particle_ID': row[particle_id_index],
                                  'particle_energy': row[particle_energy_index]})
-            if row[z_index] == z1:
-                if row[y_index] < z1_y_range[0]:
-                    z1_y_range[0] = row[y_index]
-                if row[y_index] > z1_y_range[1]:
-                    z1_y_range[1] = row[y_index]
-                if row[x_index] < z1_x_range[0]:
-                    z1_x_range[0] = row[x_index]
-                if row[x_index] > z1_x_range[1]:
-                    z1_x_range[1] = row[x_index]
+                if float(row[z_index]) == z1:
+                    l_1.append(row)
+                if float(row[z_index]) == z2:
+                    l_2.append(row)
+                if float(row[z_index]) == z3:
+                    l_3.append(row)
+                if float(row[z_index]) == z4:
+                    l_4.append(row)
 
-            if row[z_index] == z2:
-                if row[y_index] < z2_y_range[0]:
-                    z2_y_range[0] = row[y_index]
-                if row[y_index] > z2_y_range[1]:
-                    z2_y_range[1] = row[y_index]
-                if row[x_index] < z2_x_range[0]:
-                    z2_x_range[0] = row[x_index]
-                if row[x_index] > z2_x_range[1]:
-                    z2_x_range[1] = row[x_index]
+        z1_x_range = [min([float(row[x_index]) for row in l_1]), max([float(row[x_index]) for row in l_1])]
+        z2_x_range = [min([float(row[x_index]) for row in l_2]), max([float(row[x_index]) for row in l_2])]
+        z3_x_range = [min([float(row[x_index]) for row in l_3]), max([float(row[x_index]) for row in l_3])]
+        z4_x_range = [min([float(row[x_index]) for row in l_4]), max([float(row[x_index]) for row in l_4])]
 
-            if row[z_index] == z3:
-                if row[y_index] < z3_y_range[0]:
-                    z3_y_range[0] = row[y_index]
-                if row[y_index] > z3_y_range[1]:
-                    z3_y_range[1] = row[y_index]
-                if row[x_index] < z3_x_range[0]:
-                    z3_x_range[0] = row[x_index]
-                if row[x_index] > z3_x_range[1]:
-                    z3_x_range[1] = row[x_index]
-
-            if row[z_index] == z4:
-                if row[y_index] < z4_y_range[0]:
-                    z4_y_range[0] = row[y_index]
-                if row[y_index] > z4_y_range[1]:
-                    z4_y_range[1] = row[y_index]
-                if row[x_index] < z4_x_range[0]:
-                    z4_x_range[0] = row[x_index]
-                if row[x_index] > z4_x_range[1]:
-                    z4_x_range[1] = row[x_index]
+        z1_y_range = [min([float(row[y_index]) for row in l_1]), max([float(row[y_index]) for row in l_1])]
+        z2_y_range = [min([float(row[y_index]) for row in l_2]), max([float(row[y_index]) for row in l_2])]
+        z3_y_range = [min([float(row[y_index]) for row in l_3]), max([float(row[y_index]) for row in l_3])]
+        z4_y_range = [min([float(row[y_index]) for row in l_4]), max([float(row[y_index]) for row in l_4])]
 
         for row in rows:
             if int(row[particle_id_index]) not in number_list:
-                if row[z_index] == z1 and z1_x_range[0] < row[x_index] < z1_x_range[1]\
+                if row[z_index] == z1 and z1_x_range[0] < row[x_index] < z1_x_range[1] \
                         and z1_y_range[0] < row[y_index] < z1_y_range[1]:
                     writer.writerow({'hit_ID': row[hit_id_index],
                                      'x': row[x_index],
@@ -145,7 +142,8 @@ for slicing in range(10):
                                      'layer_ID': row[layer_id_index],
                                      'particle_ID': row[particle_id_index],
                                      'particle_energy': row[particle_energy_index]})
-                if row[z_index] == z2 and z2_x_range[0] < row[x_index] < z2_x_range[1]\
+
+                if row[z_index] == z2 and z2_x_range[0] < row[x_index] < z2_x_range[1] \
                         and z2_y_range[0] < row[y_index] < z2_y_range[1]:
                     writer.writerow({'hit_ID': row[hit_id_index],
                                      'x': row[x_index],
@@ -154,7 +152,8 @@ for slicing in range(10):
                                      'layer_ID': row[layer_id_index],
                                      'particle_ID': row[particle_id_index],
                                      'particle_energy': row[particle_energy_index]})
-                if row[z_index] == z3 and z3_x_range[0] < row[x_index] < z3_x_range[1]\
+
+                if row[z_index] == z3 and z3_x_range[0] < row[x_index] < z3_x_range[1] \
                         and z3_y_range[0] < row[y_index] < z3_y_range[1]:
                     writer.writerow({'hit_ID': row[hit_id_index],
                                      'x': row[x_index],
@@ -163,7 +162,8 @@ for slicing in range(10):
                                      'layer_ID': row[layer_id_index],
                                      'particle_ID': row[particle_id_index],
                                      'particle_energy': row[particle_energy_index]})
-                if row[z_index] == z4 and z4_x_range[0] < row[x_index] < z4_x_range[1]\
+
+                if row[z_index] == z4 and z4_x_range[0] < row[x_index] < z4_x_range[1] \
                         and z4_y_range[0] < row[y_index] < z4_y_range[1]:
                     writer.writerow({'hit_ID': row[hit_id_index],
                                      'x': row[x_index],
