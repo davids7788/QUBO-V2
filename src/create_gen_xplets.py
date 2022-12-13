@@ -60,42 +60,42 @@ with open(tracking_data_file, 'r') as file:
         return float(row_entry[z_index])
 
     rows.sort(key=sort_row_by_particle_id)
+    rows.append([-1, -1, -1, -1, -1, -1, -1])
+    
 
     x_plet_pieces = []
-    current_particle_id = None
+    current_particle_id = 0
     for entry in rows:
-        if current_particle_id is None:
-            x_plet_pieces.append(entry)
-            current_particle_id = int(entry[particle_id_index])
-        else:
-            if int(entry[particle_id_index]) == current_particle_id:
+        if int(entry[particle_id_index]) == current_particle_id:
                 x_plet_pieces.append(entry)
-            else:
-                x_plet_pieces.sort(key=sort_row_by_z_value)
-                doublet_list = []
-                for j in range(len(x_plet_pieces[0:-1])):
-                    doublet_list.append(Doublet(int(x_plet_pieces[j][particle_id_index]),
-                                                int(x_plet_pieces[j + 1][particle_id_index]),
-                                                (float(x_plet_pieces[j][x_index]),
-                                                 float(x_plet_pieces[j][y_index]),
-                                                 float(x_plet_pieces[j][z_index])),
-                                                (float(x_plet_pieces[j + 1][x_index]),
-                                                 float(x_plet_pieces[j + 1][y_index]),
-                                                 float(x_plet_pieces[j + 1][z_index])),
-                                                int(x_plet_pieces[j][hit_id_index]),
-                                                int(x_plet_pieces[j + 1][hit_id_index]),
-                                                float(x_plet_pieces[j][particle_energy_index]),
-                                                float(x_plet_pieces[j + 1][particle_energy_index])))
-                triplet_list = []
-                for k in range(len(doublet_list) - 1):
-                    triplet_list.append(Triplet(doublet_list[k], doublet_list[k + 1], -1))
-                truth_pattern = Xplet()
-                for triplet in triplet_list:
-                    truth_pattern.add_triplet(triplet)
-                if not truth_pattern.is_empty:
-                    generated_x_plets.append(truth_pattern)
-                x_plet_pieces = [entry]
-                current_particle_id = int(entry[particle_id_index])
-
+        else:
+            x_plet_pieces.sort(key=sort_row_by_z_value)
+            doublet_list = []
+            for j in range(len(x_plet_pieces[0:-1])):
+                doublet_list.append(Doublet(int(x_plet_pieces[j][particle_id_index]),
+                                            int(x_plet_pieces[j + 1][particle_id_index]),
+                                            (float(x_plet_pieces[j][x_index]),
+                                             float(x_plet_pieces[j][y_index]),
+                                             float(x_plet_pieces[j][z_index])),
+                                            (float(x_plet_pieces[j + 1][x_index]),
+                                             float(x_plet_pieces[j + 1][y_index]),
+                                             float(x_plet_pieces[j + 1][z_index])),
+                                            int(x_plet_pieces[j][hit_id_index]),
+                                            int(x_plet_pieces[j + 1][hit_id_index]),
+                                            float(x_plet_pieces[j][particle_energy_index]),
+                                            float(x_plet_pieces[j + 1][particle_energy_index])))
+            triplet_list = []
+            for k in range(len(doublet_list) - 1):
+                triplet_list.append(Triplet(doublet_list[k], doublet_list[k + 1], -1))
+            truth_pattern = Xplet()
+            for triplet in triplet_list:
+                truth_pattern.add_triplet(triplet)
+            if not truth_pattern.is_empty:
+                generated_x_plets.append(truth_pattern)
+            x_plet_pieces = [entry]
+            current_particle_id = int(entry[particle_id_index])
+     
+    
+        
     np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", generated_x_plets)
     print(f"Number of generated xplets: {len(generated_x_plets)}\n")

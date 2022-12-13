@@ -23,9 +23,9 @@ for g in gen_x:
 # only full gen particle tracks are considered --> all layers have to be hit
 gen_particles = set()
 
-edges_left = [1.5]
-edges_mid = [2.0 + 0.4 * i for i in range(15)]
-edges_right = [8.0, 8.5, 9.5]
+edges_left = [1]
+edges_mid = [2.0 + 0.5 * i for i in range(15)]
+edges_right = [10, 12]
 edges = np.array(edges_left + edges_mid + edges_right)
 
 gen_doublets = TH1F('gen doublets', 'energy', len(edges) - 1, edges)
@@ -173,9 +173,10 @@ gStyle.SetPadTickY(0)
 
 canv = TCanvas("example", "preselection efficiency ", 800, 600)
 
+gPad.SetTopMargin(0.15)
 h_frame = TH1F('frame', 'energy', len(edges) - 1, edges)
-h_frame.GetYaxis().SetTitle("efficiency")
-h_frame.GetXaxis().SetTitle("true energy [GeV]")
+h_frame.GetYaxis().SetTitle("Selection efficiency")
+h_frame.GetXaxis().SetTitle("True energy [GeV]")
 h_frame.GetYaxis().SetTitleSize(0.055)
 h_frame.GetXaxis().SetTitleSize(0.055)
 # h_frame.GetXaxis().SetNdivisions(115)
@@ -184,13 +185,14 @@ h_frame.SetMaximum(1.01)
 h_frame.SetMinimum(0.8)
 h_frame.GetXaxis().SetLabelOffset(0.02)
 h_frame.GetXaxis().SetRangeUser(0.0, 12.0)
+gPad.SetTicky()
 h_frame.Draw()
 
 # Teff
 eff_doublets = TEfficiency(matched_doublets, gen_doublets)
 eff_doublets.SetMarkerStyle(21)
 eff_doublets.SetMarkerColor(kRed)
-eff_doublets.SetMarkerSize(1.2)
+eff_doublets.SetMarkerSize(1.5)
 eff_doublets.Draw("PSAME X0")
 gPad.Update()
 
@@ -201,7 +203,7 @@ for i in range(eff_d_gr.GetN()):
 eff_d_gr.SetMarkerStyle(21)
 eff_d_gr.SetMarkerColor(kRed)
 eff_d_gr.SetLineColor(kRed)
-eff_d_gr.SetMarkerSize(1.2)
+eff_d_gr.SetMarkerSize(1.5)
 eff_d_gr.Draw("PSAME")
 
 matched_triplets_clone = matched_triplets.Clone()
@@ -209,7 +211,7 @@ matched_triplets_clone = matched_triplets.Clone()
 eff_triplets = TEfficiency(matched_triplets, gen_triplets_passed_doublets)
 eff_triplets.SetMarkerStyle(22)
 eff_triplets.SetMarkerColor(kBlue)
-eff_triplets.SetMarkerSize(1.2)
+eff_triplets.SetMarkerSize(1.5)
 eff_triplets.Draw("PSAME X0")
 gPad.Update()
 
@@ -219,16 +221,16 @@ for i in range(eff_tr_gr.GetN()):
     eff_tr_gr.GetEXhigh()[i] = 0 
 eff_tr_gr.SetMarkerStyle(22)
 eff_tr_gr.SetLineColor(kBlue)
-eff_tr_gr.SetMarkerSize(1.2)
+eff_tr_gr.SetMarkerSize(1.5)
 eff_tr_gr.Draw("PSAME")
 
 
 # Teff total
 
 eff_total = TEfficiency(matched_triplets_clone, gen_triplets)
-eff_total.SetMarkerStyle(207)
+eff_total.SetMarkerStyle(20)
 eff_total.SetMarkerColor(kBlack)
-eff_total.SetMarkerSize(1.2)
+eff_total.SetMarkerSize(1.5)
 eff_total.Draw("PSAME X0")
 gPad.Update()
 
@@ -238,28 +240,23 @@ for i in range(eff_t_gr.GetN()):
     eff_t_gr.GetEXhigh()[i] = 0 
 eff_t_gr.SetMarkerStyle(20)
 eff_t_gr.SetLineColor(kBlack)
-eff_t_gr.SetMarkerSize(1.2)
+eff_t_gr.SetMarkerSize(1.5)
 eff_t_gr.Draw("PSAME")
 
+latex = TLatex()
+latex.SetTextSize(0.045)
+latex.SetTextFont(42)
+latex.DrawLatex(5.5, 0.82, f"40TW laser, e-laser, #xi = {xi}")
 
-
-LUXELabel(0.8, 0.75)
-
-leg = TLegend(0.6, 0.4, 0.85, 0.65)
+leg = TLegend(0.65, 0.5, 0.85, 0.7)
 leg.AddEntry(eff_doublets, "doublet", "p")
 leg.AddEntry(eff_triplets, "triplet", "p")
 leg.AddEntry(eff_total, "total", "p")
 leg.SetBorderSize(0)
 leg.SetFillColor(0)
-leg.SetTextSize(0.04)
+leg.SetTextSize(0.05)
 leg.Draw()
 
-leg2 = TLegend(0.8, 0.65, 0.9, 0.75)
-leg2.SetBorderSize(0)
-leg2.SetFillColor(0)
-leg2.SetTextSize(0.04)
-leg2.SetHeader(f"#xi = {xi}")
-leg2.Draw()
 
 
 canv.SaveAs(f"preselection_efficiency_{xi}.pdf")

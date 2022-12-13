@@ -38,8 +38,8 @@ for i in range(10):
         sum_w_xi_7 += weight
 
 canv = TCanvas("example","xplet efficiency ", 800, 600)    
-h_frame.GetYaxis().SetTitle("fraction of counts / 250 MeV")
-h_frame.GetXaxis().SetTitle("positron energy [GeV]")
+h_frame.GetYaxis().SetTitle("Fraction of positrons")
+h_frame.GetXaxis().SetTitle("Positron energy [GeV]")
 h_frame.SetMaximum(0.085)
 h_frame.Draw()
 
@@ -55,13 +55,12 @@ xi_7.SetLineColor(kBlack)
 xi_7.SetMarkerSize(0)
 xi_7.DrawNormalized("EHISTSAME")
 
-LUXELabel(0.2, 0.85)
 
 leg = TLegend(0.6, 0.7, 0.8, 0.9)
-leg.AddEntry(xi_4, f"#xi = 4.0", "l")
-leg.AddEntry(xi_5, f"#xi = 5.0", "l")
-leg.AddEntry(xi_7, f"#xi = 7.0", "l")
-leg.SetHeader("e-laser, phase-0")
+leg.AddEntry(xi_4, f"#xi = 4", "l")
+leg.AddEntry(xi_5, f"#xi = 5", "l")
+leg.AddEntry(xi_7, f"#xi = 7", "l")
+leg.SetHeader("40TW laser, e-laser")
 leg.SetBorderSize(0)
 leg.SetFillColor(0)
 leg.SetTextSize(0.05)

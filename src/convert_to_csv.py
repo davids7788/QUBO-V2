@@ -21,13 +21,15 @@ if not os.path.isdir("pixel"):
 
 
 for file in os.listdir():
-    if ".npy" not in file:
+    if ".root" in file:
         continue
     print(f"Processing file: {file}")
     if "sl" in file:
         file_name = '_'.join('.'.join(file.split('.')[0:-1]).split("_")[0:-2]) + "_sl"
     if "fl" in file:
         file_name = '_'.join('.'.join(file.split('.')[0:-1]).split("_")[0:-2]) + "_fl"
+    if os.path.exists('true/' + file_name + '.csv'):
+        continue
 
     data = np.load(file, allow_pickle=True)[()]
 
