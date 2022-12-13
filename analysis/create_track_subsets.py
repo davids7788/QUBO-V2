@@ -21,7 +21,7 @@ for slicing in range(10):
     x_max = 0.55430088
     y_min = - 0.00688128
     y_max = 0.00688128
-    
+
     z1 = 3.9560125
     z2 = 4.0560125
     z3 = 4.1560125
@@ -62,28 +62,27 @@ for slicing in range(10):
         a = bin_number[0]
         b = bin_number[1]
         bin_number = [a[0], b[0]]
-    
+
     number_list = []
     
     x_range = [10, -10]
     y_range = [10, -10]
-    
+
     for i, b_number_x, b_number_y in zip([i for i in range(len(detector_stats.binnumber[0]))],
                                          detector_stats.binnumber[0],
                                          detector_stats.binnumber[1]):
         if b_number_x == bin_number[0] + 1 and b_number_y == bin_number[1] + 1:
             number_list.append(p_numbers[i])
-            
+
             if t_x[i] < x_range[0]:
                 x_range[0] = t_x[i]
             if t_x[i] > x_range[1]:
                 x_range[1] = t_x[i]
-                
+
             if t_y[i] < y_range[0]:
                 y_range[0] = t_y[i]
             if t_y[i] > y_range[1]:
                 y_range[1] = t_y[i]
-                
 
     z1_x_range = [10, -10]
     z1_y_range = [10, -10]
@@ -93,6 +92,7 @@ for slicing in range(10):
     z3_y_range = [10, -10]
     z4_x_range = [10, -10]
     z4_y_range = [10, -10]
+
     
     # with open(outfile_folder + "/" + file_name + "_particle_names", 'w', newline='') as csvfile:
     #     fieldnames = ['particle_ID']
@@ -106,7 +106,7 @@ for slicing in range(10):
         fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        
+
         l_1 = []
         l_2 = []
         l_3 = []
@@ -211,3 +211,4 @@ for slicing in range(10):
         #                              'layer_ID': row[layer_id_index],
         #                              'particle_ID': row[particle_id_index],
         #                              'particle_energy': row[particle_energy_index]})
+

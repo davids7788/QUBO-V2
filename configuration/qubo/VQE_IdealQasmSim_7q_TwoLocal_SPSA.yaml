@@ -12,7 +12,7 @@ solver:
   algorithm: "VQE"
   backend: "Qasm Ideal Sim"
   optimiser: SPSA
-  maxiter: 100
+  maxiter: 500
   maxfev: null
   seed: 0
   shots: 10

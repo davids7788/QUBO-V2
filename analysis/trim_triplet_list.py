@@ -21,15 +21,6 @@ print(correct, false)
 exit()
 
 
-
-
-# 1102298 98992
-
-
-
-
-
-
 data = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
 
 print(len(data))
