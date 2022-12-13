@@ -53,10 +53,9 @@ for i, t1 in enumerate(kept_triplets):
             if t_list[-1].doublet_2 == t2.doublet_1:
                 t_list.append(t2)
 
-        if t_list[-1].doublet_2.hit_2_position[2] in last_layer:
-            reco_pattern = Xplet()
-            for triplet in t_list:
-                reco_pattern.add_triplet(triplet)
-            reco_x_plets.append(reco_pattern)
+        reco_pattern = Xplet()
+        for triplet in t_list:
+            reco_pattern.add_triplet(triplet)
+        reco_x_plets.append(reco_pattern)
 
 np.save(f"{folder}/reco_xplet_list", reco_x_plets)

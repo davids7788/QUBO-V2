@@ -14,7 +14,7 @@ class Doublet:
         """Class for doublet objects, consisting of two hits on different detector layers.
         :param hit_1_particle_key: particle true number, from simulation
         :param hit_2_particle_key: particle true number, from simulation
-        :param hit_1_position:  particle position [x, y, z] on detector layer of hit 1
+        :param hit_1_position: particle position [x, y, z] on detector layer of hit 1
         :param hit_2_position: particle position [x, y, z] on detector layer of hit 2
         :param hit_1_id: unique integer hit id on detector of hit 1
         :param hit_2_id: unique integer hit id on detector of hit 2
