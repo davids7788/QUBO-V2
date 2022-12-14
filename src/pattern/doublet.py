@@ -5,21 +5,25 @@ class Doublet:
     def __init__(self,
                  hit_1_particle_key: int,
                  hit_2_particle_key: int,
-                 hit_1_position: [float, float, float],
-                 hit_2_position: [float, float, float],
+                 hit_1_position: list[float],
+                 hit_2_position: list[float],
                  hit_1_id: int,
                  hit_2_id: int,
                  energy_1: float,
-                 energy_2: float):
+                 energy_2: float,
+                 time_1: float = 0,
+                 time_2: float = 0):
         """Class for doublet objects, consisting of two hits on different detector layers.
         :param hit_1_particle_key: particle true number, from simulation
         :param hit_2_particle_key: particle true number, from simulation
-        :param hit_1_position: particle position [x, y, z] on detector layer of hit 1
-        :param hit_2_position: particle position [x, y, z] on detector layer of hit 2
+        :param hit_1_position: particle position [x, y, z] or [rho, phi, z] on detector layer of hit 1
+        :param hit_2_position: particle position [x, y, z] or [rho, phi, z] on detector layer of hit 2
         :param hit_1_id: unique integer hit id on detector of hit 1
         :param hit_2_id: unique integer hit id on detector of hit 2
-        :param energy_1 unique integer hit id on detector of hit 1
-        :param energy_2: unique integer hit id on detector of hit 2
+        :param energy_1: energy value of particle from hit 1
+        :param energy_2: energy value of particle from hit 2
+        :param time_1: absolute time of the hit in s
+        :param time_2: absolute time of the hit in s
         """
         self.hit_1_position = hit_1_position
         self.hit_1_particle_key = hit_1_particle_key
@@ -29,9 +33,10 @@ class Doublet:
         self.hit_2_id = hit_2_id
         self.energy_1 = energy_1
         self.energy_2 = energy_2
-        self.is_correct_match = self.set_is_correct_match()
+        self.time_1 = time_1
+        self.time_2 = time_2
 
-    def set_is_correct_match(self):
+    def is_correct_match(self):
         """Checks if doublet hits stem from the same particle.
         :return
             True if created from same particle, else False.
