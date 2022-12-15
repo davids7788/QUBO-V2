@@ -4,14 +4,11 @@ from src.detector_plane import DetectorPlane
 import matplotlib.pyplot as plt
 import numpy as np
 
-folder = sys.argv[1] 
-os.chdir(folder)
-if not os.path.isdir("acceptance"):
-    os.mkdir("acceptance")
-    
-for file in os.listdir():
-    if ".npy" not in file:
-        continue
+
+def acceptance_plots_simplified_LUXE(file):
+    """Takes a file and makes acceptance plots for that file.
+    :param file: .npy file with simplified tracking data.
+    """
     data = np.load(file, allow_pickle=True)[()]
     num_particles = len(list(data["Particle momentum history log"].keys()))
     num_of_hits = {}
@@ -29,12 +26,12 @@ for file in os.listdir():
         elif 0 < counter < 4:
             partial_acceptance_energy.append(np.linalg.norm(data["Particle momentum history log"][particle]['IP']))
         else:
-            full_acceptance_energy.append(np.linalg.norm(data["Particle momentum history log"][particle]['IP']))            
+            full_acceptance_energy.append(np.linalg.norm(data["Particle momentum history log"][particle]['IP']))
 
     plt.figure(figsize=(8, 6), dpi=250)
-    plt.hist(num_of_hits.values(), 
-             weights=np.ones(num_particles) / num_particles, 
-             bins=8, 
+    plt.hist(num_of_hits.values(),
+             weights=np.ones(num_particles) / num_particles,
+             bins=8,
              range=(0, 8),
              align='left',
              histtype='step',
@@ -52,38 +49,37 @@ for file in os.listdir():
     plt.grid(True, which="both", ls="-")
     plt.savefig('acceptance/' + '.'.join(file.split('.')[0:-1]) + '_acceptance.pdf')
     plt.close()
-    
-    plt.figure(figsize=(8, 6), dpi=250)
 
+    plt.figure(figsize=(8, 6), dpi=250)
     plt.hist(np.array(full_acceptance_energy) / 1000,
-             weights=np.ones(len(full_acceptance_energy)) / num_particles, 
-             bins=70, 
+             weights=np.ones(len(full_acceptance_energy)) / num_particles,
+             bins=70,
              range=(0, 14),
              align='left',
              histtype='step',
              linewidth=2.5,
              label="> 3 interactions")
     plt.hist(np.array(partial_acceptance_energy) / 1000,
-             weights=np.ones(len(partial_acceptance_energy)) / num_particles, 
-             bins=70, 
+             weights=np.ones(len(partial_acceptance_energy)) / num_particles,
+             bins=70,
              range=(0, 14),
              align='left',
              histtype='step',
              linewidth=2.5,
              label="0 < i < 4 interactions")
     plt.hist(np.array(no_acceptance_energy) / 1000,
-             weights=np.ones(len(no_acceptance_energy)) / num_particles, 
-             bins=70, 
+             weights=np.ones(len(no_acceptance_energy)) / num_particles,
+             bins=70,
              range=(0, 14),
              align='left',
              histtype='step',
              linewidth=2.5,
              label="0 interactions")
-    plt.hist([], 
+    plt.hist([],
              label=f"N = {num_particles}",
              histtype="step",
              linewidth=0)
-    
+
     plt.yscale('log')
     plt.xticks(fontsize=14)
     plt.xlabel("Energy [GeV]", fontsize=14)

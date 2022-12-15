@@ -7,9 +7,9 @@ class Triplet:
                  doublet_1: Doublet,
                  doublet_2: Doublet):
         """Class for Creating Triplets out of doublets from the Doublet class.
-        :param doublet_1: doublet object containing hit 1 and hit 2 of the then created triplet
-        :param doublet_2: doublet object containing hit 2 and hit 3 of the then created triplet
-        :param triplet_id: unique integer id
+        :param
+            doublet_1: doublet object containing hit 1 and hit 2 of the then created triplet
+            doublet_2: doublet object containing hit 2 and hit 3 of the then created triplet
         """
         self.doublet_1 = doublet_1
         self.doublet_2 = doublet_2

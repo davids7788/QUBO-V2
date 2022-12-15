@@ -50,8 +50,7 @@ class DipoleMagnet:
             # radius
             r = abs(DipoleMagnet.compute_bending_radius(np.sqrt(particle.momentum[0]**2 + particle.momentum[2]**2),
                                                         dipole_strength_value))
-            # print(R, "radius")
-            
+
             # theta_i
             dz = self.dipole_length / len(self.dipole_strength)
             
@@ -64,4 +63,5 @@ class DipoleMagnet:
             dy = r * theta / np.sqrt(particle.momentum[2]**2 + particle.momentum[0]**2) * particle.momentum[1]
             
             particle.position += np.array([dx, dy, dz])
-            particle.momentum = DipoleMagnet.xz_rotation_matrix(- theta).dot(particle.momentum) 
+            particle.momentum = DipoleMagnet.xz_rotation_matrix(- theta).dot(particle.momentum)
+            particle.update_time(np.sqrt((r * theta_i)**2 + dy**2))

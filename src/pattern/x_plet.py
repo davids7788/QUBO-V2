@@ -19,7 +19,10 @@ class Xplet:
 
     def add_triplet(self,
                     triplet: Triplet):
-        """Adds a triplet to the Xple"""
+        """Adds a triplet to the Xplet structure
+        :param
+            triplet: Triplet object
+        """
         if self.is_empty:
             self.hit_ids.update({0: triplet.doublet_1.hit_1_id})
             self.hit_ids.update({1: triplet.doublet_1.hit_2_id})
@@ -55,21 +58,26 @@ class Xplet:
     @staticmethod
     def lin_func(x, a, b):
         """Linear function with slope a and bias b
+        :param
+            x: data points
+            a: slope
+            b: bias
         """
         return a * x + b
 
     def get_coordinates(self):
-        """Auxiliary function to extrac x,y and z coordinates.
-        :return (x, y, z)
+        """Auxiliary function to extract x,y and z coordinates.
+        :return
+            (x, y, z)
         """
         return ([value[0] for value in list(self.coordinates.values())],
                 [value[1] for value in list(self.coordinates.values())],
                 [value[2] for value in list(self.coordinates.values())])
 
     def fit_lin_track(self):
-        """Linear fit of the track in xz and yz direction. Chi squared values are averaged.
+        """Linear fit of the track in xz and yz direction. Chi squared values are averaged. Chi squared and p-value
+        attributes are set for the xplet.
         """
-
         popt_xz, _ = curve_fit(Xplet.lin_func, x, z)
         chi_xz, _ = chisquare(y, f_exp=[popt_xz[0] * x_i + popt_xz[1] for x_i in x], ddof=len(x) - 2)
 

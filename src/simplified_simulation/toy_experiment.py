@@ -36,6 +36,7 @@ class MCToyExperiment:
 
             particle_momentum_log = {}
             particle_position_log = {}
+            particle_time_log = {}
 
             particle = Particle(position=self.particle_source.get_particle_info(self.species, 'position', i)[1:],
                                 momentum=self.particle_source.get_particle_info(self.species, 'momentum', i)[1:],
@@ -43,7 +44,8 @@ class MCToyExperiment:
             
             # particle related dictionaries
             particle_momentum_log.update({'IP': particle.momentum})    
-            particle_position_log.update({'IP': particle.position}) 
+            particle_position_log.update({'IP': particle.position})
+            particle_time_log.update({'IP': particle.time})
 
             # particle moves to dipole location
             z_dist_dipole = abs(particle.position[2] - self.dipole_magnet.dipole_start)
@@ -87,3 +89,7 @@ class MCToyExperiment:
         for k, plane in enumerate(self.detector_plane_list):
             self.result.list_of_planes.update({f"Plane {k}": plane})
             self.result.true_detector_hits_dictionary.update({f"Plane {k}": plane.true_hits_dictionary})
+
+    @staticmethod
+    def get_distance(x1, x0, y1, y0, z1, z0):
+        return np.sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)

@@ -14,16 +14,17 @@ class Doublet:
                  time_1: float = 0,
                  time_2: float = 0):
         """Class for doublet objects, consisting of two hits on different detector layers.
-        :param hit_1_particle_key: particle true number, from simulation
-        :param hit_2_particle_key: particle true number, from simulation
-        :param hit_1_position: particle position [x, y, z] or [rho, phi, z] on detector layer of hit 1
-        :param hit_2_position: particle position [x, y, z] or [rho, phi, z] on detector layer of hit 2
-        :param hit_1_id: unique integer hit id on detector of hit 1
-        :param hit_2_id: unique integer hit id on detector of hit 2
-        :param energy_1: energy value of particle from hit 1
-        :param energy_2: energy value of particle from hit 2
-        :param time_1: absolute time of the hit in s
-        :param time_2: absolute time of the hit in s
+        :param
+            hit_1_particle_key: particle true number, from simulation
+            hit_2_particle_key: particle true number, from simulation
+            hit_1_position: particle position [x, y, z] on detector layer of hit 1
+            hit_2_position: particle position [x, y, z] or detector layer of hit 2
+            hit_1_id: unique integer hit id on detector of hit 1
+            hit_2_id: unique integer hit id on detector of hit 2
+            energy_1: energy value of particle from hit 1
+            energy_2: energy value of particle from hit 2
+            time_1: absolute time of the hit in s
+            time_2: absolute time of the hit in s
         """
         self.hit_1_position = hit_1_position
         self.hit_1_particle_key = hit_1_particle_key
