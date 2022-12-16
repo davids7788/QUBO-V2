@@ -38,24 +38,29 @@ class MCToyExperiment:
             particle_position_log = {}
             particle_time_log = {}
 
-            particle = Particle(position=self.particle_source.get_particle_info(self.species, 'position', i)[1:],
-                                momentum=self.particle_source.get_particle_info(self.species, 'momentum', i)[1:],
+            particle = Particle(position=self.particle_source.get_particle_info(self.species, "position", i)[1:],
+                                momentum=self.particle_source.get_particle_info(self.species, "momentum", i)[1:],
                                 particle_id=str(i))
             
             # particle related dictionaries
-            particle_momentum_log.update({'IP': particle.momentum})    
-            particle_position_log.update({'IP': particle.position})
-            particle_time_log.update({'IP': particle.time})
+            particle_momentum_log.update({"IP": particle.momentum})
+            particle_position_log.update({"IP": particle.position})
+            particle_time_log.update({"IP": particle.time})
 
             # particle moves to dipole location
             z_dist_dipole = abs(particle.position[2] - self.dipole_magnet.dipole_start)
             particle.move_along_beam(z_dist_dipole)
-            particle_momentum_log.update({'Magnetic Dipole Start': particle.momentum})
-            particle_position_log.update({'Magnetic Dipole Start': particle.position})
 
-            self.dipole_magnet.traversing_through_dipole_magnet(particle)
+            particle_momentum_log.update({"Magnetic Dipole Start": particle.momentum})
+            particle_position_log.update({"Magnetic Dipole Start": particle.position})
+            particle.update_time(get_distance(particle_position_log.values()[-1],
+                                              particle_position_log.values()[-2]))
+            particle_time_log.update({'Magnetic Dipole Start': particle.time})
+
+            self.dipole_magnet.traversing_through_dipole_magnet(particle)   # time update included
             particle_momentum_log.update({'Magnetic Dipole End': particle.momentum})
             particle_position_log.update({'Magnetic Dipole End': particle.position})
+            particle_time_log.update({'Magnetic Dipole End': particle.time})
 
             for z_detector in sorted(set([plane.z_position for plane in self.detector_plane_list])):
                 z_dist = z_detector - particle.position[2]
@@ -79,6 +84,9 @@ class MCToyExperiment:
                         pass                        
                     particle_momentum_log.update({f"Plane {k}": particle.momentum})
                     particle_position_log.update({f"Plane {k}": particle.position})
+                    particle.update_time(get_distance(particle_position_log.values()[-1],
+                                                      particle_position_log.values()[-2]))
+                    particle_time_log.update({f"Plane {k}": particle.time})
 
                     # Adds entries with true, smeared and pixelated hits to dictionaries, stored in layer objects
                     plane.true_hits_dictionary.update({particle.particle_ID: particle.position})
@@ -91,5 +99,12 @@ class MCToyExperiment:
             self.result.true_detector_hits_dictionary.update({f"Plane {k}": plane.true_hits_dictionary})
 
     @staticmethod
-    def get_distance(x1, x0, y1, y0, z1, z0):
-        return np.sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)
+    def get_distance(p1, p0):
+        """Returns the distance from a point p1 (x1, y1, z1) to a point p0 (x0, y0, z0)
+        :param
+            p1: [x1, y1, z1]
+            p0: [x0, y0, z0]
+        :return
+            distance of p1 and po
+        """
+        return np.sqrt((p1[0] - p0[0])**2 + (p1[1] - p0[1])**2 + (p1[2] - p0[2])**2)

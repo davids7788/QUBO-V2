@@ -18,14 +18,15 @@ class Particle:
         self.momentum = momentum
         self.time = 0
 
-    def move_along_beam(self, distance):
+    def move_along_beam(self, dz):
         """Propagates x, y and z value for moving along the beam.
-        :param distance: distance in z direction
+        :param
+            dz: distance in z direction
         """
         [px, py, pz] = self.momentum
-        self.position = [self.position[0] + distance / pz * px,
-                         self.position[1] + distance / pz * py,
-                         self.position[2] + distance]
+        self.position = [self.position[0] + dz / pz * px,
+                         self.position[1] + dz / pz * py,
+                         self.position[2] + dz]
 
     def update_time(self, distance):
         c = 299792458   # m/s
