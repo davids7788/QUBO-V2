@@ -1,4 +1,5 @@
 from simplified_simulation.particle import Particle
+import numpy as np
 
 
 class MCToyExperiment:
@@ -28,8 +29,8 @@ class MCToyExperiment:
 
     def start_experiment(self):
         """Starts the experiment. Th particle moves first to the dipole, the trajectory gets bend and it moves
-        to the detector planes."""
-
+        to the detector planes.
+        """
         particles = len(self.particle_source.get_particle_info(self.species, 'position'))
 
         for i in range(particles):
@@ -53,10 +54,11 @@ class MCToyExperiment:
 
             particle_momentum_log.update({"Magnetic Dipole Start": particle.momentum})
             particle_position_log.update({"Magnetic Dipole Start": particle.position})
-            particle.update_time(get_distance(particle_position_log.values()[-1],
-                                              particle_position_log.values()[-2]))
+            particle.update_time(MCToyExperiment.get_distance(list(particle_position_log.values())[-1],
+                                                              list(particle_position_log.values())[-2]))
             particle_time_log.update({'Magnetic Dipole Start': particle.time})
 
+            # moving through dipole
             self.dipole_magnet.traversing_through_dipole_magnet(particle)   # time update included
             particle_momentum_log.update({'Magnetic Dipole End': particle.momentum})
             particle_position_log.update({'Magnetic Dipole End': particle.position})
@@ -84,15 +86,16 @@ class MCToyExperiment:
                         pass                        
                     particle_momentum_log.update({f"Plane {k}": particle.momentum})
                     particle_position_log.update({f"Plane {k}": particle.position})
-                    particle.update_time(get_distance(particle_position_log.values()[-1],
-                                                      particle_position_log.values()[-2]))
+                    particle.update_time(MCToyExperiment.get_distance(list(particle_position_log.values())[-1],
+                                                                      list(particle_position_log.values())[-2]))
                     particle_time_log.update({f"Plane {k}": particle.time})
 
-                    # Adds entries with true, smeared and pixelated hits to dictionaries, stored in layer objects
+                    # Adds entries to dictionaries, stored in detector layer objects
                     plane.true_hits_dictionary.update({particle.particle_ID: particle.position})
 
             self.result.particle_momentum_history.update({particle.particle_ID: particle_momentum_log})
             self.result.particle_position_history.update({particle.particle_ID: particle_position_log})
+            self.result.particle_time_history.update({particle.particle_ID: particle_time_log})
 
         for k, plane in enumerate(self.detector_plane_list):
             self.result.list_of_planes.update({f"Plane {k}": plane})

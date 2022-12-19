@@ -29,8 +29,12 @@ class Particle:
                          self.position[2] + dz]
 
     def update_time(self, distance):
+        """Updates the time attribute for a particle which traveled the given distance
+         :param
+            distance: distance [m]
+        """
         c = 299792458   # m/s
-        e_total = np.sqrt(momentum[0]**2 + momentum[1]**2 + momentum[2]**2)   # MeV
+        e_total = np.sqrt(self.momentum[0]**2 + self.momentum[1]**2 + self.momentum[2]**2)   # MeV
         e_kin = e_total - 0.511   #
         velocity = c * np.sqrt(1 - (1 / (1 + e_kin/0.511))**2)
         self.time += distance / velocity

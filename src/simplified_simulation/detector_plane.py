@@ -32,12 +32,24 @@ class DetectorPlane:
         self.true_hits_dictionary = {}
 
     def bin_width_in_x(self):
+        """Returns bin width in x calculated from number of bins and length of detector
+        :return
+            bin width in x [m]
+        """
         return (self.limits_x[1] - self.limits_x[0]) / self.num_bins[0]
     
     def bin_width_in_y(self):
+        """Returns bin width in y calculated from number of bins and length of detector
+        :return
+            bin width in y [m]
+        """
         return (self.limits_y[1] - self.limits_y[0]) / self.num_bins[1]
     
     def bin_edges_for_hit(self, hit):
+        """Returns bin edges in x and y for a particle position (hit) on the detector
+        :return
+            (x_low, x_up), (y_low, y_up) [m]
+        """
         x_steps_upper_limit = int((self.limits_x[1] - hit[0]) / self.bin_width_in_x())
         y_steps_upper_limit = int((self.limits_y[1] - hit[1]) / self.bin_width_in_y())
         return (self.limits_x[1] - (x_steps_upper_limit + 1) * self.bin_width_in_x(),

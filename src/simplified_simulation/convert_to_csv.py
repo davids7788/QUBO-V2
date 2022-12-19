@@ -5,40 +5,25 @@ import sys
 import matplotlib.pyplot as plt
 from numpy.linalg import norm
 
-folder = sys.argv[1]
 
-os.chdir(folder)
-if not os.path.isdir("true"):
-    os.mkdir("true")
-if not os.path.isdir("smeared"):
-    os.mkdir("smeared")
-if not os.path.isdir("occupancy"):
-    os.mkdir("occupancy")
-if not os.path.isdir("train_images_NN"):
-    os.mkdir("train_images_NN")
-if not os.path.isdir("pixel"):
-    os.mkdir("pixel")
-
-
-for file in os.listdir():
-    if ".root" in file:
-        continue
-    print(f"Processing file: {file}")
+def convert_to_csv_true(path_to_file):
+    folder = "/".join(path_to_file.split("/")[0:-1])
+    file = path_to_file.split("/")[-1]
+    if not os.path.isdir(f"{folder}/true"):
+        os.mkdir(f"{folder}/true")
     if "sl" in file:
-        file_name = '_'.join('.'.join(file.split('.')[0:-1]).split("_")[0:-2]) + "_sl"
+        file_name = '_'.join(file.split("_")[0:-2]) + "_sl"
     if "fl" in file:
-        file_name = '_'.join('.'.join(file.split('.')[0:-1]).split("_")[0:-2]) + "_fl"
-    if os.path.exists('true/' + file_name + '.csv'):
-        continue
+        file_name = '_'.join(file.split("_")[0:-2]) + "_fl"
 
-    data = np.load(file, allow_pickle=True)[()]
+    data = np.load(f"{path_to_file}.npy", allow_pickle=True)[()]
 
     hit_id = 0
-    with open('true/' + file_name + '.csv', 'w', newline='') as csvfile:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy']
+    with open(f"{folder}/true/{file_name}.csv", 'w', newline='') as csvfile:
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy', 'time']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        
+
         for key, plane in zip(data['Plane list'].keys(), data['Plane list'].values()):
             for particle, hit in zip(plane.true_hits_dictionary.keys(), plane.true_hits_dictionary.values()):
                 writer.writerow({'hit_ID': hit_id,
@@ -47,16 +32,29 @@ for file in os.listdir():
                                  'z': hit[2],
                                  'layer_ID': key,
                                  'particle_ID': particle,
-                                 'particle_energy': norm(data["Particle momentum history log"][particle][key])})
+                                 'particle_energy': norm(data["Particle momentum history log"][particle][key]),
+                                 'time': data["Particle time log"][particle][key]})
                 hit_id += 1
-    print(f"True hits saved to file {'true/' + '.'.join(file.split('.')[0:-1]) + '.csv'}")
+
+
+def convert_to_csv_smeared(path_to_file):
+    folder = "/".join(path_to_file.split("/")[0:-1])
+    file = path_to_file.split("/")[-1]
+    if not os.path.isdir(f"{folder}/smeared"):
+        os.mkdir(f"{folder}/smeared")
+    if "sl" in file:
+        file_name = '_'.join(file.split("_")[0:-2]) + "_sl"
+    if "fl" in file:
+        file_name = '_'.join(file.split("_")[0:-2]) + "_fl"
+
+    data = np.load(f"{path_to_file}.npy", allow_pickle=True)[()]
 
     hit_id = 0
-    with open('smeared/' + file_name + '.csv', 'w', newline='') as csvfile:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy']
+    with open(f"{folder}/smeared/{file_name}.csv", 'w', newline='') as csvfile:
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy', 'time']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        
+
         for key, plane in zip(data['Plane list'].keys(), data['Plane list'].values()):
             # sigma_x_resolution = (plane.limits_x[1] - plane.limits_x[0]) / (plane.num_bins[0]) / np.sqrt(12)
             # sigma_y_resolution = (plane.limits_y[1] - plane.limits_y[0]) / (plane.num_bins[1]) / np.sqrt(12)
@@ -71,18 +69,32 @@ for file in os.listdir():
                                  'z': hit[2],
                                  'layer_ID': key,
                                  'particle_ID': particle,
-                                 'particle_energy': norm(data["Particle momentum history log"][particle][key])})
+                                 'particle_energy': norm(data["Particle momentum history log"][particle][key]),
+                                 'time': data["Particle time log"][particle][key]})
                 hit_id += 1
-    print(f"Smeared hits saved to file {'smeared/' + file_name + '.csv'}")
 
-    print("\nStarting digitisation part...")
+
+def convert_to_csv_pixel(path_to_file):
+    folder = "/".join(path_to_file.split("/")[0:-1])
+    file = path_to_file.split("/")[-1]
+
+    if not os.path.isdir(f"{folder}/occupancy"):
+        os.mkdir(f"{folder}/occupancy")
+    if not os.path.isdir(f"{folder}/train_images_NN"):
+        os.mkdir(f"{folder}/train_images_NN")
+    if not os.path.isdir(f"{folder}/pixel"):
+        os.mkdir(f"{folder}/pixel")
+    if "sl" in file:
+        file_name = '_'.join(file.split("_")[0:-2]) + "_sl"
+    if "fl" in file:
+        file_name = '_'.join(file.split("_")[0:-2]) + "_fl"
 
     # every file gets a folder for train images data -> up to 72 per simulation
-    if not os.path.isdir("train_images_NN/" + file_name):
-        os.mkdir("train_images_NN/" + file_name)
+    if not os.path.isdir(f"{folder}/train_images_NN/" + file_name):
+        os.mkdir(f"{folder}/train_images_NN/" + file_name)
 
-    if not os.path.isdir("occupancy/" + file_name):
-        os.mkdir("occupancy/" + file_name)
+    if not os.path.isdir(f"{folder}/occupancy/" + file_name):
+        os.mkdir(f"{folder}/occupancy/" + file_name)
 
     # single: one particle triggers exactly one pixel
     # multi: one particle may trigger more than one pixel
@@ -103,7 +115,7 @@ for file in os.listdir():
     hist_data_single_hits = {}
     hist_data_multi_hits = {}
 
-    data = np.load(file, allow_pickle=True)[()]
+    data = np.load(f"{path_to_file}.npy", allow_pickle=True)[()]
     for plane_name, plane in zip(data['Plane list'].keys(), data['Plane list'].values()):
 
         # mid to edge of bin
@@ -272,7 +284,8 @@ for file in os.listdir():
         cbar.set_label(label, size=18)
         cbar.ax.tick_params(labelsize=18)
         plt.title(r"Pixel occupancy", fontsize=18, loc="left")
-        plt.savefig("occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
+
+        plt.savefig(f"{folder}/occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
                     "_single_pixel_hit.pdf")
         plt.close()
 
@@ -298,7 +311,7 @@ for file in os.listdir():
                         h_single[j, k] = 1
 
         # save as train image for NN
-        np.save("train_images_NN/" + file_name + "/single_pixel_hit_" +
+        np.save(f"{folder}/train_images_NN/" + file + "/single_pixel_hit_" +
                 plane_name.replace(" ", "_"), h_single)
 
         # net triggered pixels
@@ -332,7 +345,7 @@ for file in os.listdir():
         cbar.set_label(label, size=18)
         cbar.ax.tick_params(labelsize=18)
         plt.title(r"Pixel occupancy", fontsize=18, loc="left")
-        plt.savefig("occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
+        plt.savefig(f"{folder}/occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
                     "_multi_pixel_hit.pdf")
         plt.close()
 
@@ -357,7 +370,7 @@ for file in os.listdir():
                         h_multi[j, k] = 1
 
         # save as train image for NN
-        np.save("train_images_NN/" + file_name + "/multi_pixel_hit_" + plane_name.replace(" ", "_"),
+        np.save(f"{folder}/train_images_NN/" + file_name + "/multi_pixel_hit_" + plane_name.replace(" ", "_"),
                 h_multi)
 
         # net triggered pixels
@@ -368,7 +381,7 @@ for file in os.listdir():
 
         # writing csv files to make the data set compatible with the ML track challenge
     hit_id = 0
-    with open('pixel/single_pixel_hits_' + file_name + '.csv', 'w', newline='') as csv_file:
+    with open(f'{folder}/pixel/single_pixel_hits_' + file_name + '.csv', 'w', newline='') as csv_file:
         fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
@@ -382,7 +395,7 @@ for file in os.listdir():
             hit_id += 1
 
     hit_id = 0
-    with open('pixel/multi_pixel_hits_' + file_name + '.csv', 'w', newline='') as csv_file:
+    with open(f'{folder}/pixel/multi_pixel_hits_' + file_name + '.csv', 'w', newline='') as csv_file:
         fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
@@ -395,12 +408,10 @@ for file in os.listdir():
                              'particle_ID': key.split("_")[1]})
             hit_id += 1
 
-    np.save("occupancy/occupancy_info_" + file_name,
+    np.save(f"{folder}/occupancy/occupancy_info_" + file_name,
             np.array([{"single hit": single_pixel_hits_occupancy,
                        "single hit net": net_single_pixel_hits_occupancy,
                        "multi hit": multi_pixel_hits_occupancy,
                        "multi hit net": net_multi_pixel_hits_occupancy,
                        "histogram single": hist_data_single_hits,
                        "histogram multi": hist_data_single_hits}]))
-
-print("Finished successfully!")

@@ -7,6 +7,7 @@ from simplified_simulation.experimental_results_MC_toy import ExperimentalResult
 from simplified_simulation.toy_experiment import MCToyExperiment
 from simplified_simulation.detector_plane import DetectorPlane
 from simplified_simulation.dipole_magnet import DipoleMagnet
+from simplified_simulation.convert_to_csv import *
 
 config_file = sys.argv[1]
 ptarmigan = sys.argv[2]
@@ -75,3 +76,6 @@ Experiment_1 = MCToyExperiment(source,
 Experiment_1.start_experiment()
 
 result.save_results(save_location + "/" + outfile_name + outfile_appendix)
+convert_to_csv_true(save_location + "/" + outfile_name + outfile_appendix)
+convert_to_csv_smeared(save_location + "/" + outfile_name + outfile_appendix)
+# convert_to_csv_pixel(save_location + "/" + outfile_name + outfile_appendix)
