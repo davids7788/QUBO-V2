@@ -3,6 +3,7 @@ import yaml
 import os
 
 from pathlib import Path
+from pattern_building.create_gen_xplets import *
 
 from preselection.triplet_creator import TripletCreatorLUXE
 from preselection.segment_manager import SegmentManager
@@ -36,6 +37,8 @@ triplet_plet_creator = TripletCreatorLUXE(config_file, new_folder)
 triplet_plet_creator.load_tracking_data(tracking_data, s_manager, geometry_file)
 triplet_plet_creator.create_x_plets(s_manager)
 triplet_plet_creator.write_info_file()
+
+gen_xplets(tracking_data, "/".join(new_folder.split("/")[0:-1]))
 
 qubo_coefficients = QuboCoefficients(config_file, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)

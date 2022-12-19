@@ -180,7 +180,7 @@ class TripletCreatorLUXE:
                                               second_hit[self.hit_id_index],
                                               first_hit[self.particle_energy_index],
                                               second_hit[self.particle_energy_index])
-                            if doublet.is_correct_match and doublet.hit_1_particle_key in self.xplet_numbers:
+                            if doublet.is_correct_match() and doublet.hit_1_particle_key in self.xplet_numbers:
                                 self.found_correct_doublets += 1
                                 self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
                                                                           doublet.hit_1_position[0]) /
@@ -216,12 +216,12 @@ class TripletCreatorLUXE:
                         if first_doublet.hit_2_position != second_doublet.hit_1_position:  # check if match
                             continue
                         if self.triplet_criteria_check(first_doublet, second_doublet):
-                            triplet = Triplet(first_doublet, second_doublet, self.found_triplets)
+                            triplet = Triplet(first_doublet, second_doublet)
                             self.found_triplets += 1
                             segment.triplet_data.append(triplet)
 
                             # filling lists for statistical purposes
-                            if triplet.is_correct_match and triplet.doublet_1.hit_1_particle_key in self.xplet_numbers:
+                            if triplet.is_correct_match() and triplet.doublet_1.hit_1_particle_key in self.xplet_numbers:
                                 self.preselection_statistic_scattering.append(
                                     np.sqrt(triplet.angles_between_doublets()[0]**2 +
                                             triplet.angles_between_doublets()[1]**2))

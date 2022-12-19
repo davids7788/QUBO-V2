@@ -3,9 +3,7 @@ class Segment:
                  name: str,
                  layer: int,
                  x_start: float,
-                 y_start: float,
                  x_end: float,
-                 y_end: float,
                  z_position: float):
         """Manages segments of the detector layers
         :param name: string created from integer
@@ -17,9 +15,7 @@ class Segment:
         self.name = name
         self.layer = layer
         self.x_start = x_start
-        self.y_start = y_start
         self.x_end = x_end
-        self.y_end = y_end
         self.z_position = z_position
         self.data = []   # stored info from .csv file
         self.doublet_data = []   # doublet list, first hit of the doublet is considered to be inside the segment
