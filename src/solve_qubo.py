@@ -67,3 +67,5 @@ if "impact list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_process_impact_list()
 if "merged cluster" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_process_merged_zones()
+
+qubo_processor.build_reco_xplets()

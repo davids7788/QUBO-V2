@@ -8,6 +8,7 @@ from qiskit.opflow.primitive_ops.pauli_sum_op import PauliSumOp
 class Hamiltonian:
     def __init__(self,
                  triplet_slice,
+                 t_mapping,
                  solution_candidate,
                  rescaling=None,
                  only_specified_connections=None):
@@ -22,6 +23,7 @@ class Hamiltonian:
         """
         self.only_specified_connections = only_specified_connections
         self.triplet_slice = triplet_slice
+        self.t_mapping = t_mapping
         self.solution_candidate = solution_candidate
         self.triplet_ids = [triplet.triplet_id for triplet in triplet_slice]
         self.rescaling = rescaling
@@ -42,13 +44,13 @@ class Hamiltonian:
             for interaction_key in triplet.interactions.keys():
                 if self.only_specified_connections is None:
                     if interaction_key not in self.triplet_ids:
-                        if self.solution_candidate[interaction_key] == 1:
+                        if self.solution_candidate[self.t_mapping[interaction_key]] == 1:
                             lin_out += triplet.interactions[interaction_key]
                             lin_out_counter += 1
                 else:
                     if interaction_key not in self.triplet_ids:
                         if interaction_key in self.only_specified_connections:
-                            if self.solution_candidate[interaction_key] == 1:
+                            if self.solution_candidate[self.t_mapping[interaction_key]] == 1:
                                 lin_out += triplet.interactions[interaction_key]
                                 lin_out_counter += 1
 

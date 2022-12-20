@@ -9,10 +9,11 @@ def bit_flip_optimisation(triplets,
     """Looping over a list of triplet objects and a corresponding binary solution vector to compute if the energy
     value would improve if the binary state of a triplet (keep <-> discard) should be changed. If the energy
     decreases, the triplet state is flipped.
-    :param triplets: list of triplet objects
-    :param solution_candidate binary vector representing triplet states
-    :param triplet_ordering: index list of triplets
-    :param reverse: False if provided sorting order, else reversed
+    :param
+        triplets: list of triplet objects
+        t_mapping: mapping of names to positions
+        solution_candidate binary vector representing triplet states
+        reverse: False if provided sorting order, else reversed
     """
     if reverse:
         triplet_ordering.reverse()
@@ -47,10 +48,12 @@ def bit_flip_optimisation(triplets,
 
 
 def make_impact_list(triplet_list,
+                     t_mapping,
                      solution_candidate,
                      local=False):
     """Creates an impact list based on how much influence on the energy a bit flip has
     :param triplet_list: list of triplet objects
+    :param t_mapping: triplet mapping
     :param solution_candidate: binary solution vector, representing triplet state
     :param local: if True, then triplets outside of the given triplet subset are not considered
     :return:
@@ -73,11 +76,11 @@ def make_impact_list(triplet_list,
             if local:
                 if interaction not in t_indices:
                     continue
-            if t_i == 0 and solution_candidate[interaction] == 0:
+            if t_i == 0 and solution_candidate[t_mapping[interaction]] == 0:
                 pass
-            elif t_i == 0 and solution_candidate[interaction] == 1:
+            elif t_i == 0 and solution_candidate[t_mapping[interaction]] == 1:
                 energy_change += triplet.interactions[interaction]
-            elif t_i == 1 and solution_candidate[interaction] == 0:
+            elif t_i == 1 and solution_candidate[t_mapping[interaction]] == 0:
                 pass
             else:
                 energy_change -= triplet.interactions[interaction]

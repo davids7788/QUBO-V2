@@ -52,7 +52,8 @@ class QuboCoefficients:
         """Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
         set it is also applied. If the process is successful a message and the target folder location containing the
         triplet list is displayed.
-        :param segment_manager: segment manager object
+        :param
+            segment_manager: segment manager object
         """
         # self checking configuration
         print("Setting triplet coefficients...")
@@ -88,23 +89,25 @@ class QuboCoefficients:
             for triplet in segment.triplet_data:
                 self.triplet_list.add(triplet)
             segment.triplet_data.clear()
-        self.triplet_list = list(self.triplet_list)
-        self.triplet_list.sort(key=lambda t: t.triplet_id)   # triplet id = index in triplet list
 
     def filling_lists_for_statistics(self):
         """"Function for collecting and storing information about quality and interaction values,
         as well as truth information about the triplets.
         """
+        self.triplet_list = list(self.triplet_list)
+        t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplet_list],
+                                                      np.arange(len(self.triplet_list)))}
+
         print("Filling list for statistics of a_i and b_ij")
-        for t1 in self.triplet_list:
+        for i, t1 in enumerate(self.triplet_list):
             if t1.is_correct_match:
                 self.quality_correct_match_list.append(t1.quality)
             else:
                 self.quality_wrong_match_list.append(t1.quality)
 
             for i_key, i_value in t1.interactions.items():
-                if i_key < t1.triplet_id:
-                    t2 = self.triplet_list[i_key]
+                if t_mapping[i_key] < i:
+                    t2 = self.triplet_list[t_mapping[i_key]]
                     if t1.doublet_1.hit_1_particle_key == t1.doublet_1.hit_2_particle_key == \
                        t1.doublet_2.hit_1_particle_key == t1.doublet_2.hit_2_particle_key == \
                        t2.doublet_1.hit_1_particle_key == t2.doublet_1.hit_2_particle_key == \

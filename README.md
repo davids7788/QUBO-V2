@@ -25,7 +25,7 @@ To run the preselection the following arguments are needed:
    * `save_to:` folder to which results are saved
 
 ```bash
-python create_triplets.py configuration tracking_data geometry save_to
+python prepare_QUBO.py configuration tracking_data geometry save_to
 ```
 
 At the end of the preselection, plots are created with truth information to check if parameters are set well and results 

@@ -13,6 +13,7 @@ from qubo.solver import Solver
 from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
 from qubo.qubo_logging import QuboLogging
+from pattern.x_plet import Xplet
 
 algorithm_globals.massive = True
 
@@ -34,6 +35,8 @@ class QuboProcessing:
         :param save_folder: folder to which results are stored
         """
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
+        self.t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplets],
+                                                           np.arange(len(self.triplets)))}
         self.config = config
         self.solver = solver
         self.ansatz = ansatz
@@ -255,7 +258,7 @@ class QuboProcessing:
             # triplet list ordering determines also how many subqubos are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
-            triplet_ordering = self.optimisation_strategy(self.triplets, self.solution_candidate, False)
+            triplet_ordering = self.optimisation_strategy(self.triplets, self.t_mapping, self.solution_candidate, False)
             if "reverse" in self.config["qubo"]["optimisation strategy"]:
                 triplet_ordering.reverse()
 
@@ -346,7 +349,7 @@ class QuboProcessing:
             minimum energy state, minimum energy value """
         minimum_energy_state = []
         for t in self.triplets:
-            if t.is_correct_match:
+            if t.is_correct_match():
                 minimum_energy_state.append(1)
             else:
                 minimum_energy_state.append(0)
@@ -359,16 +362,18 @@ class QuboProcessing:
         :return:
             energy value
         """
+
         hamiltonian_energy = 0
         if triplet_subset is None:
             for i, b1 in enumerate(binary_vector):
                 if b1 == 1:
                     hamiltonian_energy += self.triplets[i].quality
                 for j in self.triplets[i].interactions.keys():
-                    if j < i:
+                    if self.t_mapping[j] < i:
                         continue
                     else:
-                        if binary_vector[i] == binary_vector[j] == 1:
+                        pass
+                        if binary_vector[i] == binary_vector[self.t_mapping[j]] == 1:
                             hamiltonian_energy += self.triplets[i].interactions[j]
             return hamiltonian_energy
 
@@ -450,6 +455,7 @@ class QuboProcessing:
         # start timer sub-qubo creation and solving
 
         hamiltonian = Hamiltonian(triplet_slice=triplet_slice,
+                                  t_mapping=self.t_mapping,
                                   solution_candidate=self.solution_candidate,
                                   rescaling=self.config["qubo"]["hamiltonian rescaling"],
                                   only_specified_connections=subsequent_list)
@@ -521,3 +527,36 @@ class QuboProcessing:
                 f.write("\n")
             f.write("\n\n")
             f.write("---\n")
+
+    def build_reco_xplets(self):
+        """Creates xplets from the kept triplets."""
+
+        def triplet_start(t):
+            """Returns z value of first triplet hit
+            """
+            return t.doublet_1.hit_1_position[2]
+
+        triplet_start_value = set()
+        kept_triplets = []
+        for solution, triplet in zip(self.solution_candidate, self.triplets):
+            if solution == 1:
+                kept_triplets.append(triplet)
+                triplet_start_value.add(triplet.doublet_1.hit_1_position[2])
+        kept_triplets.sort(key=triplet_start)
+        xplet_start = min(list(triplet_start_value))
+
+        reco_x_plets = []
+        for i, t1 in enumerate(kept_triplets):
+            if t1.doublet_1.hit_1_position[2] == xplet_start:
+                t_list = [t1]
+                for t2 in kept_triplets[i + 1:]:
+                    if t_list[-1].doublet_2 == t2.doublet_1:
+                        t_list.append(t2)
+
+                reco_pattern = Xplet()
+                for triplet in t_list:
+                    reco_pattern.add_triplet(triplet)
+
+                reco_x_plets.append(reco_pattern)
+
+        np.save(f"{self.save_folder}/reco_xplet_list", reco_x_plets)
