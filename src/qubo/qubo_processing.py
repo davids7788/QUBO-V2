@@ -8,7 +8,7 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from qubo.optimisation import make_impact_list, bit_flip_optimisation
+from qubo.optimisation import make_impact_list, bit_flip_optimisation, make_connection_list
 from qubo.solver import Solver
 from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
@@ -45,6 +45,8 @@ class QuboProcessing:
         self.qubo_logging = qubo_logging
         if "impact list" in self.config["qubo"]["optimisation strategy"]:
             self.optimisation_strategy = make_impact_list
+        if "connection list" in self.config["qubo"]["optimisation strategy"]:
+            self.optimisation_strategy = make_connection_list
         self.save_folder = save_folder
 
         # Log truth minimum energy state and energy
@@ -244,7 +246,7 @@ class QuboProcessing:
         self.write_setup_info_to_file()
         print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
 
-    def qubo_process_impact_list(self):
+    def qubo_processing(self):
         """Solves the QUBO with the set optimisation strategy.
         """
         # timer
@@ -258,7 +260,14 @@ class QuboProcessing:
             # triplet list ordering determines also how many subqubos are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
-            triplet_ordering = self.optimisation_strategy(self.triplets, self.t_mapping, self.solution_candidate, False)
+            if "impact list" in self.config["qubo"]["optimisation strategy"]:
+                triplet_ordering = self.optimisation_strategy(self.triplets,
+                                                              self.t_mapping,
+                                                              self.solution_candidate,
+                                                              False)
+            if "connection list" in self.config["qubo"]["optimisation strategy"]:
+                triplet_ordering = self.optimisation_strategy(self.triplets,
+                                                              self.t_mapping)
             if "reverse" in self.config["qubo"]["optimisation strategy"]:
                 triplet_ordering.reverse()
 

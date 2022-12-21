@@ -87,3 +87,40 @@ def make_impact_list(triplet_list,
 
         impact_list_values.append(abs(energy_change))
     return list(np.argsort(impact_list_values))
+
+
+def make_connection_list(triplet_list,
+                         t_mapping):
+    """Creates an preferred connections list and returns a list of indices for the triplets
+    :param triplet_list: list of triplet objects
+    :param t_mapping: triplet mapping
+    :return:
+        list of indices ordered from lowest to highest impact of triplets in triplet list
+    """
+    def sort_by_connection(connections_map_entry):
+        return connections_map_entry[0]
+
+    connections_map = []   # connection_value, triplet_1, triplet_2
+    for triplet in triplet_list:
+        for connection, value in zip(triplet.interactions.keys(), triplet.interactions.values()):
+            if value < 0:
+                connections_map.append([value, triplet.triplet_id, connection])
+
+    connections_map.sort(key=sort_by_connection)
+
+    triplet_used = set()
+    triplet_ordering = []
+
+    for entry in connections_map:
+        for i in [1, 2]:
+            if entry[i] not in triplet_used:
+                triplet_ordering.append(t_mapping[entry[i]])
+                triplet_used.add(entry[i])
+                for connection, value in zip(triplet_list[t_mapping[entry[i]]].interactions.keys(),
+                                             triplet_list[t_mapping[entry[i]]].interactions.values()):
+                    if value < 0:
+                        if connection not in triplet_used:
+                            triplet_used.add(connection)
+                            triplet_ordering.append(t_mapping[connection])
+
+    return triplet_ordering
