@@ -9,85 +9,79 @@ class SegmentManager:
                  configuration: dict,
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
-        :param configuration: information needed for the segments:
+        :param configuration: information needed for the segments, delivered by loading yaml file as a nested
+               python dictionary:
                 {
-                doublet: {dx/x0: <value>,
-                          eps:   <value>},
-                triplet: {angle diff x: <value>,
-                          angle diff y: <value>}
-                binning: {num bins x: <value>}
-                qubo parameters: {b_ij conflict: <value>,
-                                  b_ij match: value,
-                                  a_i: <value>}
-                scale range parameters: {z_scores: <value>,
-                                         quality: <value>,
-                                         interaction: <value>}
+                doublet: {dx/x0: float,
+                          eps:   float>,
+                          dy/y0: float},
+                triplet: {max scattering: float}
+                binning: {num bins x: int,
+                          num bins y: int}
+                qubo parameters: {b_ij conflict: float
+                                  b_ij match: <name of an implemented function> or float,
+                                  a_i: <name of an implemented function> or float}
+                scale range parameters: {z_scores: True or False,
+                                         quality: null (= None or [float, float],
+                                         interaction: null (= None) or [float, float]}
                 }
-        :param detector_geometry: .csv detector layer file geometry file
+        :param detector_geometry: string with address of a.csv geometry file
         """
 
-        self.configuration = configuration   # Dictionary of selection criteria
-        self.detector_layers = []
+        self.configuration = configuration   # dictionary of selection criteria
+        self.detector_layers = []   # list containing coordinate information about detector layers
+
+        # load detector layers / chips information and add them to the detector layers list
         with open(detector_geometry, 'r') as file:
             csv_reader = csv.reader(file)
             next(csv_reader)    # skip header, csv files should consist of one line
             for row in csv_reader:
                 self.detector_layers.append([float(r) for r in (row[1:])])
-        self.detector_layers.sort(key=lambda entry: entry[-1])   # sort by z-value
 
-        self.num_layers = len(set([layer[-1] for layer in self.detector_layers]))
-        self.segment_list = []   # List of segment objects
+        # information string
+        print(f"Loaded file {detector_geometry.split('/')[-1]} for segmentation algorithm\n")
+
         self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)
-        self.reference_layer_z = None   # reference layer for dx/x0 criterion
-        self.layer_z_values = [entry[-1] for entry in self.detector_layers]
-        self.layer_x_min_values = [entry[0] for entry in self.detector_layers]
-        self.layer_x_max_values = [entry[1] for entry in self.detector_layers]
+        self.segment_list = []   # List of segment objects
 
-        # create segments and mapping
-        if self.num_layers == 4:
-            self.create_segments_simplified_model()
-            self.segment_mapping_simplified_model()
-            self.setup = "Simplified LUXE"
-        elif self.num_layers == 8:
-            self.setup = "Full LUXE"
-            pass  # to be implemented --> FullLUXE
-
-    def target_segments(self,
-                        name: str):
-        """Takes the name of a segment and the target segments are returned
-        :param name: name of segment
-        :return:
-            target segments
+    def create_segments_simplified_LUXE(self):
+        """Splitting data into num bins segment to reduce the combinatorial computational costs.
+        For the simplified model only.
         """
-        segment_names = [segment_name for segment_name in self.segment_mapping[name]]
-        return [segment for segment in self.segment_list if segment.name in segment_names]
+        for i, layer in enumerate(self.detector_layers):   # ordered in z value from lowest to highest
+            x_min = layer[0]
+            x_max = layer[1]
+            y_min = layer[2]
+            y_max = layer[3]
 
-    def get_segment_at_known_xz_value(self,
-                                      x: float,
-                                      z: float):
-        """Finds the correct segment to store a hit. The segment list is a flattened 2d array with
-        <number layers> * <num segments per layer> entries
-        :param x: x value of
-        :param z: z value of hit
-        :return:
-            index of corresponding segment in segment list
-        """
-        z_index = self.layer_z_values.index(z)
-        x_range = self.detector_layers[z_index][1] - self.detector_layers[z_index][0]
-        x_bin_size = x_range / self.configuration["binning"]["num bins x"]
-        x_index = int((x - self.detector_layers[z_index][0]) / x_bin_size)
-        return z_index * self.configuration["binning"]["num bins x"] + x_index
+            segment_size_x = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
+            segment_size_y = (y_max - y_min) / int(self.configuration["binning"]["num bins x"])
+            for j in range(int(self.configuration["binning"]["num bins x"])):
+                x_slice = []
+                for k in range(int(self.configuration["binning"]["num bins y"])):
+                    x_slice.append(Segment(f"L{i}_S{j}_{k}",  # Layer i segment-x j segment-y k
+                                           i,
+                                           x_min + j * segment_size_x,
+                                           x_min + (j + 1) * segment_size_x,
+                                           y_min + k * segment_size_y,
+                                           y_min + (k + 1) * segment_size_y,
+                                           self.detector_layers[i][-1]))
+                self.segment_list.append(x_slice)
+
+
 
     def segment_mapping_simplified_model(self):
         """Maps the segments according to the doublet preselection criteria.
         Stores the result inside the segment mapping attribute.
         """
         # set reference layer as first layer counting from the IP
-        self.reference_layer_z = min(self.layer_z_values)
+        z_ref = self.get_z_reference_layer_LUXE()
+
+        #####work on this function!!!!!!!!!!
 
         # get maximum detector dimension in x
-        min_x_detector_dimension = min(self.layer_x_min_values)
-        max_x_detector_dimension = max(self.layer_x_max_values)
+        min_x_detector_dimension, max_x_detector_dimension = min(self.layer_x_min_values)
+         = max(self.layer_x_max_values)
 
         for segment in self.segment_list:
             target_list = []
@@ -146,17 +140,37 @@ class SegmentManager:
         dz = z_end - z_start
         return x_end - dx * (z_end - self.reference_layer_z) / dz
 
-    def create_segments_simplified_model(self):
-        """Splitting data into num bins segment to reduce the combinatorial computational costs.
-        For the simplified model only.
+    def target_segments(self,
+                        name: str):
+        """Takes the name of a segment and the target segments are returned
+        :param name: name of segment
+        :return:
+            target segments
         """
-        for i, layer in enumerate(self.detector_layers):   # ordered in z value from lowest to highest
-            x_max = layer[1]
-            x_min = layer[0]
-            segment_size = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
-            for j in range(int(self.configuration["binning"]["num bins x"])):
-                self.segment_list.append(Segment(f"L{i}_S{j}",  # Layer i segment j
-                                                 i,
-                                                 x_min + j * segment_size,
-                                                 x_min + (j + 1) * segment_size,
-                                                 self.detector_layers[i][-1]))
+        segment_names = [segment_name for segment_name in self.segment_mapping[name]]
+        return [segment for segment in self.segment_list if segment.name in segment_names]
+
+    def get_segment_at_known_xz_value(self,
+                                      x: float,
+                                      z: float):
+        """Finds the correct segment to store a hit. The segment list is a flattened 2d array with
+        <number layers> * <num segments per layer> entries
+        :param x: x value of
+        :param z: z value of hit
+        :return:
+            index of corresponding segment in segment list
+        """
+        z_index = self.layer_z_values.index(z)
+        x_range = self.detector_layers[z_index][1] - self.detector_layers[z_index][0]
+        x_bin_size = x_range / self.configuration["binning"]["num bins x"]
+        x_index = int((x - self.detector_layers[z_index][0]) / x_bin_size)
+        return z_index * self.configuration["binning"]["num bins x"] + x_index
+
+    def get_z_reference_layer_LUXE(self):
+        """For LUXE the reference layer is always the layer with the lowest distance to the IP,
+        thus with the lowest z-value.
+        :return
+            z-value of reference layer
+        """
+        return min([layer[-1] for layer in self.detector_layers])
+

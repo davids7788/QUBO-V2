@@ -1,15 +1,17 @@
-import sys
 import csv
 import numpy as np
 import os
 
-from pattern.x_plet import Xplet
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
+from pattern.x_plet import Xplet
 
 
 def gen_xplets(tracking_data_file, save_to_folder):
-    """Creates truth generated xplet list."""
+    """Creates truth generated xplet list.
+        :param tracking_data_file: .csv tracking data file
+        :param save_to_folder: location to save the gen_xplet list
+    """
 
     output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
     if os.path.isfile(output_name):
@@ -41,6 +43,8 @@ def gen_xplets(tracking_data_file, save_to_folder):
             return float(row_entry[z_index])
 
         rows.sort(key=sort_row_by_particle_id)
+
+        # bug fix, needs to be remade in a more sophisticated way...
         rows.append([-1, -1, -1, -1, -1, -1, -1, -1])
 
         x_plet_pieces = []
