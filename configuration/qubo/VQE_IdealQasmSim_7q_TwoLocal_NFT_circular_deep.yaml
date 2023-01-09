@@ -1,19 +1,19 @@
 ---
 ansatz:
   layout: "TwoLocal"
-  circuit depth: 1
+  circuit depth: 3
   rotation blocks: "ry"
   entanglement blocks: "cx"
-  entanglement: "linear"
+  entanglement: "circular"
   skip final rotation layer: False
   skip unentangled qubits: False
 
 solver:
   algorithm: "VQE"
   backend: "Qasm Ideal Sim"
-  optimiser: COBYLA
-  maxiter: 1000
-  maxfev: null
+  optimiser: NFT
+  maxiter: 4000
+  maxfev: 250
   seed: 0
   shots: 10
   optimisation level: 3

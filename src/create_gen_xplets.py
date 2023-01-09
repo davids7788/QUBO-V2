@@ -68,6 +68,7 @@ with open(tracking_data_file, 'r') as file:
     for entry in rows:
         if int(entry[particle_id_index]) == current_particle_id:
                 x_plet_pieces.append(entry)
+
         else:
             x_plet_pieces.sort(key=sort_row_by_z_value)
             doublet_list = []
@@ -96,6 +97,5 @@ with open(tracking_data_file, 'r') as file:
             current_particle_id = int(entry[particle_id_index])
      
     
-        
     np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", generated_x_plets)
     print(f"Number of generated xplets: {len(generated_x_plets)}\n")
