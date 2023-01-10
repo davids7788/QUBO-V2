@@ -8,7 +8,7 @@ triplet:
   max scattering: 0.0010
 
 binning:
-  num bins x: 1000
+  num bins x: 500
   num bins y: 20
 
 qubo parameters:

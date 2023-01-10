@@ -57,31 +57,21 @@ class SegmentManager:
             segment_size_x = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
             segment_size_y = (y_max - y_min) / int(self.configuration["binning"]["num bins x"])
             for j in range(int(self.configuration["binning"]["num bins x"])):
-                x_slice = []
                 for k in range(int(self.configuration["binning"]["num bins y"])):
-                    x_slice.append(Segment(f"L{i}_S{j}_{k}",  # Layer i segment-x j segment-y k
-                                           i,
-                                           x_min + j * segment_size_x,
-                                           x_min + (j + 1) * segment_size_x,
-                                           y_min + k * segment_size_y,
-                                           y_min + (k + 1) * segment_size_y,
-                                           self.detector_layers[i][-1]))
-                self.segment_list.append(x_slice)
-
-
+                    self.segment_list.append(Segment(f"L{i}_S{j}_{k}",  # Layer i segment-x j segment-y k
+                                                     i,
+                                                     x_min + j * segment_size_x,
+                                                     x_min + (j + 1) * segment_size_x,
+                                                     y_min + k * segment_size_y,
+                                                     y_min + (k + 1) * segment_size_y,
+                                                     self.detector_layers[i][-1]))
 
     def segment_mapping_simplified_model(self):
         """Maps the segments according to the doublet preselection criteria.
         Stores the result inside the segment mapping attribute.
         """
-        # set reference layer as first layer counting from the IP
-        z_ref = self.get_z_reference_layer_LUXE()
 
-        #####work on this function!!!!!!!!!!
-
-        # get maximum detector dimension in x
-        min_x_detector_dimension, max_x_detector_dimension = min(self.layer_x_min_values)
-         = max(self.layer_x_max_values)
+        max_x_detector, max_y_detector, min_x_detector, min_y_detector = self.get_detector_dimensions_LUXE()
 
         for segment in self.segment_list:
             target_list = []
@@ -95,6 +85,9 @@ class SegmentManager:
                 max_dx = target_segment.x_end - segment.x_start
                 min_dx = max([target_segment.x_start - segment.x_end, 0])
 
+                max_dy = target_segment.y_end - segment.y_start
+                min_dy = min([target_segment.y_end - segment.y_start, 0])
+
                 # max x_0 range on reference screen
                 x0_max = self.x0_at_z_ref(target_segment.x_start, segment.x_end, target_segment.z_position,
                                           segment.z_position)
@@ -103,22 +96,29 @@ class SegmentManager:
                                           segment.z_position)
 
                 # correct for detector dimensions
-                if x0_min < min_x_detector_dimension:
-                    x0_min = min_x_detector_dimension
-                    if x0_max < min_x_detector_dimension:
+                if x0_min < min_x_detector:
+                    x0_min = min_x_detector
+                    if x0_max < min_x_detector:
                         continue
-                if x0_max > max_x_detector_dimension:
-                    x0_max = max_x_detector_dimension
+                if x0_max > max_x_detector:
+                    x0_max = max_x_detector
 
                 dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
                                              self.configuration["doublet"]["eps"],
                                              self.configuration["doublet"]["dx/x0"] +
                                              self.configuration["doublet"]["eps"])
 
+                dy_x0_interval = pd.Interval(self.configuration["doublet"]["dy/x0"] -
+                                             self.configuration["doublet"]["eps"],
+                                             self.configuration["doublet"]["dy/x0"] +
+                                             self.configuration["doublet"]["eps"])
+
                 max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
+                max_dy_interval = pd.Interval(min_dy / x0_max, max_dy / x0_min)
 
                 if dx_x0_interval.overlaps(max_dx_interval):
-                    target_list.append(target_segment.name)
+                    if dy_x0_interval.overlaps(max_dy_interval):
+                        target_list.append(target_segment.name)
 
             self.segment_mapping.update({segment.name: target_list})
 
@@ -138,7 +138,7 @@ class SegmentManager:
         """
         dx = x_end - x_start
         dz = z_end - z_start
-        return x_end - dx * (z_end - self.reference_layer_z) / dz
+        return x_end - dx * (z_end - self.get_z_reference_layer_LUXE()) / dz
 
     def target_segments(self,
                         name: str):
@@ -150,21 +150,31 @@ class SegmentManager:
         segment_names = [segment_name for segment_name in self.segment_mapping[name]]
         return [segment for segment in self.segment_list if segment.name in segment_names]
 
-    def get_segment_at_known_xz_value(self,
-                                      x: float,
-                                      z: float):
-        """Finds the correct segment to store a hit. The segment list is a flattened 2d array with
-        <number layers> * <num segments per layer> entries
-        :param x: x value of
+    def get_segment_at_known_xyz_value(self,
+                                       x: float,
+                                       y: float,
+                                       z: float):
+        """Finds the correct segment to store a hit. The segment list is a flattened 3d array with
+        <number layers> * <num segments in x per layer> * <num segments in y per layer> entries.
+        Only possible if all the layers have the exact same length!
+        :param x: x value of hit
+        :param y: y value of hit
         :param z: z value of hit
         :return:
             index of corresponding segment in segment list
         """
-        z_index = self.layer_z_values.index(z)
-        x_range = self.detector_layers[z_index][1] - self.detector_layers[z_index][0]
-        x_bin_size = x_range / self.configuration["binning"]["num bins x"]
-        x_index = int((x - self.detector_layers[z_index][0]) / x_bin_size)
-        return z_index * self.configuration["binning"]["num bins x"] + x_index
+        for i, segment in enumerate(self.segment_list):
+            if segment.z_position != z:
+                continue
+            if segment.x_start > x:
+                continue
+            if segment.x_end < x:
+                continue
+            if segment.y_start > y:
+                continue
+            if segment.y_end < y:
+                continue
+            return i
 
     def get_z_reference_layer_LUXE(self):
         """For LUXE the reference layer is always the layer with the lowest distance to the IP,
@@ -174,3 +184,14 @@ class SegmentManager:
         """
         return min([layer[-1] for layer in self.detector_layers])
 
+    def get_detector_dimensions_LUXE(self):
+        """Extracts detector dimensions from the LUXE setup files.
+        :return
+            max_x_detector, max_y_detector, min_x_detector, min_y_detector
+        """
+        min_x = min([layer[1] for layer in self.detector_layers])
+        max_x = max([layer[2] for layer in self.detector_layers])
+        min_y = min([layer[3] for layer in self.detector_layers])
+        max_y = max([layer[4] for layer in self.detector_layers])
+
+        return max_x, max_y, min_x, min_y
