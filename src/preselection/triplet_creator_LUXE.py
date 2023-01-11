@@ -75,13 +75,19 @@ class TripletCreatorLUXE:
             z_values_unique = list(set(z_values))
             z_values_unique.sort()
             if len(z_values_unique) == 4:
+                # Simplified LUXE setup consists of 4 layers, assuming consisting one big chip each
                 last_layer = [z_values_unique[-1], z_values_unique[-1]]
                 first_layer = [z_values_unique[0], z_values_unique[0]]
             else:
+                # Full LUXE setup consists of 4 layers, each layer has 2 rows of chips, the rows overlap in the middle
                 last_layer = [z_values_unique[-2], z_values_unique[-1]]
                 first_layer = [z_values_unique[0], z_values_unique[1]]
 
         particle_numbers = {}  # counting particle ID
+
+        print(f"Loading tracking data: {tracking_data_file}\n"
+              f"Distributing data into segments ...\n")
+
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             csv_header = next(csv_reader)  # access header, csv files should consist of one line of header
@@ -99,7 +105,7 @@ class TripletCreatorLUXE:
                         row_converted.append(float(row[i]))  # convert coordinates from string to float
                     else:
                         row_converted.append(row[i])
-                # keeping track of possible full tracks
+                # check if particle ID was already seen
                 if row[self.particle_id_index] in particle_numbers:
                     particle_numbers[row[self.particle_id_index]].update(
                                         {z_values_unique.index(row_converted[self.z_index]):
@@ -109,10 +115,10 @@ class TripletCreatorLUXE:
                                             {z_values_unique.index(row_converted[self.z_index]):
                                              row_converted[self.z_index]}})
 
+                # adding particle to a segment, used to reduce combinatorial candidates
                 segment_index_for_entry = segment_manager.get_segment_at_known_xyz_value(row_converted[self.x_index],
                                                                                          row_converted[self.y_index],
                                                                                          row_converted[self.z_index])
-                # storing in segment
                 segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
 
             for key, outer_value in particle_numbers.items():
@@ -129,14 +135,15 @@ class TripletCreatorLUXE:
                     self.xplet_numbers.add(key)
 
             print(f"Number of particles with at least one hit: {self.num_particles}")
-            print(f"Number of complete tracks: {self.num_complete_tracks}")
+            print(f"Number of complete tracks: {self.num_complete_tracks}\n")
 
     def create_x_plets_simplified_LUXE(self,
                                        segment_manager: SegmentManager):
         """Creates doublets and triplets. For the simplified model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
-        print("\nCreating doublet lists...\n")
+        print("-----------------------------------")
+        print("Creating doublet lists...\n")
         doublet_list_start = time.time()  # doublet list timer
         for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer

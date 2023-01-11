@@ -29,7 +29,11 @@ if Path(new_folder).is_dir():
 else:
     os.mkdir(new_folder)
 
+
+print("\nStarting QUBO creation ...\n")
 # Program
+
+print("Starting segmentation algorithm ...")
 s_manager = SegmentManager(config_file, geometry_file)
 s_manager.create_segments_simplified_LUXE()
 s_manager.segment_mapping_simplified_LUXE()
