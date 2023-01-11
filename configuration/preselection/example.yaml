@@ -5,11 +5,12 @@ doublet:
   dy/x0: 0.001
 
 triplet:
-  max scattering: 0.0010
+  max scattering: 0.001
 
 binning:
-  num bins x: 500
-  num bins y: 20
+  num bins x: 256
+  num bins y: 8
+
 
 qubo parameters:
   b_ij conflict: 1.0

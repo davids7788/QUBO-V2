@@ -55,10 +55,10 @@ class SegmentManager:
             y_max = layer[3]
 
             segment_size_x = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
-            segment_size_y = (y_max - y_min) / int(self.configuration["binning"]["num bins x"])
+            segment_size_y = (y_max - y_min) / int(self.configuration["binning"]["num bins y"])
             for j in range(int(self.configuration["binning"]["num bins x"])):
                 for k in range(int(self.configuration["binning"]["num bins y"])):
-                    self.segment_list.append(Segment(f"L{i}_S{j}_{k}",  # Layer i segment-x j segment-y k
+                    self.segment_list.append(Segment(f"L{i}_SX{j}_SY{k}",  # Layer i segment-x j segment-y k
                                                      i,
                                                      x_min + j * segment_size_x,
                                                      x_min + (j + 1) * segment_size_x,
@@ -66,7 +66,7 @@ class SegmentManager:
                                                      y_min + (k + 1) * segment_size_y,
                                                      self.detector_layers[i][-1]))
 
-    def segment_mapping_simplified_model(self):
+    def segment_mapping_simplified_LUXE(self):
         """Maps the segments according to the doublet preselection criteria.
         Stores the result inside the segment mapping attribute.
         """
@@ -81,12 +81,14 @@ class SegmentManager:
                 if target_segment.x_end < segment.x_start:   # heavy scattering excluded
                     continue
 
+                min_dy = min([abs(target_segment.y_end - segment.y_start),
+                              abs(target_segment.y_start - segment.y_end),
+                              abs(target_segment.y_end - segment.y_end),
+                              abs(target_segment.y_start - segment.y_start)])
+
                 # max and minimum dx values
                 max_dx = target_segment.x_end - segment.x_start
                 min_dx = max([target_segment.x_start - segment.x_end, 0])
-
-                max_dy = target_segment.y_end - segment.y_start
-                min_dy = min([target_segment.y_end - segment.y_start, 0])
 
                 # max x_0 range on reference screen
                 x0_max = self.x0_at_z_ref(target_segment.x_start, segment.x_end, target_segment.z_position,
@@ -108,16 +110,10 @@ class SegmentManager:
                                              self.configuration["doublet"]["dx/x0"] +
                                              self.configuration["doublet"]["eps"])
 
-                dy_x0_interval = pd.Interval(self.configuration["doublet"]["dy/x0"] -
-                                             self.configuration["doublet"]["eps"],
-                                             self.configuration["doublet"]["dy/x0"] +
-                                             self.configuration["doublet"]["eps"])
-
                 max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
-                max_dy_interval = pd.Interval(min_dy / x0_max, max_dy / x0_min)
 
                 if dx_x0_interval.overlaps(max_dx_interval):
-                    if dy_x0_interval.overlaps(max_dy_interval):
+                    if min_dy / x0_max < self.configuration["doublet"]["dy/x0"]:
                         target_list.append(target_segment.name)
 
             self.segment_mapping.update({segment.name: target_list})
@@ -189,9 +185,9 @@ class SegmentManager:
         :return
             max_x_detector, max_y_detector, min_x_detector, min_y_detector
         """
-        min_x = min([layer[1] for layer in self.detector_layers])
-        max_x = max([layer[2] for layer in self.detector_layers])
-        min_y = min([layer[3] for layer in self.detector_layers])
-        max_y = max([layer[4] for layer in self.detector_layers])
+        min_x = min([layer[0] for layer in self.detector_layers])
+        max_x = max([layer[1] for layer in self.detector_layers])
+        min_y = min([layer[2] for layer in self.detector_layers])
+        max_y = max([layer[3] for layer in self.detector_layers])
 
         return max_x, max_y, min_x, min_y

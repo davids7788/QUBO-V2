@@ -109,8 +109,9 @@ class TripletCreatorLUXE:
                                             {z_values_unique.index(row_converted[self.z_index]):
                                              row_converted[self.z_index]}})
 
-                segment_index_for_entry = segment_manager.get_segment_at_known_xz_value(row_converted[self.x_index],
-                                                                                        row_converted[self.z_index])
+                segment_index_for_entry = segment_manager.get_segment_at_known_xyz_value(row_converted[self.x_index],
+                                                                                         row_converted[self.y_index],
+                                                                                         row_converted[self.z_index])
                 # storing in segment
                 segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
 
@@ -130,18 +131,8 @@ class TripletCreatorLUXE:
             print(f"Number of particles with at least one hit: {self.num_particles}")
             print(f"Number of complete tracks: {self.num_complete_tracks}")
 
-    def create_x_plets(self,
-                       segment_manager: SegmentManager):
-        """Selects the setup for the configuration Simplified or Full LUXE.
-        :param segment_manager: segment manager object
-        """
-        if segment_manager.setup == "Simplified LUXE":
-            self.create_x_plets_simplified_setup(segment_manager)
-        elif segment_manager.setup == "Full LUXE":
-            pass   # to be implemented
-
-    def create_x_plets_simplified_setup(self,
-                                        segment_manager: SegmentManager):
+    def create_x_plets_simplified_LUXE(self,
+                                       segment_manager: SegmentManager):
         """Creates doublets and triplets. For the simplified model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
@@ -159,7 +150,7 @@ class TripletCreatorLUXE:
                                               second_hit[self.x_index],
                                               first_hit[self.z_index],
                                               second_hit[self.z_index],
-                                              segment_manager.reference_layer_z)
+                                              segment_manager.get_z_reference_layer_LUXE())
                         if abs(second_hit[self.y_index] - first_hit[self.y_index]) / x0 > \
                                 self.configuration["doublet"]["dy/x0"]:
                             continue
@@ -167,7 +158,7 @@ class TripletCreatorLUXE:
                                                        second_hit[self.x_index],
                                                        first_hit[self.z_index],
                                                        second_hit[self.z_index],
-                                                       segment_manager.reference_layer_z):
+                                                       segment_manager.get_z_reference_layer_LUXE()):
                             doublet = Doublet(first_hit[self.particle_id_index],
                                               second_hit[self.particle_id_index],
                                               (first_hit[self.x_index],
@@ -189,7 +180,7 @@ class TripletCreatorLUXE:
                                                                                           doublet.hit_2_position[2],
                                                                                           doublet.hit_1_position[2],
                                                                                           segment_manager.
-                                                                                          reference_layer_z))
+                                                                                          get_z_reference_layer_LUXE()))
                             self.found_doublets += 1
                             segment.doublet_data.append(doublet)
         doublet_list_end = time.time()  # doublet list timer
@@ -221,7 +212,8 @@ class TripletCreatorLUXE:
                             segment.triplet_data.append(triplet)
 
                             # filling lists for statistical purposes
-                            if triplet.is_correct_match() and triplet.doublet_1.hit_1_particle_key in self.xplet_numbers:
+                            if triplet.is_correct_match() and triplet.doublet_1.hit_1_particle_key \
+                                    in self.xplet_numbers:
                                 self.preselection_statistic_scattering.append(
                                     np.sqrt(triplet.angles_between_doublets()[0]**2 +
                                             triplet.angles_between_doublets()[1]**2))
