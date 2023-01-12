@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 sys.path.append("../src")
 
 
-data = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
+data = np.load("../../QUBO/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
 
 connection_strength_matched = []
 connection_strength_fake = []
@@ -51,7 +51,7 @@ ax.hist([connection_strength_matched, connection_strength_fake],
         color=["teal", "firebrick"],
         linewidth=2.5,
         histtype="step",)
-ax.text(-1.0005, 1e5, r"phase-0, $\xi=7.0$", fontsize=16)
+ax.text(-1.0005, 1e5, r"phase-0, $\xi=e0gpc_7.0$", fontsize=16)
 ax.set_xlabel("Connection strength", fontsize=16)
 ax.set_ylabel("Number of connections", fontsize=16)
 ax.tick_params(axis='both', labelsize=16)
@@ -68,7 +68,7 @@ ax.hist([quality_matched, quality_fake],
         color=["teal", "firebrick"],
         linewidth=2.5,
         histtype="step",)
-ax.text(-1.0, 25e3, r"phase-0, $\xi=7.0$", fontsize=16)
+ax.text(-1.0, 25e3, r"phase-0, $\xi=e0gpc_7.0$", fontsize=16)
 ax.set_xlabel("Triplet quality", fontsize=16)
 ax.set_ylabel("Number of triplets", fontsize=16)
 ax.tick_params(axis='both', labelsize=16)

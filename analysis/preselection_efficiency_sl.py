@@ -13,7 +13,7 @@ ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
 
 SetLuxeStyle()
 
-gen_x = np.load("/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase-0/gpc/7.0/e0gpc_7.0_0000_sl_gen_xplet_list.npy", allow_pickle=True)[()]
+gen_x = np.load("/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase-0/gpc/e0gpc_7.0/e0gpc_7.0_0000_sl_gen_xplet_list.npy", allow_pickle=True)[()]
 xi = 7
 
 for g in gen_x:

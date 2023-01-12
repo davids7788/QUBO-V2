@@ -9,9 +9,9 @@ submit/
 /analysis/*.pdf
 /analysis/*.png
 /TrackingData/*
-/ptarmigan_files*
-/simplified_simulation_files*
-/qubo_files*
+/ptarmigan_files
+/simplified_simulation_files
+/qubo_files
 /*csv
 /test_files_qubo/
 /test_qubos/

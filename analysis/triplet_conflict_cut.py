@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 sys.path.append("../src")
 
 
-data = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
+data = np.load("../../QUBO/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
 
 number_of_conflicts_matched = []
 number_of_conflicts_fake = []
@@ -35,7 +35,7 @@ ax.hist([number_of_conflicts_matched, number_of_conflicts_fake],
         # density=True,
         label=["matched triplets", "fake triplets"],
         color=["teal", "firebrick"])
-ax.text(150, 8e3, r"phase-0, $\xi=7.0$", fontsize=16)
+ax.text(150, 8e3, r"phase-0, $\xi=e0gpc_7.0$", fontsize=16)
 ax.set_xlabel("Number of conflicts", fontsize=16)
 ax.set_ylabel("Number of triplets", fontsize=16)
 ax.tick_params(axis='both', labelsize=16)

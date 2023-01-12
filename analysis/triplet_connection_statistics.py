@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 sys.path.append("../src")
 
 
-data = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
+data = np.load("../../QUBO/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
 
 all_connections = []
 correct_connections = []
@@ -33,7 +33,7 @@ fig, ax = plt.subplots(figsize=(8,6), dpi=200)
 ax.hist(correct_connections,
         bins=4,
         range=(1, 5),
-        label=r"phase-0, $\xi=7.0$",
+        label=r"phase-0, $\xi=e0gpc_7.0$",
         histtype="bar",
         color="teal",
         align="left",
@@ -51,7 +51,7 @@ fig2, ax = plt.subplots(figsize=(8,6), dpi=200)
 ax.hist(all_connections,
         bins=8,
         range=(1, 9),
-        label=r"phase-0, $\xi=7.0$",
+        label=r"phase-0, $\xi=e0gpc_7.0$",
         histtype="bar",
         color="firebrick",
         align="left",

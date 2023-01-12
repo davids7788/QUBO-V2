@@ -11,7 +11,7 @@ binning:
   num bins x: 2000
 
 qubo parameters:
-  b_ij conflict: 3.0
+  b_ij conflict: e0gpc_3.0
   b_ij match: two norm angle standard deviation
   a_i: two norm angle standard deviation
 

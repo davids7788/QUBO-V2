@@ -8,11 +8,11 @@ from simplified_simulation.visualisation import Visualisation
 from simplified_simulation.ptarmigan import PtargmiganSimData
 
 # .h5 ptarmigan source file
-source = PtargmiganSimData("../../ptarmigan_files/e0gpc_4.0_0000_particles.h5")
+source = PtargmiganSimData("../../PtarmiganFiles/e0gpc_4.0_0000_particles.h5")
 # folder with Simplified Simulation result,
 
-result = np.load('../../simplified_simulation_files/e0gpc_4.0/e0gpc_4.0_0000_particles_sl.npy', allow_pickle=True)
-os.chdir('../../simplified_simulation_files/e0gpc_4.0')
+result = np.load('../../../simplified_simulation_files/e0gpc_4.0/e0gpc_4.0_0000_particles_sl.npy', allow_pickle=True)
+os.chdir('../../../simplified_simulation_files/e0gpc_4.0')
 
 visualisation = Visualisation(source=source,
                               result=result)

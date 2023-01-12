@@ -1,7 +1,7 @@
 import csv
 import numpy as np
 
-with open("../simplified_simulation_files/e0gpc_7.0/smeared/e0gpc_7.0_0000_sl.csv", 'r') as file:
+with open("../../simplified_simulation_files/e0gpc_7.0/smeared/e0gpc_7.0_0000_sl.csv", 'r') as file:
     csv_reader_tracking_file = csv.reader(file)
     csv_header_tracking_file = next(csv_reader_tracking_file)
 
