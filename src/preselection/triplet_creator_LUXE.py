@@ -9,24 +9,25 @@ from preselection.segment_manager import SegmentManager
 
 class TripletCreatorLUXE:
     def __init__(self,
-                 configuration,
-                 save_to_folder):
+                 configuration: dict,
+                 save_to_folder: str):
         """Class for creating x_plets from detector hits
-        :param configuration  : dictionary, configuration for detector setup and xplet selection
-            {
-            doublet: {dx/x0: <value>,
-                      eps:   <value>,
-                      dy: <value>},
-            triplet: {angle diff x: <value>,
-                      angle diff y: <value>},
-            binning: {num bins x: <value>},
-            qubo parameters: {b_ij conflict: <value>,
-                              b_ij match: value,
-                              a_i: <value>}
-            scale range parameters: {z_scores: <value>,
-                                     quality: <value>,
-                                     interaction: <value>}
-            }
+        :param configuration: information needed for the segments, delivered by loading yaml file as a nested
+               python dictionary:
+                {
+                doublet: {dx/x0: float,
+                          eps:   float>,
+                          dy/y0: float},
+                triplet: {max scattering: float}
+                binning: {num bins x: int,
+                          num bins y: int}
+                qubo parameters: {b_ij conflict: float
+                                  b_ij match: <name of an implemented function> or float,
+                                  a_i: <name of an implemented function> or float}
+                scale range parameters: {z_scores: True or False,
+                                         quality: null (= None) or [float, float],
+                                         interaction: null (= None) or [float, float]}
+                }
         :param save_to_folder : folder in which results are stored
         """
         self.configuration = configuration
@@ -85,7 +86,7 @@ class TripletCreatorLUXE:
 
         particle_numbers = {}  # counting particle ID
 
-        print(f"Loading tracking data: {tracking_data_file}\n"
+        print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Distributing data into segments ...\n")
 
         with open(tracking_data_file, 'r') as file:
@@ -142,8 +143,8 @@ class TripletCreatorLUXE:
         """Creates doublets and triplets. For the simplified model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
-        print("-----------------------------------")
-        print("Creating doublet lists...\n")
+        print("-----------------------------------\n")
+        print("Forming doublets ...\n")
         doublet_list_start = time.time()  # doublet list timer
         for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
@@ -192,18 +193,17 @@ class TripletCreatorLUXE:
                             segment.doublet_data.append(doublet)
         doublet_list_end = time.time()  # doublet list timer
         self.doublet_creation_time = TripletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
-        print(f"Time elapsed for creating doublets: "
+        print(f"Time elapsed for forming doublets: "
               f"{self.doublet_creation_time}")
         print(f"Number of doublets found: {self.found_doublets}\n")
-        print(f"Number of tracks approximately possible to reconstruct with set doublet preparation parameters: "
+        print(f"Number of tracks approximately possible to reconstruct: "
               f"{int(self.found_correct_doublets / 3)}\n")
-        print(f"Doublet selection efficiency d_matched / d_max: "
-              f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n"
-              f"d_max: maximum possible correctly matched doublets\n"
-              f"d_matched: number of doublets stemming from only one particle")
+        print(f"Doublet selection efficiency: "
+              f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n")
 
         list_triplet_start = time.time()
-        print("\nCreating triplet lists...\n")
+        print("-----------------------------------\n")
+        print("Forming triplets ...\n")
         for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 3:   # triplets start only at first two layers
                 continue
@@ -230,15 +230,14 @@ class TripletCreatorLUXE:
         list_triplet_end = time.time()
         self.triplet_creation_time = TripletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
 
-        print(f"Time elapsed for creating triplets: "
+        print(f"Time elapsed for  forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.found_triplets}")
-        print(f"Number of tracks approximately possible to reconstruct with set triplet preparation parameters: "
+        print(f"Number of tracks approximately possible to reconstruct: "
               f"{int(self.found_correct_triplets / 2)}\n")
-        print(f"Triplet selection efficiency t_matched / t_max: "
-              f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n"
-              f"d_max: maximum possible correctly matched triplets\n"
-              f"d_matched: number of triplets stemming from only one particle")
+        print(f"Triplet selection efficiency: "
+              f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n")
+        print("-----------------------------------\n")
 
     def triplet_criteria_check(self,
                                doublet1: Doublet,
@@ -322,22 +321,18 @@ class TripletCreatorLUXE:
             f.write(f"Number of particles with at least one hit on the detector:: {self.num_particles}\n")
             f.write(f"Number of generated tracks: {self.num_complete_tracks}\n")
 
-            f.write(f"Time elapsed for creating doublets: "
+            f.write(f"Time elapsed for forming doublets: "
                     f"{self.doublet_creation_time}\n")
             f.write(f"Number of doublets found: {self.found_doublets}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct with set doublet preparation parameters: "
+            f.write(f"Number of tracks approximately possible to reconstruct: "
                     f"{int(self.found_correct_doublets / 3)}\n\n")
-            f.write(f"Doublet selection efficiency d_matched / d_max: "
-                    f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n"
-                    f"d_max: maximum possible correctly matched doublets, known from truth number of particles\n"
-                    f"d_matched: number of doublets stemming from only one particle\n\n")
+            f.write(f"Doublet selection efficiency: "
+                    f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n")
 
             f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
             f.write(f"Number of triplets found: {self.found_triplets}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct with set triplet preparation parameters: "
+            f.write(f"Number of tracks approximately possible to reconstruct: "
                     f"{int(self.found_correct_triplets / 2)}\n\n")
             f.write(f"Triplet selection efficiency t_matched / t_max: "
-                    f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n"
-                    f"t_max: maximum possible correctly matched triplets, known from truth number of particles\n"
-                    f"t_matched: number of triplets stemming from only one particle")
+                    f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n")

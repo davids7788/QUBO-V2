@@ -22,7 +22,7 @@ class SegmentManager:
                                   b_ij match: <name of an implemented function> or float,
                                   a_i: <name of an implemented function> or float}
                 scale range parameters: {z_scores: True or False,
-                                         quality: null (= None or [float, float],
+                                         quality: null (= None) or [float, float],
                                          interaction: null (= None) or [float, float]}
                 }
         :param detector_geometry: string with address of a.csv geometry file
@@ -39,7 +39,8 @@ class SegmentManager:
                 self.detector_layers.append([float(r) for r in (row[1:])])
 
         # information string
-        print(f"Loaded file {detector_geometry.split('/')[-1]} for segmentation algorithm\n")
+        print("-----------------------------------\n")
+        print(f"Using geometry file {detector_geometry.split('/')[-1]} for segmentation algorithm\n")
 
         self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)
         self.segment_list = []   # List of segment objects

@@ -29,11 +29,10 @@ if Path(new_folder).is_dir():
 else:
     os.mkdir(new_folder)
 
-
-print("\nStarting QUBO creation ...\n")
+print("\n-----------------------------------")
+print("\nStarting QUBO creation...\n")
 # Program
 
-print("Starting segmentation algorithm ...")
 s_manager = SegmentManager(config_file, geometry_file)
 s_manager.create_segments_simplified_LUXE()
 s_manager.segment_mapping_simplified_LUXE()
@@ -54,3 +53,5 @@ qubo_coefficients.parameter_rescaling()
 # qubo_coefficients.plot_and_save_statistics(triplet_creator.num_complete_tracks,
 #                                            triplet_creator.preselection_statistic_dx_x0,
 #                                            triplet_creator.preselection_statistic_scattering)
+print("-----------------------------------\n")
+print("QUBO preparation finished successfully!\n")

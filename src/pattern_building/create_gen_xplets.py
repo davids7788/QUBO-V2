@@ -13,6 +13,7 @@ def gen_xplets(tracking_data_file, save_to_folder):
         :param save_to_folder: location to save the gen_xplet list
     """
 
+    print("Creating Xplets on generator level with truth information...")
     output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
     if os.path.isfile(output_name):
         return
@@ -82,3 +83,4 @@ def gen_xplets(tracking_data_file, save_to_folder):
 
         np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", generated_x_plets)
         print(f"Number of generated xplets: {len(generated_x_plets)}\n")
+        print("-----------------------------------\n")

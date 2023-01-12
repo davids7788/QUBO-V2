@@ -10,20 +10,22 @@ class QuboCoefficients:
                  configuration: dict,
                  save_to_folder: str):
         """Class for handling and setting QUBO coefficients
-        :param configuration: dictionary, configuration for detector setup and xplet selection
-            {
-            doublet: {dx/x0: <value>,
-                       eps:   <value>},
-            triplet: {angle diff x: <value>,
-                      angle diff y: <value>},
-            binning: {num bins x: <value>},
-            qubo parameters: {b_ij conflict: <value>,
-                              b_ij match: value,
-                              a_i: <value>}
-            scale range parameters: {z_scores: <value>,
-                                     quality: <value>,
-                                     interaction: <value>}
-            }
+        :param configuration: information needed for the segments, delivered by loading yaml file as a nested
+               python dictionary:
+                {
+                doublet: {dx/x0: float,
+                          eps:   float>,
+                          dy/y0: float},
+                triplet: {max scattering: float}
+                binning: {num bins x: int,
+                          num bins y: int}
+                qubo parameters: {b_ij conflict: float
+                                  b_ij match: <name of an implemented function> or float,
+                                  a_i: <name of an implemented function> or float}
+                scale range parameters: {z_scores: True or False,
+                                         quality: null (= None) or [float, float],
+                                         interaction: null (= None) or [float, float]}
+                }
         :param save_to_folder: folder to store results
         """
         self.configuration = configuration
@@ -52,11 +54,10 @@ class QuboCoefficients:
         """Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
         set it is also applied. If the process is successful a message and the target folder location containing the
         triplet list is displayed.
-        :param
-            segment_manager: segment manager object
+        :param segment_manager: segment manager object
         """
         # self checking configuration
-        print("Setting triplet coefficients...")
+        print("Setting triplet coefficients a_i and b_ij...")
         quality = None
         try:
             quality = float(self.configuration["qubo parameters"]["a_i"])
@@ -91,14 +92,14 @@ class QuboCoefficients:
             segment.triplet_data.clear()
 
     def filling_lists_for_statistics(self):
-        """"Function for collecting and storing information about quality and interaction values,
+        """Function for collecting and storing information about quality and interaction values,
         as well as truth information about the triplets.
         """
         self.triplet_list = list(self.triplet_list)
         t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplet_list],
                                                       np.arange(len(self.triplet_list)))}
 
-        print("Filling list for statistics of a_i and b_ij")
+        print("Collecting statistics about a_i and b_ij...")
         for i, t1 in enumerate(self.triplet_list):
             if t1.is_correct_match:
                 self.quality_correct_match_list.append(t1.quality)
@@ -119,7 +120,7 @@ class QuboCoefficients:
     def parameter_rescaling(self):
         """Rescaling parameters according to the config file.
         """
-        print("Starting rescaling...")
+        print("Starting rescaling of a_i and b_ij parameters...")
         # additional processing of qubo parameters
         if self.configuration["scale range parameters"]["z_scores"]:
             quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
@@ -186,8 +187,8 @@ class QuboCoefficients:
                                                                    min_connectivity) * (b - a) / \
                                                                   (max_connectivity - min_connectivity)
 
-        print("\nCoefficients set successfully")
-        print(f"\nSaving triplet list to folder: {self.save_to_folder}")
+        print("\nFinished setting and rescaling of parameters.")
+        print(f"\nSaving triplet list...")
         np.save(f"{self.save_to_folder}/triplet_list", self.triplet_list)
 
     def triplet_interaction(self,
