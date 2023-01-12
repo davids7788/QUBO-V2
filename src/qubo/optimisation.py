@@ -3,6 +3,7 @@ import numpy as np
 
 def bit_flip_optimisation(triplets,
                           solution_candidate,
+                          t_mapping,
                           triplet_ordering,
                           reverse=True):
 
@@ -11,8 +12,9 @@ def bit_flip_optimisation(triplets,
     decreases, the triplet state is flipped.
     :param
         triplets: list of triplet objects
-        t_mapping: mapping of names to positions
+        triplet_ordering:
         solution_candidate binary vector representing triplet states
+        t_mapping: mapping of names to positions
         reverse: False if provided sorting order, else reversed
     """
     if reverse:
@@ -30,11 +32,11 @@ def bit_flip_optimisation(triplets,
 
         # Checking interactions with other triplets
         for interaction in triplet.interactions.keys():
-            if solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[interaction] == 0:
+            if solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[t_mapping[interaction]]  == 0:
                 pass
-            elif solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[interaction] == 1:
+            elif solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[t_mapping[interaction]]  == 1:
                 energy_change += triplet.interactions[interaction]
-            elif solution_candidate[triplet_ordering[i]] == 1 and solution_candidate[interaction] == 0:
+            elif solution_candidate[triplet_ordering[i]] == 1 and solution_candidate[t_mapping[interaction]]  == 0:
                 pass
             else:
                 energy_change -= triplet.interactions[interaction]
@@ -101,10 +103,14 @@ def make_connection_list(triplet_list,
         return connections_map_entry[0]
 
     connections_map = []   # connection_value, triplet_1, triplet_2
+
     for triplet in triplet_list:
         for connection, value in zip(triplet.interactions.keys(), triplet.interactions.values()):
             if value < 0:
                 connections_map.append([value, triplet.triplet_id, connection])
+        if len(list(triplet.interactions.values())) > 0:
+            if max(list(triplet.interactions.values())) > 0:
+                connections_map.append([0, triplet.triplet_id, connection])
 
     connections_map.sort(key=sort_by_connection)
 
