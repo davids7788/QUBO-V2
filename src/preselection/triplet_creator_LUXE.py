@@ -195,9 +195,7 @@ class TripletCreatorLUXE:
         self.doublet_creation_time = TripletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
         print(f"Time elapsed for forming doublets: "
               f"{self.doublet_creation_time}")
-        print(f"Number of doublets found: {self.found_doublets}\n")
-        print(f"Number of tracks approximately possible to reconstruct: "
-              f"{int(self.found_correct_doublets / 3)}\n")
+        print(f"Number of doublets found: {self.found_doublets}")
         print(f"Doublet selection efficiency: "
               f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n")
 
@@ -233,8 +231,6 @@ class TripletCreatorLUXE:
         print(f"Time elapsed for  forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.found_triplets}")
-        print(f"Number of tracks approximately possible to reconstruct: "
-              f"{int(self.found_correct_triplets / 2)}\n")
         print(f"Triplet selection efficiency: "
               f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n")
         print("-----------------------------------\n")
@@ -310,8 +306,7 @@ class TripletCreatorLUXE:
         'preselection_info.txt' which is stored inside the output folder.
         """
         with open(self.save_to_folder + "/preselection_info.txt", "w") as f:
-            f.write("Preselection performed with the following set of parameters: \n")
-            f.write("---\n")
+            f.write("Preselection performed with the following configuration: \n")
             for outer_key in self.configuration.keys():
                 for inner_key, value in self.configuration[outer_key].items():
                     f.write(f"\n{inner_key}: {value}")
@@ -320,19 +315,17 @@ class TripletCreatorLUXE:
             f.write("---\n")
             f.write(f"Number of particles with at least one hit on the detector:: {self.num_particles}\n")
             f.write(f"Number of generated tracks: {self.num_complete_tracks}\n")
+            f.write("\n\n")
 
             f.write(f"Time elapsed for forming doublets: "
                     f"{self.doublet_creation_time}\n")
             f.write(f"Number of doublets found: {self.found_doublets}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct: "
-                    f"{int(self.found_correct_doublets / 3)}\n\n")
             f.write(f"Doublet selection efficiency: "
                     f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n")
+            f.write("\n\n")
 
             f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
             f.write(f"Number of triplets found: {self.found_triplets}\n")
-            f.write(f"Number of tracks approximately possible to reconstruct: "
-                    f"{int(self.found_correct_triplets / 2)}\n\n")
-            f.write(f"Triplet selection efficiency t_matched / t_max: "
+            f.write(f"Triplet selection efficiency: "
                     f"{np.around(100 * self.found_correct_triplets / (2 * self.num_complete_tracks), 3)} %\n")

@@ -101,7 +101,7 @@ class QuboCoefficients:
 
         print("Collecting statistics about a_i and b_ij...")
         for i, t1 in enumerate(self.triplet_list):
-            if t1.is_correct_match:
+            if t1.is_correct_match():
                 self.quality_correct_match_list.append(t1.quality)
             else:
                 self.quality_wrong_match_list.append(t1.quality)
@@ -347,8 +347,7 @@ class QuboCoefficients:
                  linewidth=3,
                  histtype='step',
                  label=f"Number of particles: {num_particles}\n"
-                       f"Number of triplets: {len(self.triplet_list)}\n"
-                       f"Number of interactions: {int(len(interactions_list))}\n")
+                       f"Number of triplets: {len(self.triplet_list)}\n")
         plt.yscale("log")
         plt.legend(loc="best", fontsize=20)
 

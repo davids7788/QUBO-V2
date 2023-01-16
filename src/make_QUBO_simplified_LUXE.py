@@ -50,8 +50,8 @@ qubo_coefficients = QuboCoefficients(config_file, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.filling_lists_for_statistics()
 qubo_coefficients.parameter_rescaling()
-# qubo_coefficients.plot_and_save_statistics(triplet_creator.num_complete_tracks,
-#                                            triplet_creator.preselection_statistic_dx_x0,
-#                                            triplet_creator.preselection_statistic_scattering)
+qubo_coefficients.plot_and_save_statistics(triplet_creator.num_complete_tracks,
+                                           triplet_creator.preselection_statistic_dx_x0,
+                                           triplet_creator.preselection_statistic_scattering)
 print("-----------------------------------\n")
 print("QUBO preparation finished successfully!\n")
