@@ -14,12 +14,14 @@ class Hamiltonian:
                  only_specified_connections=None):
         """Class for handling the Hamiltonian
         :param triplet_slice: slice of triplets participating in the SubQUBO
+        :param t_mapping: name of triplets consist of <hit_ID>_<hit_ID>_<hit_ID> and is mapped to its position
+                          inside the triplet list
+        :param solution_candidate: binary vector representing kept and discarded triplets e.g [0,1,..., 1]
         :param rescaling: "complete"    : (a_i + sum(outer_terms_bij)) / (#outer_terms_bij + 1)
-                          "outer terms" : a_i + (sum(outer_terms_bij) / #outer_terms_bij)
-                          "None"        : a_i + sum(outer_terms_bij)
+                          "outer terms" :  a_i + (sum(outer_terms_bij) / #outer_terms_bij)
+                          "None"        :  a_i + sum(outer_terms_bij)
         :param only_specified_connections: dictionary of triplet ids which have to be considered for accumulating
                                            relations from outside the (sub)qubo
-
         """
         self.only_specified_connections = only_specified_connections
         self.triplet_slice = triplet_slice
@@ -30,7 +32,7 @@ class Hamiltonian:
 
     def linear_term(self):
         """Pseudo-linear term, sums (and normalizes if chosen) all interaction values outside the
-        current subqubo and adds it to the linear term.
+        current sub-QUBO and adds it to the linear term.
         :return
             list of linear terms for the SubQUBO
         """

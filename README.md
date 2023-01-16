@@ -38,7 +38,7 @@ a VQE approach are implemented to solve the QUBO. To run the pattern recognition
    * `qubo_folder:` folder with a .npy triplet list file
 
 ```bash
-python solve_qubo.py configuration qubo_folder
+python qubo_solve.py configuration qubo_folder
 ```
 From the results of the qubo, xplets can be created on reconstruction level. The following arguments are needed:
    * `qubo_folder:` folder with a solved qubo (has a 9-digit number in the front by default)

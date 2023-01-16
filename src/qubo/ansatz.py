@@ -51,7 +51,7 @@ class Ansatz:
         self.circuit = qc
 
     def set_no_entanglements(self):
-        """Set quantum circuits with just rotation layers and not entanglements.
+        """Set quantum circuits with just rotation layers and no entanglements.
         """
         qc = QuantumCircuit(self.config["qubo"]["num qubits"])
         for i in range(self.config["ansatz"]["circuit depth"]):

@@ -115,6 +115,7 @@ class QuboProcessing:
         y_max = 0.00688128
         z_start = 3.9560125
 
+        self.optimisation_strategy
         sub_optimisation_strategy = make_impact_list
 
         for i, t_entry in enumerate(self.triplets):
@@ -258,10 +259,11 @@ class QuboProcessing:
         while self.pass_count < self.config["qubo"]["search depth"]:
             start_loop = time.time()
             start_quantum_part = time.time()
+            triplet_ordering = None
 
             # triplet list ordering determines also how many subqubos are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
-            # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...]
+            # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...] would be possible
             if "impact list" in self.config["qubo"]["optimisation strategy"]:
                 triplet_ordering = self.optimisation_strategy(self.triplets,
                                                               self.t_mapping,

@@ -10,12 +10,12 @@ def bit_flip_optimisation(triplets,
     """Looping over a list of triplet objects and a corresponding binary solution vector to compute if the energy
     value would improve if the binary state of a triplet (keep <-> discard) should be changed. If the energy
     decreases, the triplet state is flipped.
-    :param
-        triplets: list of triplet objects
-        triplet_ordering:
-        solution_candidate binary vector representing triplet states
-        t_mapping: mapping of names to positions
-        reverse: False if provided sorting order, else reversed
+    :param triplets: list of triplet objects
+    :param solution_candidate: binary vector representing kept and discarded triplets e.g [0,1,..., 1]
+    :param t_mapping: name of triplets consist of <hit_ID>_<hit_ID>_<hit_ID> and is mapped to its position
+                      inside the triplet list
+    :param triplet_ordering: order in which the triplets are sorted, e.g by impact, connectivity,...
+    :param reverse: False if provided sorting order, else reversed
     """
     if reverse:
         triplet_ordering.reverse()
@@ -55,9 +55,10 @@ def make_impact_list(triplet_list,
                      local=False):
     """Creates an impact list based on how much influence on the energy a bit flip has
     :param triplet_list: list of triplet objects
-    :param t_mapping: triplet mapping
-    :param solution_candidate: binary solution vector, representing triplet state
-    :param local: if True, then triplets outside of the given triplet subset are not considered
+    :param t_mapping: name of triplets consist of <hit_ID>_<hit_ID>_<hit_ID> and is mapped to its position
+                      inside the triplet list
+    :param solution_candidate: binary vector representing kept and discarded triplets e.g [0,1,..., 1]
+    :param local: if True, then triplets outside the given triplet subset are not considered
     :return:
         list of indices ordered from lowest to highest impact of triplets in triplet list
     """
@@ -93,7 +94,7 @@ def make_impact_list(triplet_list,
 
 def make_connection_list(triplet_list,
                          t_mapping):
-    """Creates an preferred connections list and returns a list of indices for the triplets
+    """Creates a preferred connections list and returns a list of indices for the triplets
     :param triplet_list: list of triplet objects
     :param t_mapping: triplet mapping
     :return:
@@ -108,9 +109,11 @@ def make_connection_list(triplet_list,
         for connection, value in zip(triplet.interactions.keys(), triplet.interactions.values()):
             if value < 0:
                 connections_map.append([value, triplet.triplet_id, connection])
+        if len(list(triplet.interactions.values())) == 0:
+            connections_map.append([0, triplet.triplet_id, None])
         if len(list(triplet.interactions.values())) > 0:
-            if max(list(triplet.interactions.values())) > 0:
-                connections_map.append([0, triplet.triplet_id, connection])
+            if min(list(triplet.interactions.values())) > 0:
+                connections_map.append([1, triplet.triplet_id, None])
 
     connections_map.sort(key=sort_by_connection)
 
@@ -119,6 +122,8 @@ def make_connection_list(triplet_list,
 
     for entry in connections_map:
         for i in [1, 2]:
+            if entry[i] is None:
+                continue
             if entry[i] not in triplet_used:
                 triplet_ordering.append(t_mapping[entry[i]])
                 triplet_used.add(entry[i])

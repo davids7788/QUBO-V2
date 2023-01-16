@@ -82,5 +82,5 @@ def gen_xplets(tracking_data_file, save_to_folder):
                 current_particle_id = int(entry[particle_id_index])
 
         np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", generated_x_plets)
-        print(f"Number of generated xplets: {len(generated_x_plets)}\n")
+        print(f"Number of generated Xplets: {len(generated_x_plets)}\n")
         print("-----------------------------------\n")
