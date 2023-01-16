@@ -9,10 +9,14 @@ from qubo.qubo_processing import QuboProcessing
 from qubo.qubo_logging import QuboLogging
 from qubo.ansatz import Ansatz
 from qubo.solver import Solver
+from pattern_building.create_reco_xplets import reco_xplets_simplified_LUXE
 
 
 # sys argv [1]: config file
 # sys argv [2]: folder containing a .npy triplet list file
+
+print("\n-----------------------------------")
+print("\nStarting to solve the QUBO...\n")
 
 with open(sys.argv[1], 'r') as f:
     config_file = yaml.safe_load(f)
@@ -26,7 +30,7 @@ new_folder = folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
 if Path(new_folder).is_dir():
     pass
 else:
-    print(f"Creating folder: {new_folder}")
+    print(f"Creating folder: {new_folder}\n")
     os.mkdir(new_folder)
 
 # Create logger
@@ -60,14 +64,18 @@ qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
                                 solver=solver,
                                 ansatz=ansatz,
                                 qubo_logging=qubo_logger,
-                                save_folder=new_folder)
+                                save_folder=new_folder,
+                                verbose=1)
+
 
 # Select solving method
 if "impact list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_processing()
 if "connection list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_processing()
-if "merged cluster" in config_file["qubo"]["optimisation strategy"]:
-    qubo_processor.qubo_process_merged_zones()
 
-qubo_processor.build_reco_xplets()
+reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
+                            new_folder)
+
+print("-----------------------------------\n")
+print("QUBO solved successfully!\n")

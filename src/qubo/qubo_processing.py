@@ -25,7 +25,8 @@ class QuboProcessing:
                  solver: Solver,
                  ansatz: Ansatz,
                  qubo_logging: QuboLogging,
-                 save_folder: str):
+                 save_folder: str,
+                 verbose=1):
         """Processes the Qubo and provides solving functions like a solving process via a chosen optimisation strategy.
         :param triplet_list_file: .npy file with triplet objects
         :param config: dictionary with configuration parameters
@@ -33,7 +34,9 @@ class QuboProcessing:
         :param ansatz: ansatz circuit
         :param qubo_logging: object for handling information about the solving process of class QuboLogging
         :param save_folder: folder to which results are stored
+        :param verbose: 0: only energy output, 1: showing sub-QUBO process
         """
+        self.verbose = verbose
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
         self.t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplets],
                                                            np.arange(len(self.triplets)))}
@@ -67,7 +70,7 @@ class QuboProcessing:
 
         # Performing initial bit flip optimisation
         if self.config["bit flip optimisation"]["iterations"] is not None:
-            start_bit_flip = time.time()
+            start_bit_flip = time.process_time()
             for i in range(self.config["bit flip optimisation"]["iterations"]):
                 new_solution_candidate, energy_change = bit_flip_optimisation(self.triplets,
                                                                               self.solution_candidate,
@@ -87,7 +90,7 @@ class QuboProcessing:
             if self.config["qubo"]["search depth"] is None:
                 self.qubo_logging.save_results(self.save_folder)
                 self.write_setup_info_to_file()
-            end_bit_flip = time.time()
+            end_bit_flip = time.process_time()
             print(f"Bit flip optimisation needed {QuboProcessing.hms_string((end_bit_flip - start_bit_flip))}")
 
         # Here starts the sub qubo algorithm
@@ -95,175 +98,22 @@ class QuboProcessing:
         self.pass_count = 0
         self.sub_qubo_counter = 0
 
-    def qubo_process_merged_zones(self):
-        """Solves the QUBO with the merged"""
-        start_solving_process_time = time.time()
-        # detector has 512 vs. 1024 * 18 pixel -->
-        # start with 128 * 4608 bins (size 4*4)
-        y_bins = 1   # 1 * 32
-        x_bins = 1   # 36 * 32
-
-        t_x = []   # first hit of triplet, x value
-        t_y = []   # first hit of triplet, y value
-
-        t_index = []  # index in triplet list
-
-        # hardcoded, see LUXE_sl.csv --> maybe fix later...
-        x_min = 0.05275912
-        x_max = 0.55430088
-        y_min = - 0.00688128
-        y_max = 0.00688128
-        z_start = 3.9560125
-
-        self.optimisation_strategy
-        sub_optimisation_strategy = make_impact_list
-
-        for i, t_entry in enumerate(self.triplets):
-            if len(list(t_entry.interactions.keys())) > 0:
-                if t_entry.doublet_1.hit_1_position[2] == z_start:
-                    t_index.append(i)
-                    t_x.append(t_entry.doublet_1.hit_1_position[0])
-                    t_y.append(t_entry.doublet_1.hit_1_position[1])
-
-            else:
-                t_index.append(i)
-                t_x.append(t_entry.doublet_1.hit_1_position[0])
-                t_y.append(t_entry.doublet_1.hit_1_position[1])
-
-        for loop in range(15):
-            print(f"Starting iteration {loop + 1}")
-            print(f"Number of bins in x: {x_bins} and y: {y_bins}")
-            start_loop = time.time()
-            start_quantum_part = time.time()
-
-            detector_stats = binned_statistic_2d(t_x, t_y, None, "count",
-                                                 bins=[x_bins, y_bins],
-                                                 range=[[x_min, x_max], [y_min, y_max]])
-
-            # map for faster access o bins
-            bin_mapping = {}
-            for triplet_index, bin_index in zip(t_index, detector_stats.binnumber):
-                if bin_index in bin_mapping.keys():
-                    bin_mapping[bin_index].append(triplet_index)
-                else:
-                    bin_mapping[bin_index] = [triplet_index]
-
-            # collecting locally connected triplets
-            for bin_entry in bin_mapping.keys():
-                # here the triplets taking part in the local optimisation are chosen
-                participating_triplets = bin_mapping[bin_entry]
-                for triplet in participating_triplets:
-                    for connection in self.triplets[triplet].interactions.keys():
-                        if connection not in participating_triplets:
-                            participating_triplets.append(connection)
-                if len(participating_triplets) <= self.config["qubo"]["num qubits"]:
-                    continue
-
-                local_solution = [self.solution_candidate[k] for k in participating_triplets]
-                local_energy = self.hamiltonian_energy(local_solution, participating_triplets)
-                pass_count_merge_zones = 0
-                while pass_count_merge_zones < self.config["qubo"]["search depth"]:
-                    triplet_ordering = sub_optimisation_strategy([self.triplets[t] for t in participating_triplets],
-                                                                 self.solution_candidate,
-                                                                 local=False)
-                    triplet_ordering.reverse()
-
-                    # iterating over parts parts areas
-                    for i in range(int(len(participating_triplets) / self.config["qubo"]["num qubits"])):
-                        result = self.solve_subqubos([self.triplets[i] for i in
-                                                      triplet_ordering[self.config["qubo"]["num qubits"] * i:
-                                                                       self.config["qubo"]["num qubits"] * (i + 1)]],
-                                                     None)
-                        if result is None:
-                            continue
-                        for k, entry in enumerate(triplet_ordering[self.config["qubo"]["num qubits"] * i:
-                                                  self.config["qubo"]["num qubits"] * (i + 1)]):
-                            self.solution_candidate[entry] = result[k]
-                    if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
-                        result = self.solve_subqubos([self.triplets[i] for i in
-                                                      triplet_ordering[- self.config["qubo"]["num qubits"]:]],
-                                                     None)
-                        if result is None:
-                            pass
-                        else:
-                            for k, entry in enumerate(triplet_ordering[- self.config["qubo"]["num qubits"]:]):
-                                self.solution_candidate[entry] = result[k]
-
-                    local_solution = [self.solution_candidate[k] for k in participating_triplets]
-                    new_energy = self.hamiltonian_energy(local_solution, participating_triplets)
-                    print(new_energy)
-
-                    if new_energy < local_energy:
-                        local_energy = new_energy
-                    else:
-                        pass_count_merge_zones += 1
-
-                end_quantum_part = time.time()
-                quantum_time = end_quantum_part - start_quantum_part
-                self.qubo_logging.add_entry("time tracking quantum",
-                                            str(self.loop_count),
-                                            quantum_time)
-
-            # update energy
-            self.energy_candidate = self.hamiltonian_energy(self.solution_candidate)
-
-            self.qubo_logging.add_entry("solution vector",
-                                        str(self.loop_count),
-                                        self.solution_candidate)
-            self.qubo_logging.add_entry("energy",
-                                        str(self.loop_count),
-                                        self.energy_candidate)
-
-            # check if new solution candidate has a lower energy value than the one before
-            if self.energy_candidate < self.qubo_logging.qubo_log["computed minimum energy"]:
-                self.qubo_logging.set_value("computed minimum energy",
-                                            self.energy_candidate)
-                self.qubo_logging.set_value("computed solution vector",
-                                            self.solution_candidate)
-            print(f"Energy after iteration {self.loop_count} at pass count {self.pass_count}: "
-                  f"{np.around(self.energy_candidate, 2)}")
-
-            # if loop in [12, 13]:
-            #     x_bins = int(x_bins / 3)
-            # elif loop in [0, 2, 4, 6, 8, 10, 11]:
-            #     x_bins = int(x_bins / 2)
-            # elif loop in [1, 3, 5, 7, 9]:
-            #     y_bins = int(y_bins / 2)
-
-            # increasing overall loop count
-            self.loop_count += 1
-            end_loop = time.time()
-            loop_time = end_loop - start_loop
-            self.qubo_logging.add_entry("time tracking qubo iteration",
-                                        str(self.loop_count),
-                                        loop_time)
-
-            self.qubo_logging.save_results(self.save_folder)
-
-        end_solving_process_time = time.time()
-        solving_process_time = end_solving_process_time - start_solving_process_time
-        self.qubo_logging.add_entry("time tracking complete",
-                                    "complete run",
-                                    solving_process_time)
-        self.qubo_logging.save_results(self.save_folder)
-        self.write_setup_info_to_file()
-        print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
-
     def qubo_processing(self):
         """Solves the QUBO with the set optimisation strategy.
         """
         # timer
-        start_solving_process_time = time.time()
+        start_solving_process_time = time.process_time()
 
         # global optimisation iterations
         while self.pass_count < self.config["qubo"]["search depth"]:
-            start_loop = time.time()
-            start_quantum_part = time.time()
+            start_loop = time.process_time()
+            start_quantum_part = time.process_time()
             triplet_ordering = None
 
-            # triplet list ordering determines also how many subqubos are built within one iteration
+            # triplet list ordering determines also how many Ssub-QUBOs are built within one iteration
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...] would be possible
+
             if "impact list" in self.config["qubo"]["optimisation strategy"]:
                 triplet_ordering = self.optimisation_strategy(self.triplets,
                                                               self.t_mapping,
@@ -283,7 +133,8 @@ class QuboProcessing:
 
             # Sub-qubos with full size
             for i in range(int(len(self.triplets) / self.config["qubo"]["num qubits"])):
-                print(f"Processing SubQUBO {i + 1} of {num_sub_qubos}", end="\r")
+                if self.verbose == 1:
+                    print(f"Processing Sub-QUBO {i + 1} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                              triplet_ordering[self.config["qubo"]["num qubits"] * i:
                                                               self.config["qubo"]["num qubits"] * (i + 1)]])
@@ -295,7 +146,8 @@ class QuboProcessing:
 
             # Check if triplets are left -> take the last <sub_qubo_size> triplets and perform a vqe
             if len(triplet_ordering) % self.config["qubo"]["num qubits"] != 0:
-                print(f"Processing SubQUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
+                if self.verbose == 1:
+                    print(f"Processing Sub-QUBO {num_sub_qubos} of {num_sub_qubos}", end="\r")
                 result = self.solve_subqubos([self.triplets[i] for i in
                                               triplet_ordering[- self.config["qubo"]["num qubits"]:]])
                 if result is None:
@@ -305,7 +157,7 @@ class QuboProcessing:
                         self.solution_candidate[entry] = result[k]
 
             # Time tracking quantum part
-            end_quantum_part = time.time()
+            end_quantum_part = time.process_time()
             quantum_time = end_quantum_part - start_quantum_part
             self.qubo_logging.add_entry("time tracking quantum",
                                         str(self.loop_count),
@@ -339,7 +191,7 @@ class QuboProcessing:
             self.loop_count += 1
 
             # time tracking iteration
-            end_loop = time.time()
+            end_loop = time.process_time()
             loop_time = end_loop - start_loop
             self.qubo_logging.add_entry("time tracking qubo iteration",
                                         str(self.loop_count),
@@ -347,7 +199,7 @@ class QuboProcessing:
 
             self.qubo_logging.save_results(self.save_folder)
 
-        end_solving_process_time = time.time()
+        end_solving_process_time = time.process_time()
         solving_process_time = end_solving_process_time - start_solving_process_time
         self.qubo_logging.add_entry("time tracking complete",
                                     "complete run",
@@ -491,13 +343,13 @@ class QuboProcessing:
                 self.solver.quantum_instance.ansatz = self.ansatz
 
             # Timestamps and solving the SubQUBO
-            start_sub_qubo = time.time()
+            start_sub_qubo = time.process_time()
             result = self.solve_quantum(hamiltonian=hamiltonian.qubo_representation_quantum())
-            end_sub_qubo = time.time()
+            end_sub_qubo = time.process_time()
             sub_qubo_time = end_sub_qubo - start_sub_qubo
 
             # Check if comparing to Eigensolver
-            if self.config["qubo"]["compare to eigensolver"]: # and self.loop_count == 0:  # one iteration
+            if self.config["qubo"]["compare to eigensolver"]:
                 exact_result = self.exact_solver.solve(hamiltonian.qubo_representation()).x
                 self.qubo_logging.add_entry("compare to analytical solution",
                                             self.sub_qubo_counter,
@@ -505,9 +357,9 @@ class QuboProcessing:
                                             count(True) == self.config["qubo"]["num qubits"])
 
         elif self.config["solver"]["algorithm"] == "Numpy Eigensolver":
-            start_sub_qubo = time.time()
+            start_sub_qubo = time.process_time()
             result = self.exact_solver.solve(hamiltonian.qubo_representation()).x
-            end_sub_qubo = time.time()
+            end_sub_qubo = time.process_time()
             sub_qubo_time = end_sub_qubo - start_sub_qubo
 
         # update solution
@@ -541,35 +393,14 @@ class QuboProcessing:
             f.write("\n\n")
             f.write("---\n")
 
-    def build_reco_xplets(self):
-        """Creates xplets from the kept triplets."""
-
-        def triplet_start(t):
-            """Returns z value of first triplet hit
-            """
-            return t.doublet_1.hit_1_position[2]
-
-        triplet_start_value = set()
+    def get_kept_triplets(self):
+        """Collects the kept triplets from the triplet list
+        :return
+            kept triplets selected by the optimisation process
+        """
         kept_triplets = []
-        for solution, triplet in zip(self.solution_candidate, self.triplets):
-            if solution == 1:
+        for triplet, entry in zip(self.triplets, self.solution_candidate):
+            if int(entry) == 1:
                 kept_triplets.append(triplet)
-                triplet_start_value.add(triplet.doublet_1.hit_1_position[2])
-        kept_triplets.sort(key=triplet_start)
-        xplet_start = min(list(triplet_start_value))
+        return kept_triplets
 
-        reco_x_plets = []
-        for i, t1 in enumerate(kept_triplets):
-            if t1.doublet_1.hit_1_position[2] == xplet_start:
-                t_list = [t1]
-                for t2 in kept_triplets[i + 1:]:
-                    if t_list[-1].doublet_2 == t2.doublet_1:
-                        t_list.append(t2)
-
-                reco_pattern = Xplet()
-                for triplet in t_list:
-                    reco_pattern.add_triplet(triplet)
-
-                reco_x_plets.append(reco_pattern)
-
-        np.save(f"{self.save_folder}/reco_xplet_list", reco_x_plets)

@@ -7,7 +7,8 @@ from pattern.triplet import Triplet
 from pattern.x_plet import Xplet
 
 
-def gen_xplets(tracking_data_file, save_to_folder):
+def gen_xplets_simplified_LUXE(tracking_data_file,
+                               save_to_folder):
     """Creates truth generated xplet list.
         :param tracking_data_file: .csv tracking data file
         :param save_to_folder: location to save the gen_xplet list

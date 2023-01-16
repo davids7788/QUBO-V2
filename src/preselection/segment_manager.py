@@ -38,8 +38,6 @@ class SegmentManager:
             for row in csv_reader:
                 self.detector_layers.append([float(r) for r in (row[1:])])
 
-        # information string
-        print("-----------------------------------\n")
         print(f"Using geometry file {detector_geometry.split('/')[-1]} for segmentation algorithm\n")
 
         self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)

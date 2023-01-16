@@ -47,7 +47,7 @@ triplet_creator.create_x_plets_simplified_LUXE(s_manager)
 triplet_creator.write_info_file()
 
 # Create truth Xplets
-gen_xplets(tracking_data, "/".join(new_folder.split("/")[0:-1]))
+gen_xplets_simplified_LUXE(tracking_data, "/".join(new_folder.split("/")[0:-1]))
 
 # Set and rescale parameters plot statistics
 qubo_coefficients = QuboCoefficients(config_file, new_folder)
