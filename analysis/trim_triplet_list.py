@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 sys.path.append("../src")
 
-data = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_6/253254035_bit_flip/qubo_log.npy", allow_pickle=True)[()]
-data2 = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_4/968446171_bit_flip/qubo_log.npy", allow_pickle=True)[()]
+data = np.load("../../QUBO/e0gpc_7.0_0000_sl-c_6/253254035_bit_flip/qubo_log.npy", allow_pickle=True)[()]
+data2 = np.load("../../QUBO/e0gpc_7.0_0000_sl-c_4/968446171_bit_flip/qubo_log.npy", allow_pickle=True)[()]
 print(data["truth minimum energy"], data["computed minimum energy"])
 print(data2["truth minimum energy"], data2["computed minimum energy"])
 
@@ -21,7 +21,7 @@ print(correct, false)
 exit()
 
 
-data = np.load("../qubo_files/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
+data = np.load("../../QUBO/e0gpc_7.0_0000_sl-c_4/triplet_list.npy", allow_pickle=True)
 
 print(len(data))
 
@@ -63,4 +63,4 @@ for i, triplet in enumerate(data):
 
 print(len(list(t_removed_list)))
 
-np.save("../qubo_files/e0gpc_7.0_0000_sl-c_6/triplet_list.npy", data)
+np.save("../../QUBO/e0gpc_7.0_0000_sl-c_6/triplet_list.npy", data)

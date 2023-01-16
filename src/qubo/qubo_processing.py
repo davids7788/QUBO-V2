@@ -71,8 +71,10 @@ class QuboProcessing:
             for i in range(self.config["bit flip optimisation"]["iterations"]):
                 new_solution_candidate, energy_change = bit_flip_optimisation(self.triplets,
                                                                               self.solution_candidate,
+                                                                              self.t_mapping,
                                                                               self.optimisation_strategy(
                                                                                    self.triplets,
+                                                                                   self.t_mapping,
                                                                                    self.solution_candidate),
                                                                               self.config["bit flip optimisation"]
                                                                               ["reverse"])

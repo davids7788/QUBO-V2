@@ -10,7 +10,7 @@ ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
 
 SetLuxeStyle()
 
-file = "/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase-0/gpc/7.0/e0gpc_7.0_0000_particles_sl.npy"
+file = "/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase-0/gpc/e0gpc_7.0/e0gpc_7.0_0000_particles_sl.npy"
 data = np.load(file, allow_pickle=True)[()]['True detector hits']['Plane 0']
 xi = 7
 
