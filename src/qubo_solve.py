@@ -9,7 +9,7 @@ from qubo.qubo_processing import QuboProcessing
 from qubo.qubo_logging import QuboLogging
 from qubo.ansatz import Ansatz
 from qubo.solver import Solver
-from pattern_building.create_reco_xplets import reco_xplets_simplified_LUXE
+from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
 
 
 # sys argv [1]: config file

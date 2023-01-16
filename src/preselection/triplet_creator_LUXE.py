@@ -145,7 +145,7 @@ class TripletCreatorLUXE:
         """
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
-        doublet_list_start = time.time()  # doublet list timer
+        doublet_list_start = time.process_time()  # doublet list timer
         for segment in segment_manager.segment_list:
             if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
                 continue
@@ -191,7 +191,7 @@ class TripletCreatorLUXE:
                                                                                           get_z_reference_layer_LUXE()))
                             self.found_doublets += 1
                             segment.doublet_data.append(doublet)
-        doublet_list_end = time.time()  # doublet list timer
+        doublet_list_end = time.process_time()  # doublet list timer
         self.doublet_creation_time = TripletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
         print(f"Time elapsed for forming doublets: "
               f"{self.doublet_creation_time}")
@@ -199,7 +199,7 @@ class TripletCreatorLUXE:
         print(f"Doublet selection efficiency: "
               f"{np.around(100 * self.found_correct_doublets / (3 * self.num_complete_tracks), 3)} %\n")
 
-        list_triplet_start = time.time()
+        list_triplet_start = time.process_time()
         print("-----------------------------------\n")
         print("Forming triplets ...\n")
         for segment in segment_manager.segment_list:
@@ -225,7 +225,7 @@ class TripletCreatorLUXE:
                                 self.found_correct_triplets += 1
             segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
-        list_triplet_end = time.time()
+        list_triplet_end = time.process_time()
         self.triplet_creation_time = TripletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
 
         print(f"Time elapsed for  forming triplets: "

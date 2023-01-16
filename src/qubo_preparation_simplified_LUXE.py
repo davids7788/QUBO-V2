@@ -2,7 +2,7 @@ import sys
 import yaml
 
 from pathlib import Path
-from pattern_building.create_gen_xplets import *
+from track_reconstruction.create_gen_xplets import *
 
 from preselection.triplet_creator_LUXE import TripletCreatorLUXE
 from preselection.segment_manager import SegmentManager
