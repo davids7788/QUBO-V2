@@ -27,6 +27,7 @@ def reco_xplets_simplified_LUXE(triplets,
     xplet_start = min(list(triplet_start_value))
 
     reco_x_plets = []
+    triplets_used = set()
     for i, t1 in enumerate(triplets):
         if t1.doublet_1.hit_1_position[2] == xplet_start:
             t_list = [t1]
@@ -36,20 +37,36 @@ def reco_xplets_simplified_LUXE(triplets,
 
             reco_pattern = Xplet()
             for triplet in t_list:
+                triplets_used.add(triplet.triplet_id)
                 reco_pattern.add_triplet(triplet)
             if fit == "chi squared lin track":
                 reco_pattern.fit_lin_track()
             reco_x_plets.append(reco_pattern)
 
+    for t3 in triplets:
+        if t3.triplet_id not in triplets_used:
+            reco_pattern = Xplet()
+            reco_pattern.add_triplet(t3)
+            if fit == "chi squared lin track":
+                reco_pattern.fit_lin_track()
+            reco_x_plets.append(reco_pattern)
+
     hit_to_xplet_map = {}
-    ambiguity_candidates = []
     for i, xplet in enumerate(reco_x_plets):
         for hit_id in xplet.hit_ids.values():
             if hit_id not in hit_to_xplet_map.values():
-                hit_to_xplet_map.update({hit_id: i})
+                hit_to_xplet_map.update({hit_id: 1})
             else:
-                ambiguity_candidates.append(i)
-                ambiguity_candidates.append(hit_to_xplet_map[hit_id])
+                ambiguity_number = hit_to_xplet_map[hit_id]
+                hit_to_xplet_map.update({hit_id: ambiguity_number + 1})
+
+    list_shared = list(hit_to_xplet_map.values())
+    num_shared_hits = 0
+    for value in list_shared:
+        if value > 1:
+            num_shared_hits += 1
+
+    print(f"{num_shared_hits} shared hits found... ")
 
     print("Solving ambiguities...\n")
     remove_triplets_indices = []
