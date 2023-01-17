@@ -11,7 +11,7 @@ a tracking detector. To run the simulation the following arguments are needed:
    * `save_to:` folder to which results are saved
 
 ```bash
-python simplified_simulation.py configuration particles geometry save_to
+python simplified_simulation_LUXE.py configuration particles geometry save_to
 ```
 
 ## Preselection

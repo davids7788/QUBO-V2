@@ -34,7 +34,7 @@ class Hamiltonian:
         """Pseudo-linear term, sums (and normalizes if chosen) all interaction values outside the
         current sub-QUBO and adds it to the linear term.
         :return
-            list of linear terms for the SubQUBO
+            list of linear terms for the Sub-QUBO
         """
         linear = np.zeros(len(self.triplet_slice))
         for i, triplet in enumerate(self.triplet_slice):
@@ -69,7 +69,7 @@ class Hamiltonian:
     def quadratic_term(self):
         """Returns the quadratic term of the hamiltonian.
         :return
-            list of quadratic terms for the SubQUBO
+            list of quadratic terms for the Sub-QUBO
         """
         quadratic = np.zeros((len(self.triplet_slice), len(self.triplet_slice)))
         for i, t1 in enumerate(self.triplet_slice):
@@ -110,5 +110,6 @@ class Hamiltonian:
 
     def error_mitigated_hamiltonian(self):
         """TODO: Implement!"""
-        # returning error mitigated hamiltonian --> paper from Karl's group
+        # returning error mitigated hamiltonian -->
+        # "Measurement Error Mitigation in Quantum Computers Through Classical Bit-Flip Correction"
         pass

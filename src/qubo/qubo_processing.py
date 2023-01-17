@@ -110,7 +110,7 @@ class QuboProcessing:
             start_quantum_part = time.process_time()
             triplet_ordering = None
 
-            # triplet list ordering determines also how many Ssub-QUBOs are built within one iteration
+            # triplet list ordering determines also how many Ssub-QUBOs are built within one iteration,
             # so it is possible to define a function with repeating indices resulting in a longer triplet ordering list
             # e.g. [1, 5, 3, 2, 4, 0], but also [1, 5, 1, 5, 3, 2, 4, 1, 5, ...] would be possible
 
@@ -403,4 +403,3 @@ class QuboProcessing:
             if int(entry) == 1:
                 kept_triplets.append(triplet)
         return kept_triplets
-

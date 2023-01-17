@@ -310,7 +310,7 @@ class QuboCoefficients:
                              quality_function_object):
         """Adds a function to the quality function dictionary
         :param quality_function_name: name of the function
-        :param quality_function_object: function object
+        :param quality_function_object: a function object
         """
         self.quality_functions.update({quality_function_name: quality_function_object})
 
@@ -319,7 +319,7 @@ class QuboCoefficients:
                               conflict_function_object):
         """Adds a function to the conflict function dictionary
         :param conflict_function_name: name of the function
-        :param conflict_function_object:  function object
+        :param conflict_function_object: a function object
         """
         self.conflict_functions.update({conflict_function_name: conflict_function_object})
 

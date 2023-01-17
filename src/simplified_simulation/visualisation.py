@@ -11,9 +11,8 @@ from matplotlib.patches import Rectangle
 
 class Visualisation:
     """Class for visualizing results
-    :param
-       source   : beam source object used in the experiment
-       result   : file with experimental results
+    :param source: beam source object used in the experiment
+    :param result: file with experimental results
     """
     def __init__(self,
                  source,
@@ -86,7 +85,7 @@ class Visualisation:
                        f'\n$\sigma$ = {np.round(sigma_x, 4)}' + '\nnum_bins = ' +
                        str(num_bins[0]))
 
-        plt.xlabel('px [GeV]')
+        plt.xlabel('px [MeV]')
         plt.ylabel('hit counts')
         plt.legend(loc='best', fontsize=12)
 
@@ -104,7 +103,7 @@ class Visualisation:
                        f'\n$\sigma$ = {np.round(sigma_y, 4)}' + '\nnum_bins = ' +
                        str(num_bins[1]))
 
-        plt.xlabel('py [GeV]')
+        plt.xlabel('py [MeV]')
         plt.ylabel('hit counts')
         plt.legend(loc='best', fontsize=12)
 
@@ -121,7 +120,7 @@ class Visualisation:
                        f'\n$\sigma$ = {np.round(sigma_pt, 4)}' + '\nnum_bins = ' +
                        str(num_bins[2]))
 
-        plt.xlabel('pt [GeV]')
+        plt.xlabel('pt [MeV]')
         plt.ylabel('hit counts')
         plt.legend(loc='best', fontsize=12)
         plt.savefig('beam_source_visualisation/px_py_pt_beam_source.pdf')
@@ -133,11 +132,10 @@ class Visualisation:
                                      z_lim,
                                      number_of_displayed_tracks=20):
         """Plotting a visualisation of the experiment.
-        :param
-            x_lim                             : plot limits x
-            y_lim                             : plot limits y
-            z_lim                             : plot limits z
-            number_of_displayed_tracks        : number of single tracks from one plane to another shown in the plot
+        :param x_lim: plot limits x
+        :param y_lim: plot limits y
+        :param z_lim: plot limits z
+        :param number_of_displayed_tracks: number of single tracks from one plane to another shown in the plot
         """
         if not os.path.isdir('tracks_example'):
             os.mkdir('tracks_example')

@@ -43,7 +43,7 @@ if config_file["ansatz"]["layout"] is None:
 else:
     ansatz = Ansatz(config=config_file)
 
-# If not "hamiltonian aware" additional parameters are set
+# If not "hamiltonian driven" additional parameters are set
 if config_file["ansatz"]["layout"] == "TwoLocal":
     ansatz.set_two_local()
 elif config_file["ansatz"]["layout"] is None:
@@ -82,4 +82,3 @@ track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.n
 
 print("-----------------------------------\n")
 print("QUBO solved successfully!\n")
-

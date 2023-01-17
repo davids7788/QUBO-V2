@@ -90,5 +90,5 @@ class Xplet:
 
         self.chi_squared = 0.5 * (chi_xz + chi_yz)
 
-        # p-value is calculate with k - 1 - ddof, where k is the number of observations
+        # p-value is calculated with k - 1 - dof, where k is the number of observations
         self.p_value = chi2.sf(self.chi_squared, df=len(x) - 1 - (len(x) - 2))

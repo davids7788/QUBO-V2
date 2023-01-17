@@ -8,14 +8,15 @@ triplet:
   max scattering: 0.001
 
 binning:
-  num bins x: 2000
+  num bins x: 32
+  num bins y: 4
 
 qubo parameters:
   b_ij conflict: 1.0
   b_ij match: two norm angle standard deviation
-  a_i: 0
+  a_i: two norm angle standard deviation
 
 scale range parameters:
-  z_scores: False
-  quality: null
-  interaction: null
+  z_scores: True
+  quality: [-0.1, 0.1]
+  interaction: [-1.0, -0.5]

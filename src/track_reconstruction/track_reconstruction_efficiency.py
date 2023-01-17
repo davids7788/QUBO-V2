@@ -30,8 +30,5 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str):
 
     print("\n-----------------------------------\n")
     print(f"Track reconstruction statistics:"
-          f"Efficiency: {np.around(matched_tracks / len(gen_xplet), 3)}\n"
-          f"Fake Rate: {np.around(fake_tracks / len(reco_xplets), 3)}")
-
-
-
+          f"Efficiency: {100 * np.around(matched_tracks / len(gen_xplet), 3)} %\n"
+          f"Fake Rate: {100 * np.around(fake_tracks / len(reco_xplets), 3)} %")
