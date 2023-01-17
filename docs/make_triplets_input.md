@@ -7,6 +7,8 @@ Criterion for a preselection on doublet level. Creating a Doublet object, if a s
 * `dx/x0:` $\frac{(x_2 - x_1)}{x_0}$ with $x_1$ (float) and $x_2$ (float) as x-coordinates of hits ond 
   (consecutive layers) and $x_0$ as linearly interpolated hit on reference layer (float)
 * `eps:` maximum deviation from the d/dx criteria (float)
+* `dy/x0:` $\frac{(x_y - x_y)}{x_0}$ with $y_1$ (float) and $y_2$ (float) as y-coordinates of hits ond 
+  (consecutive layers) and $x_0$ as linearly interpolated hit on reference layer (float)
 
 Criteria for a preselection on triplet level. Creating a Doublet object, if a set of two doublets fulfill both criteria.
 # triplet
@@ -15,6 +17,7 @@ Criteria for a preselection on triplet level. Creating a Doublet object, if a se
 # binning
 To reduce computational costs, separating hits into bins. 
 * `num bins x:` number of bins in x (int)
+* `num bins y:` number of bins in y (int)
 
 # qubo
 QUBO parameters. Separating parameters for quadratic terms to match and conflict. The QuboCoefficients class administers the functions. 

@@ -10,6 +10,7 @@ Defines the parameters of the quantum circuit used for the quantum part of the s
 * `circuit depth:` number of repetition blocks (int)
 * `rotation blocks:` single string that represents a gate, or a list of strings of parametrized gates, e.g "ry" or ["ry", "rx"]
 * `entanglement blocks:` multi qubit gates, such as "cx" or "cxx" 
+* `entanglement:` how the entanglement structure is realised, e.g "linear", "full", "circular" 
 * `skip final rotation layer:` True if rotation block should be skipped at the end of the circuit, else False
 * `skip unentangled qubits:` True, if the single qubit gates are only applied to qubits that are entangled, else False
 
@@ -29,7 +30,7 @@ Parameters for the solver, the used algorithm and backend.
 # qubo
 Additional parameters for solving the QUBO, such as initialisation, optimisation strategy, noise mitigation and 
 comparing to analytical solution.
-* `optimisation strategy:` "impact list" (more added in the future)
+* `optimisation strategy:` "impact list" or "connection list" (more added in the future)
 * `hamiltonian rescaling:` When using the SubQUBO approach, contributions from outside the SubQUBO are added to the 
   linear term of the participants in the SubQUBO. If "complete" then all the values, including the $a_i$ term from the SubQUBO
   are divided by the number of all the participating outer contributions + 1, if "outer term", then it is only divided by the number
