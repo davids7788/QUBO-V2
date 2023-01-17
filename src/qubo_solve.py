@@ -10,6 +10,7 @@ from qubo.qubo_logging import QuboLogging
 from qubo.ansatz import Ansatz
 from qubo.solver import Solver
 from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
+from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
 
 # sys argv [1]: config file
@@ -77,5 +78,8 @@ if "connection list" in config_file["qubo"]["optimisation strategy"]:
 reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
                             new_folder)
 
+track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy")
+
 print("-----------------------------------\n")
 print("QUBO solved successfully!\n")
+
