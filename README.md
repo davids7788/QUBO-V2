@@ -35,8 +35,7 @@ make sense.
 ## QUBO-solving
 The qubo is solved and results are saved into a .npy file with a dictionary with various information about the 
 solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
-an integrated track reconstruction efficiency and fake rate is calculated on the fly The following arguments
-are needed:
+an integrated track reconstruction efficiency and fake rate is calculated on the fly The following arguments are needed:
    * `configuration:` 
    * `folder_with_triplet_list:` folder with a solved qubo (has a 9-digit number in the front by default)
 
