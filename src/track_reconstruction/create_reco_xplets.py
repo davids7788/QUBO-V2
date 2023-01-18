@@ -53,9 +53,9 @@ def reco_xplets_simplified_LUXE(triplets,
             reco_x_plets.append(reco_pattern)
 
     hit_to_xplet_map = {}
-    for i, xplet in enumerate(reco_x_plets):
+    for xplet in reco_x_plets:
         for hit_id in xplet.hit_ids.values():
-            if hit_id not in hit_to_xplet_map.values():
+            if hit_id not in hit_to_xplet_map.keys():
                 hit_to_xplet_map.update({hit_id: 1})
             else:
                 ambiguity_number = hit_to_xplet_map[hit_id]

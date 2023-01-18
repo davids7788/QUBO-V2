@@ -22,13 +22,30 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str):
     matched_tracks = 0
     fake_tracks = 0
 
+    matched_tracks_bookkeeping = set()
+
     for track in reco_xplets:
-        if len(set(track.particle_ids.values())) < 0.5 * len(list(track.particle_ids.values())):
-            matched_tracks += 1
+        matched = False
+        p_id = None
+        ids = set(track.particle_ids.values())
+        for test_id in ids:
+            count = 0
+            for particle_id in track.particle_ids.values():
+                if test_id == particle_id:
+                    count += 1
+            if count >= 3:
+                p_id = test_id
+                matched = True
+        if matched:
+            if p_id not in matched_tracks_bookkeeping:
+                matched_tracks += 1
+                matched_tracks_bookkeeping.add(p_id)
+            else:
+                pass
         else:
             fake_tracks += 1
 
     print("\n-----------------------------------\n")
-    print(f"Track reconstruction statistics:"
-          f"Efficiency: {100 * np.around(matched_tracks / len(gen_xplet), 3)} %\n"
-          f"Fake Rate: {100 * np.around(fake_tracks / len(reco_xplets), 3)} %")
+    print(f"Track reconstruction statistics:\n"
+          f"Efficiency: {100 * np.round(matched_tracks / len(gen_xplet), 3)} %\n"
+          f"Fake Rate: {100 * np.round(fake_tracks / len(reco_xplets), 3)} %")
