@@ -14,7 +14,7 @@ a tracking detector. To run the simulation the following arguments are needed:
 python simplified_simulation_LUXE.py configuration particles geometry save_to
 ```
 
-## Preselection
+## Preselection and QUBO-building
 In the preselection, possible parts of track candidates, doublets and triplets, are created. To reduce the computational
 costs of this combinatorial task, constraints on the creation of these Xplets are set. Additionally, coefficients for the
 pattern recognition task in the form of a Quadratic Unconstrained Binary Optimisation (QUBO) are set.
@@ -29,10 +29,10 @@ To run the preselection the following arguments are needed:
 python qubo_preparation_simplified_LUXE.py configuration tracking_data geometry save_to
 ```
 
-At the end of the preselection, plots are created with truth information to check if parameters are set well and results 
+At the end of the preselection, plots can be created with truth information to check if parameters are set well and results 
 make sense.
 
-
+## QUBO-solving
 The qubo is solved and results are saved into a .npy file with a dictionary with various information about the 
 solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
 an integrated track reconstruction efficiency and fake rate is calculated on the fly The following arguments
