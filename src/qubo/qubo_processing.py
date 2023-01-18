@@ -206,7 +206,8 @@ class QuboProcessing:
                                     solving_process_time)
         self.qubo_logging.save_results(self.save_folder)
         self.write_setup_info_to_file()
-        print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
+        if self.config["qubo"]["search depth"] > 0:
+            print(f"Qubo solving process needed {QuboProcessing.hms_string(solving_process_time)}")
 
     def minimal_energy_and_solution(self):
         """Calculates the minimum energy state and value.

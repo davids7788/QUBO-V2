@@ -43,6 +43,7 @@ def reco_xplets_simplified_LUXE(triplets,
                 reco_pattern.fit_lin_track()
             reco_x_plets.append(reco_pattern)
 
+    # tracks starting from the second layer
     for t3 in triplets:
         if t3.triplet_id not in triplets_used:
             reco_pattern = Xplet()
@@ -66,29 +67,33 @@ def reco_xplets_simplified_LUXE(triplets,
         if value > 1:
             num_shared_hits += 1
 
-    print(f"{num_shared_hits} shared hits found... ")
+    print(f"{num_shared_hits} shared hits found... \n")
 
     print("Solving ambiguities...\n")
-    remove_triplets_indices = []
-    for i, xplet_one in enumerate(ambiguity_candidates):
-        for j, xplet_two in enumerate(ambiguity_candidates[i + 1:]):
-            for hit_id_one in reco_x_plets[xplet_one].hit_ids:
-                for hit_id_two in reco_x_plets[xplet_two].hit_ids:
-                    if hit_id_one == hit_id_two:
-                        if reco_x_plets[xplet_one].p_value > reco_x_plets[xplet_two].p_value:
-                            remove_triplets_indices.append(i + j)
-                        else:
-                            remove_triplets_indices.append(j)
 
-    if len(ambiguity_candidates) > 0:
-        reco_ambiguity_solved = []
-        for i, xplet in reco_x_plets:
-            if i not in remove_triplets_indices:
-                reco_ambiguity_solved.append(xplet)
-    else:
-        reco_ambiguity_solved = reco_x_plets
+    def select_triplets_with_max_overlap(reco_track, max_overlaps):
+        """Returns the number of overlaps of a track with other tracks.
+        :param reco_track: Xplet object
+        :param max_overlaps: max allowed overlaps
+        :return:
+            True if more than max overlaps, else False"""
+        overlaps = 0
+        for h_id in reco_track.hit_ids.values():
+            if hit_to_xplet_map[h_id] > 1:
+                overlaps += 1
+        if overlaps > max_overlaps:
+            return True
+        return False
 
-    print(f"Number of combinatorial reco Xplets: {len(reco_ambiguity_solved)}\n")
+    reco_ambiguity_solved = None
+    for i in range(3):
+        selected_tracks = []
+        for track in reco_x_plets:
+            if not select_triplets_with_max_overlap(track, 4 - i):
+                selected_tracks.append(track)
+        reco_ambiguity_solved = selected_tracks
+
+    print(f"Number of combinatorial reco Xplets: {len(reco_x_plets)}\n")
     print(f"Number of reco Xplets after ambiguity solving: {len(reco_ambiguity_solved)}\n")
 
     np.save(f"{save_folder}/reco_xplet_list", reco_ambiguity_solved)

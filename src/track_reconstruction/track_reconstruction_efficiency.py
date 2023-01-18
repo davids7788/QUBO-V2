@@ -15,8 +15,10 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str):
     :param reco_xplet_file: string
     """
     reco_xplets = np.load(reco_xplet_file, allow_pickle=True)
-    gen_prefix = reco_xplet_file.split("/")[2].split("-")[0]
-    gen_xplet = np.load("/".join(reco_xplet_file.split("/")[0:2]) + "/" + gen_prefix + "_gen_xplet_list.npy",
+    gen_prefix = reco_xplet_file.split("/")[-3].split("-")[0]
+    print(gen_prefix)
+    print("/".join(reco_xplet_file.split("/")[0:-3]))
+    gen_xplet = np.load("/".join(reco_xplet_file.split("/")[0:-3]) + "/" + gen_prefix + "_gen_xplet_list.npy",
                         allow_pickle=True)
 
     matched_tracks = 0

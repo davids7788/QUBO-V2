@@ -83,12 +83,17 @@ class Xplet:
         z = [value[2] for value in self.coordinates.values()]
 
         popt_xz, _ = curve_fit(Xplet.lin_func, z, x)
-        chi_xz, _ = chisquare(x, f_exp=[popt_xz[0] * z_i + popt_xz[1] for z_i in z], ddof=len(x) - 2)
-
         popt_yz, _ = curve_fit(Xplet.lin_func, z, y)
-        chi_yz, _ = chisquare(y, f_exp=[popt_yz[0] * z_i + popt_yz[1] for z_i in z], ddof=len(y) - 2)
 
-        self.chi_squared = 0.5 * (chi_xz + chi_yz)
+        if (sum(y) - sum([popt_yz[0] * z_i + popt_yz[1] for z_i in z])) or \
+           (sum(x) - sum([popt_xz[0] * z_i + popt_xz[1] for z_i in x])) > 1e-8:
+            self.chi_squared = 1e10
+            self.p_value = 0
+        else:
+            chi_xz, _ = chisquare(x, f_exp=[popt_xz[0] * z_i + popt_xz[1] for z_i in z], ddof=len(x) - 2)
+            chi_yz, _ = chisquare(y, f_exp=[popt_yz[0] * z_i + popt_yz[1] for z_i in z], ddof=len(y) - 2)
 
-        # p-value is calculated with k - 1 - dof, where k is the number of observations
-        self.p_value = chi2.sf(self.chi_squared, df=len(x) - 1 - (len(x) - 2))
+            self.chi_squared = 0.5 * (chi_xz + chi_yz)
+
+            # p-value is calculated with k - 1 - dof, where k is the number of observations
+            self.p_value = chi2.sf(self.chi_squared, df=len(x) - 1 - (len(x) - 2))
