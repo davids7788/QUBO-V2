@@ -8,7 +8,7 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from qubo.optimisation import make_impact_list, bit_flip_optimisation, make_connection_list
+from qubo.optimisation import make_impact_list, bit_flip_optimisation, make_connection_list, make_paired_list
 from qubo.solver import Solver
 from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
@@ -50,6 +50,8 @@ class QuboProcessing:
             self.optimisation_strategy = make_impact_list
         if "connection list" in self.config["qubo"]["optimisation strategy"]:
             self.optimisation_strategy = make_connection_list
+        if "paired list" in self.config["qubo"]["optimisation strategy"]:
+            self.optimisation_strategy = make_paired_list
         self.save_folder = save_folder
 
         # Log truth minimum energy state and energy
@@ -120,6 +122,9 @@ class QuboProcessing:
                                                               self.solution_candidate,
                                                               False)
             if "connection list" in self.config["qubo"]["optimisation strategy"]:
+                triplet_ordering = self.optimisation_strategy(self.triplets,
+                                                              self.t_mapping)
+            if "paired list" in self.config["qubo"]["optimisation strategy"]:
                 triplet_ordering = self.optimisation_strategy(self.triplets,
                                                               self.t_mapping)
             if "reverse" in self.config["qubo"]["optimisation strategy"]:

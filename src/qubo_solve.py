@@ -74,6 +74,8 @@ if "impact list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_processing()
 if "connection list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_processing()
+if "paired list" in config_file["qubo"]["optimisation strategy"]:
+    qubo_processor.qubo_processing()
 
 reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
                             new_folder)

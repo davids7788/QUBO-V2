@@ -8,8 +8,8 @@ triplet:
   max scattering: 0.001
 
 binning:
-  num bins x: 512
-  num bins y: 16
+  num bins x: 128
+  num bins y: 4
 
 qubo parameters:
   b_ij conflict: 1.0
@@ -18,5 +18,5 @@ qubo parameters:
 
 scale range parameters:
   z_scores: True
-  quality: [-0.5, 0.5]
+  quality: [-0.1, 0.1]
   interaction: [-1.0, -0.5]
