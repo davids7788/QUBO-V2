@@ -52,7 +52,6 @@ class QuboProcessing:
             self.optimisation_strategy = make_connection_list
         if "paired list" in self.config["qubo"]["optimisation strategy"]:
             self.optimisation_strategy = make_paired_list
-            print("paired_list")
         self.save_folder = save_folder
 
         # Log truth minimum energy state and energy
