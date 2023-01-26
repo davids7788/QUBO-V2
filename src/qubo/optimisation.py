@@ -166,5 +166,7 @@ def make_paired_list(triplet_list,
 
     for entry in connections_map:
         triplet_ordering.append(t_mapping[entry[1]])
+        if entry[2]:
+            triplet_ordering.append(t_mapping[entry[2]])
 
     return triplet_ordering
