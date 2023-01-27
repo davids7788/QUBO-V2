@@ -19,11 +19,11 @@ solver:
   optimisation level: null
 
 qubo:
-  optimisation strategy: "paired list"
+  optimisation strategy: "impact list reverse"
   hamiltonian rescaling: null
-  initial binary vector: "zeros"
+  initial binary vector: "ones"
   search depth: 1
-  num qubits: 12
+  num qubits: 10
   error mitigation algorithm: null
   compare to eigensolver: null
 
