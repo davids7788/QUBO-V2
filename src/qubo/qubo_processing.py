@@ -1,9 +1,6 @@
-import copy
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 
-from scipy.stats import binned_statistic_2d
 from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
@@ -13,7 +10,6 @@ from qubo.solver import Solver
 from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
 from qubo.qubo_logging import QuboLogging
-from pattern.x_plet import Xplet
 
 algorithm_globals.massive = True
 
