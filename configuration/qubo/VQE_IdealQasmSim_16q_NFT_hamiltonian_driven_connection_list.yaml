@@ -1,12 +1,12 @@
 ---
 ansatz:
-  layout: "TwoLocal"
+  layout: "HamiltonianDriven"
   circuit depth: 1
   rotation blocks: "ry"
   entanglement blocks: "cx"
   entanglement: "linear"
   skip final rotation layer: False
-  skip unentangled qubits: False
+  skip unentangled qubits: True
 
 solver:
   algorithm: "VQE"
@@ -19,11 +19,11 @@ solver:
   optimisation level: 3
 
 qubo:
-  optimisation strategy: "impact list reverse"
+  optimisation strategy: "connection list"
   hamiltonian rescaling: null
-  initial binary vector: "ones"
-  search depth: 3
-  num qubits: 7
+  initial binary vector: "zeros"
+  search depth: 1
+  num qubits: 16
   error mitigation algorithm: null
   compare to eigensolver: True
 

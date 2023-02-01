@@ -98,7 +98,7 @@ def make_connection_list(triplet_list,
     :param triplet_list: list of triplet objects
     :param t_mapping: triplet mapping
     :return:
-        list of indices ordered from lowest to highest impact of triplets in triplet list
+        list of indices ordered from  highest connection values to lowest connection values
     """
     def sort_by_connection(connections_map_entry):
         return connections_map_entry[0]
@@ -133,5 +133,40 @@ def make_connection_list(triplet_list,
                         if connection not in triplet_used:
                             triplet_used.add(connection)
                             triplet_ordering.append(t_mapping[connection])
+
+    return triplet_ordering
+
+
+def make_paired_list(triplet_list,
+                     t_mapping):
+    """Creates a preferred connections list and returns a list of indices for the triplets
+    :param triplet_list: list of triplet objects
+    :param t_mapping: triplet mapping
+    :return:
+        list of connected pairs
+    """
+    def sort_by_connection(connections_map_entry):
+        return connections_map_entry[0]
+
+    connections_map = []   # connection_value, triplet_1, triplet_2
+
+    for triplet in triplet_list:
+        for connection, value in zip(triplet.interactions.keys(), triplet.interactions.values()):
+            if value < 0:
+                connections_map.append([value, triplet.triplet_id, connection])
+        if len(list(triplet.interactions.values())) == 0:
+            connections_map.append([0, triplet.triplet_id, None])
+        if len(list(triplet.interactions.values())) > 0:
+            if min(list(triplet.interactions.values())) > 0:
+                connections_map.append([1, triplet.triplet_id, None])
+
+    connections_map.sort(key=sort_by_connection)
+
+    triplet_ordering = []
+
+    for entry in connections_map:
+        triplet_ordering.append(t_mapping[entry[1]])
+        if entry[2]:
+            triplet_ordering.append(t_mapping[entry[2]])
 
     return triplet_ordering

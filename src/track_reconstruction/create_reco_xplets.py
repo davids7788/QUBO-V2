@@ -13,7 +13,7 @@ def reco_xplets_simplified_LUXE(triplets,
     :param save_folder: folder to store reco Xplet list 
     """
     print("\n-----------------------------------\n")
-    print("Creating reco Xplets and fitting resulting track...\n")
+    print("Creating reco Xplets and fitting resulting tracks...\n")
 
     def triplet_start(t):
         """Returns z value of first triplet hit
@@ -51,6 +51,10 @@ def reco_xplets_simplified_LUXE(triplets,
             if fit == "chi squared lin track":
                 reco_pattern.fit_lin_track()
             reco_x_plets.append(reco_pattern)
+
+    print(f"Number of combinatorial reco Xplets: {len(reco_x_plets)}\n"
+          f"Saving combinatorial Xplets to file {save_folder}/reco_xplet_list")
+    np.save(f"{save_folder}/reco_xplet_list", reco_x_plets)
 
     hit_to_xplet_map = {}
     for xplet in reco_x_plets:
@@ -93,7 +97,7 @@ def reco_xplets_simplified_LUXE(triplets,
                 selected_tracks.append(track)
         reco_ambiguity_solved = selected_tracks
 
-    print(f"Number of combinatorial reco Xplets: {len(reco_x_plets)}\n")
-    print(f"Number of reco Xplets after ambiguity solving: {len(reco_ambiguity_solved)}\n")
+    print(f"Number of reco Xplets after ambiguity solving: {len(reco_ambiguity_solved)}\n"
+          f"Saving ambiguity solved Xplets to file {save_folder}/reco_xplet_list_ambiguity_solved")
 
-    np.save(f"{save_folder}/reco_xplet_list", reco_ambiguity_solved)
+    np.save(f"{save_folder}/reco_xplet_list_ambiguity_solved", reco_ambiguity_solved)
