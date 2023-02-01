@@ -8,7 +8,7 @@ from qiskit.utils import algorithm_globals
 from qiskit.algorithms import NumPyMinimumEigensolver
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
-from qubo.optimisation import make_impact_list, bit_flip_optimisation
+from qubo.optimisation import bit_flip_optimisation, make_impact_list, impact_without_conflicts
 from qubo.solver import Solver
 from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
@@ -42,6 +42,8 @@ class QuboProcessing:
         self.qubo_logging = qubo_logging
         if "impact list" in self.config["qubo"]["optimisation strategy"]:
             self.optimisation_strategy = make_impact_list
+        if "impact_without_conflicts" in self.config["qubo"]["optimisation strategy"]:
+            self.optimisation_strategy = impact_without_conflicts
         self.save_folder = save_folder
 
         # Log truth minimum energy state and energy

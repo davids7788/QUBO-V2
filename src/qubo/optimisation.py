@@ -84,3 +84,46 @@ def make_impact_list(triplet_list,
 
         impact_list_values.append(abs(energy_change))
     return list(np.argsort(impact_list_values))
+
+
+def impact_without_conflicts(triplet_list,
+                             solution_candidate,
+                             local=False):
+    """Creates an impact list based on how much influence on the energy a bit flip has
+    :param triplet_list: list of triplet objects
+    :param solution_candidate: binary solution vector, representing triplet state
+    :param local: if True, then triplets outside of the given triplet subset are not considered
+    :return:
+        list of indices ordered from lowest to highest impact of triplets in triplet list, without using conflict terms
+
+    """
+    impact_list_values = []
+    t_indices = []
+    for triplet in triplet_list:
+        t_indices.append(triplet.triplet_id)
+
+    for triplet, t_i in zip(triplet_list, solution_candidate):
+        energy_change = 0
+        if t_i == 0:
+            energy_change += triplet.quality
+        else:
+            energy_change -= triplet.quality
+
+        for interaction, value in zip(triplet.interactions.keys(),
+                                      triplet.interactions.values()):
+            if value > 0:
+                continue
+            if local:
+                if interaction not in t_indices:
+                    continue
+            if t_i == 0 and solution_candidate[interaction] == 0:
+                pass
+            elif t_i == 0 and solution_candidate[interaction] == 1:
+                energy_change += triplet.interactions[interaction]
+            elif t_i == 1 and solution_candidate[interaction] == 0:
+                pass
+            else:
+                energy_change -= triplet.interactions[interaction]
+
+        impact_list_values.append(abs(energy_change))
+    return list(np.argsort(impact_list_values))

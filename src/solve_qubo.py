@@ -65,5 +65,7 @@ qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
 # Select solving method
 if "impact list" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_process_impact_list()
+if "impact_without_conflicts" in config_file["qubo"]["optimisation strategy"]:
+    qubo_processor.qubo_process_impact_list()
 if "merged cluster" in config_file["qubo"]["optimisation strategy"]:
     qubo_processor.qubo_process_merged_zones()
