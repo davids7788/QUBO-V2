@@ -120,7 +120,8 @@ class TripletCreatorLUXE:
                 segment_index_for_entry = segment_manager.get_segment_at_known_xyz_value(row_converted[self.x_index],
                                                                                          row_converted[self.y_index],
                                                                                          row_converted[self.z_index])
-                segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
+                if segment_index_for_entry is not None:
+                    segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
 
             for key, outer_value in particle_numbers.items():
                 last = False
