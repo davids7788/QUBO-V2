@@ -11,7 +11,8 @@ class Hamiltonian:
                  t_mapping,
                  solution_candidate,
                  rescaling=None,
-                 only_specified_connections=None):
+                 only_specified_connections=None,
+                 k=1):
         """Class for handling the Hamiltonian
         :param triplet_slice: slice of triplets participating in the SubQUBO
         :param t_mapping: name of triplets consist of <hit_ID>_<hit_ID>_<hit_ID> and is mapped to its position
@@ -20,8 +21,10 @@ class Hamiltonian:
         :param rescaling: "complete"    : (a_i + sum(outer_terms_bij)) / (#outer_terms_bij + 1)
                           "outer terms" :  a_i + (sum(outer_terms_bij) / #outer_terms_bij)
                           "None"        :  a_i + sum(outer_terms_bij)
+                          "k value"     : some mysterious k scaling factor
         :param only_specified_connections: dictionary of triplet ids which have to be considered for accumulating
                                            relations from outside the (sub)qubo
+        :param k: some mysterious value, maybe helpful, maybe not
         """
         self.only_specified_connections = only_specified_connections
         self.triplet_slice = triplet_slice
@@ -29,6 +32,7 @@ class Hamiltonian:
         self.solution_candidate = solution_candidate
         self.triplet_ids = [triplet.triplet_id for triplet in triplet_slice]
         self.rescaling = rescaling
+        self.k = k
 
     def linear_term(self):
         """Pseudo-linear term, sums (and normalizes if chosen) all interaction values outside the
@@ -41,29 +45,36 @@ class Hamiltonian:
             # self-term
             linear[i] += self.triplet_slice[i].quality
             # outer-term
-            lin_out = 0
-            lin_out_counter = 0
-            for interaction_key in triplet.interactions.keys():
+            lin_out_connection = []
+            lin_out_conflict = []
+            for interaction_key, interaction_value in triplet.interactions.items():
                 if self.only_specified_connections is None:
                     if interaction_key not in self.triplet_ids:
                         if self.solution_candidate[self.t_mapping[interaction_key]] == 1:
-                            lin_out += triplet.interactions[interaction_key]
-                            lin_out_counter += 1
+                            if interaction_value < 0:
+                                lin_out_connection.append(triplet.interactions[interaction_key])
+                            else:
+                                lin_out_conflict.append(triplet.interactions[interaction_key])
                 else:
                     if interaction_key not in self.triplet_ids:
                         if interaction_key in self.only_specified_connections:
                             if self.solution_candidate[self.t_mapping[interaction_key]] == 1:
-                                lin_out += triplet.interactions[interaction_key]
-                                lin_out_counter += 1
+                                if interaction_value < 0:
+                                    lin_out_connection.append(triplet.interactions[interaction_key])
+                                else:
+                                    lin_out_conflict.append(triplet.interactions[interaction_key])
 
             if self.rescaling == "complete":
-                linear[i] += lin_out
-                linear[i] /= (lin_out_counter + 1)
+                linear[i] += (sum(lin_out_connection) + sum(lin_out_conflict))
+                linear[i] /= (len(lin_out_connection) + len(lin_out_conflict) + 1)
             elif self.rescaling == "outer terms":
-                if lin_out_counter != 0:
-                    linear[i] += lin_out / lin_out_counter
+                if lin_out_connection or lin_out_conflict:
+                    linear[i] += (sum(lin_out_connection) + sum(lin_out_conflict)) / \
+                                 (len(lin_out_connection) + len(lin_out_conflict) + 1)
+            elif self.rescaling == "k value":
+                linear[i] += (sum(lin_out_connection) + min(sum(lin_out_conflict), self.k))
             else:
-                linear[i] += lin_out
+                linear[i] += (sum(lin_out_connection) + sum(lin_out_conflict))
         return linear
 
     def quadratic_term(self):
