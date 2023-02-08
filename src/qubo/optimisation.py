@@ -32,11 +32,11 @@ def bit_flip_optimisation(triplets,
 
         # Checking interactions with other triplets
         for interaction in triplet.interactions.keys():
-            if solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[t_mapping[interaction]]  == 0:
+            if solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[t_mapping[interaction]] == 0:
                 pass
-            elif solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[t_mapping[interaction]]  == 1:
+            elif solution_candidate[triplet_ordering[i]] == 0 and solution_candidate[t_mapping[interaction]] == 1:
                 energy_change += triplet.interactions[interaction]
-            elif solution_candidate[triplet_ordering[i]] == 1 and solution_candidate[t_mapping[interaction]]  == 0:
+            elif solution_candidate[triplet_ordering[i]] == 1 and solution_candidate[t_mapping[interaction]] == 0:
                 pass
             else:
                 energy_change -= triplet.interactions[interaction]
@@ -170,3 +170,48 @@ def make_paired_list(triplet_list,
             triplet_ordering.append(t_mapping[entry[2]])
 
     return triplet_ordering
+
+
+def impact_without_conflicts(triplet_list,
+                             t_mapping,
+                             solution_candidate,
+                             local=False):
+    """Creates an impact list based on how much influence on the energy a bit flip has
+    :param triplet_list: list of triplet objects
+    :param t_mapping: name of triplets consist of <hit_ID>_<hit_ID>_<hit_ID> and is mapped to its position
+                      inside the triplet list
+    :param solution_candidate: binary vector representing kept and discarded triplets e.g [0,1,..., 1]
+    :param local: if True, then triplets outside the given triplet subset are not considered
+    :return:
+        list of indices ordered from lowest to highest impact of triplets in triplet list, but no
+        conflicts are taken into account!
+    """
+    impact_list_values = []
+    t_indices = []
+    for triplet in triplet_list:
+        t_indices.append(triplet.triplet_id)
+
+    for triplet, t_i in zip(triplet_list, solution_candidate):
+        energy_change = 0
+        if t_i == 0:
+            energy_change += triplet.quality
+        else:
+            energy_change -= triplet.quality
+
+        for interaction, value in triplet.interactions.items():
+            if value > 0:
+                continue
+            if local:
+                if interaction not in t_indices:
+                    continue
+            if t_i == 0 and solution_candidate[t_mapping[interaction]] == 0:
+                pass
+            elif t_i == 0 and solution_candidate[t_mapping[interaction]] == 1:
+                energy_change += triplet.interactions[interaction]
+            elif t_i == 1 and solution_candidate[t_mapping[interaction]] == 0:
+                pass
+            else:
+                energy_change -= triplet.interactions[interaction]
+
+        impact_list_values.append(abs(energy_change))
+    return list(np.argsort(impact_list_values))
