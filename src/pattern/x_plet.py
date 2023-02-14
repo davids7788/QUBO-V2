@@ -14,14 +14,15 @@ class Xplet:
         self.is_empty = True
         self.chi_squared = None
         self.p_value = None
-        """Class for combining connectable triplet structures into a x-plet pattern. Inside the Xplet pattern structure
-           information about the single hits are stored. The chi_squared and p-value can be set via a linear fit. 
-           Additional options will be added in the future. 
+        """Class for x-plet objects. X-plets are meant to store information about connectable Triplet objects. 
+        Connectable means, that there is a chain of n triplets, which can be combined to a xplet of length n + 1.
+        Therefore, 2 consecutive chained triplets have to share 2 hits, sharing the middle hit of each triplet is 
+        required. The X-plet can be fitted to a track with a linear function. A curve fit will be added in the future. 
         """
 
     def add_triplet(self,
                     triplet: Triplet):
-        """Adds a triplet to the Xplet structure
+        """Adds a triplet to the X-plet structure
         :param triplet: Triplet object
         """
         if self.is_empty:
@@ -57,7 +58,9 @@ class Xplet:
         self.triplet_ids.append(triplet.triplet_id)
 
     @staticmethod
-    def lin_func(x, a, b):
+    def lin_func(x: float,
+                 a: float,
+                 b: float) -> float:
         """Linear function with slope a and bias b
         :param x: data points
         :param a: slope
@@ -65,10 +68,10 @@ class Xplet:
         """
         return a * x + b
 
-    def get_coordinates(self):
-        """Auxiliary function to extract x,y and z coordinates.
+    def get_coordinates(self) -> tuple[list[float], list[float], list[float]]:
+        """Auxiliary function to extract x, y and z coordinates.
         :return
-            (x, y, z)
+            ([x0, x1, ..], [y0, y1, ..], [z0, z1, ..])
         """
         return ([value[0] for value in list(self.coordinates.values())],
                 [value[1] for value in list(self.coordinates.values())],
@@ -76,12 +79,13 @@ class Xplet:
 
     def fit_lin_track(self):
         """Linear fit of the track in xz and yz direction. Chi squared values are averaged. Chi squared and p-value
-        attributes are set for the xplet.
+        attributes are set for the x-plet.
         """
         x = [value[0] for value in self.coordinates.values()]
         y = [value[1] for value in self.coordinates.values()]
         z = [value[2] for value in self.coordinates.values()]
 
+        # fit x(z) and y(z)
         popt_xz, _ = curve_fit(Xplet.lin_func, z, x)
         popt_yz, _ = curve_fit(Xplet.lin_func, z, y)
 

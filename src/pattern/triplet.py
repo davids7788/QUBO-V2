@@ -5,30 +5,32 @@ class Triplet:
     def __init__(self,
                  doublet_1: Doublet,
                  doublet_2: Doublet):
-        """Class for Creating Triplets out of doublets from the Doublet class.
-        :param doublet_1: doublet object containing hit 1 and hit 2 of the then created triplet
-        :param doublet_2: doublet object containing hit 2 and hit 3 of the then created triplet
+        """Class for triplet objects consisting of two connected Doublet objects. The two Doublet objects need
+        to have a common hit. This has to be the second hit of one Doublet and the first hit of the other Doublet.
+        :param doublet_1: doublet object 1
+        :param doublet_2: doublet object 2
         """
         self.doublet_1 = doublet_1
         self.doublet_2 = doublet_2
-        self.triplet_id = "_".join([doublet_1.hit_1_id, doublet_1.hit_2_id, doublet_2.hit_2_id])   # hit ID"s -> name
-        self.interactions = {}   # Interactions with other triplets
-        self.quality = 0   # Describing how well it fits the expected particle trajectory, e.g straight or curved track
+        if self.doublet_1.hit_2_id != self.doublet_2.hit_1_id:
+            print("Doublets are not forming a triplet. Please check the Triplet creation procedure!")
 
-    def angles_between_doublets(self):
-        """Returns the angles between the doublets in xz and yz a a tuple
+        # hit IDs are used to generate the triplet id -> unique identifier
+        self.triplet_id = "_".join([self.doublet_1.hit_1_id,
+                                    self.doublet_1.hit_2_id,
+                                    self.doublet_2.hit_2_id])
+        self.interactions = {}   # Interactions with other triplets, {<other triplet id> : value}
+        self.quality = 0.0   # Describing how well it fits the expected particle trajectory
+
+    def angles_between_doublets(self) -> tuple[float, float]:
+        """Calculating the angles between the doublets in xz and yz
         :return
              (angle xz of doublets, angle yz of doublets)
         """
-        angle_xz_doublet_1 = self.doublet_1.xz_angle()
-        angle_yz_doublet_1 = self.doublet_1.yz_angle()
+        return self.doublet_2.xz_angle() - self.doublet_1.xz_angle(), \
+            self.doublet_2.yz_angle() - self.doublet_1.yz_angle()
 
-        angle_xz_doublet_2 = self.doublet_2.xz_angle()
-        angle_yz_doublet_2 = self.doublet_2.yz_angle()
-
-        return angle_xz_doublet_2 - angle_xz_doublet_1, angle_yz_doublet_2 - angle_yz_doublet_1
-
-    def is_correct_match(self):
+    def is_correct_match(self) -> bool:
         """Checks if all hits of the triplets stem from the same particle.
         :return
             True if triplet originates from one single particle, else False.
