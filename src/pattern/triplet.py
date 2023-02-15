@@ -13,7 +13,7 @@ class Triplet:
         self.doublet_1 = doublet_1
         self.doublet_2 = doublet_2
         if self.doublet_1.hit_2_id != self.doublet_2.hit_1_id:
-            print("Doublets are not forming a triplet. Please check the Triplet creation procedure!")
+            print("Doublets are not forming a triplet. Please check the triplet creation procedure!")
 
         # hit IDs are used to generate the triplet id -> unique identifier
         self.triplet_id = "_".join([self.doublet_1.hit_1_id,

@@ -49,6 +49,9 @@ class Xplet:
 
         else:
             insert_position = len(self.triplet_ids) + 2
+            if self.coordinates[len(self.triplet_ids)] != triplet.doublet_1.hit_2_position or \
+                    self.coordinates[len(self.triplet_ids) + 1] != triplet.doublet_2.hit_1_position:
+                print("Triplets are not forming a x-plet. Please check the x-plet creation procedure!")
             self.hit_ids.update({insert_position: triplet.doublet_2.hit_2_id})
             self.particle_ids.update({insert_position: triplet.doublet_2.hit_2_particle_key})
             self.coordinates.update({insert_position: triplet.doublet_2.hit_2_position})
@@ -77,9 +80,10 @@ class Xplet:
                 [value[1] for value in list(self.coordinates.values())],
                 [value[2] for value in list(self.coordinates.values())])
 
-    def fit_lin_track(self):
+    def fit_lin_track(self, detector_resolution):
         """Linear fit of the track in xz and yz direction. Chi squared values are averaged. Chi squared and p-value
         attributes are set for the x-plet.
+        :param detector_resolution: resolution of the detector to calculate the reduced chi-squared
         """
         x = [value[0] for value in self.coordinates.values()]
         y = [value[1] for value in self.coordinates.values()]
@@ -90,10 +94,10 @@ class Xplet:
         popt_yz, _ = curve_fit(Xplet.lin_func, z, y)
 
         f_exp = [popt_xz[0] * z_i + popt_xz[1] for z_i in z]
-        chi_xz = sum([((x_i - e) / 5e-6) ** 2 for x_i, e in zip(x, f_exp)]) / (len(x) - 2)
+        chi_xz = sum([((x_i - e) / detector_resolution) ** 2 for x_i, e in zip(x, f_exp)])
 
         f_exp = [popt_yz[0] * z_i + popt_yz[1] for z_i in z]
-        chi_yz = sum([((y_i - e) / 5e-6) ** 2 for y_i, e in zip(y, f_exp)]) / (len(y) - 2)
+        chi_yz = sum([((y_i - e) / detector_resolution) ** 2 for y_i, e in zip(y, f_exp)])
 
-        self.chi_squared = 0.5 * (chi_xz + chi_yz)
+        self.chi_squared = (chi_xz + chi_yz) / (len(x) + len(y) - 4)   # is never zero, len(x) + len(y) >= 6
         self.p_value = chi2.sf(0.5 * (chi_xz + chi_yz), df=len(x) - 1 - (len(x) - 2))
