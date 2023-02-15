@@ -14,98 +14,114 @@ class SegmentManager:
         """
 
         self.binning = binning   # dictionary of selection criteria
-        self.detector_layers = []   # list containing coordinate information about detector layers
-        self.detector_layers.sort(key=)
+        self.detector_chips = []   # list containing coordinate information about detector layers
+        self.setup = None
 
         # load detector layers / chips information and add them to the detector layers list
         with open(detector_geometry, 'r') as file:
             csv_reader = csv.reader(file)
             next(csv_reader)    # skip header, csv files should consist of one line
             for row in csv_reader:
-                self.detector_layers.append([float(r) for r in (row[1:])])
+                self.detector_chips.append([float(r) for r in (row[1:])])
 
         print(f"Using geometry file {detector_geometry.split('/')[-1]} for segmentation algorithm\n")
 
+        # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
+        self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
+
+        # check setup, corresponds to LUXE_sl.csv = simplified, LUXE_fl.csv = full
+        if len(self.z_position_to_layer) == 4:
+            self.setup = "simplified"
+        if len(self.z_position_to_layer) == 8:
+            self.setup = "full"
+        else:
+            print("No valid LUXE setup was chosen!")
+
         self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)
-        self.segment_list = []   # List of segment objects
+        self.segment_storage = {}   # dictionary for storing and organising segment objects
 
     def create_LUXE_segments(self):
         """Segments are created according to their x, y and z coordinates. The name of the segments gives
         information about their position and layer.
         """
-        z_position_to_layer = list(set([layer[4] for layer in self.detector_layers]))  # z-position -> layer number
+        for chip in self.detector_chips:   # ordered in z value from lowest to highest
+            x_min = chip[0]
+            x_max = chip[1]
+            y_min = chip[2]
+            y_max = chip[3]
 
-        for layer in self.detector_layers:   # ordered in z value from lowest to highest
-            x_min = layer[0]
-            x_max = layer[1]
-            y_min = layer[2]
-            y_max = layer[3]
-            layer_number = z_position_to_layer.index(layer[4])
+            layer_number = self.z_position_to_layer.index(chip[4])
+
+            # creating dictionary key for each layer, value is a list
+            self.segment_storage.update({layer_number: []})
 
             segment_size_x = (x_max - x_min) / int(self.binning[0])
             segment_size_y = (y_max - y_min) / int(self.binning[1])
             for j in range(int(self.binning[0])):
                 for k in range(int(self.binning[1])):
-                    # Name of the segment consists of layer number, segment numbering in x and in y
-                    self.segment_list.append(LUXEDetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
-                                                                 layer_number,
-                                                                 x_min + j * segment_size_x,
-                                                                 x_min + (j + 1) * segment_size_x,
-                                                                 y_min + k * segment_size_y,
-                                                                 y_min + (k + 1) * segment_size_y,
-                                                                 self.detector_layers[i][-1]))
+                    # name of the segment consists of layer number, segment numbering in x and in y
+                    new_segment = LUXEDetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
+                                                      layer_number,
+                                                      x_min + j * segment_size_x,
+                                                      x_min + (j + 1) * segment_size_x,
+                                                      y_min + k * segment_size_y,
+                                                      y_min + (k + 1) * segment_size_y,
+                                                      self.detector_chips[layer_number][-1])
+                    self.segment_storage[layer_number].insert(len(self.segment_storage[layer_number]), new_segment)
 
-    def segment_mapping_simplified_LUXE(self):
-        """Maps the segments according to the doublet preselection criteria.
-        Stores the result inside the segment mapping attribute.
+    def segment_mapping_LUXE(self):
+        """Maps the segments according to the doublet preselection criteria. That means, that if there are hits inside
+        the area, defined by the segment, that should be considered for creating doublets, a connection to the target
+        segment is stored inside the segment mapping attribute.
         """
-
         max_x_detector, max_y_detector, min_x_detector, min_y_detector = self.get_detector_dimensions_LUXE()
 
-        for segment in self.segment_list:
-            target_list = []
-            for target_segment in self.segment_list:
-                if target_segment.layer != segment.layer + 1:   # only consecutive layers
-                    continue
-                if target_segment.x_end < segment.x_start:   # heavy scattering excluded
-                    continue
-
-                min_dy = min([abs(target_segment.y_end - segment.y_start),
-                              abs(target_segment.y_start - segment.y_end),
-                              abs(target_segment.y_end - segment.y_end),
-                              abs(target_segment.y_start - segment.y_start)])
-
-                # max and minimum dx values
-                max_dx = target_segment.x_end - segment.x_start
-                min_dx = max([target_segment.x_start - segment.x_end, 0])
-
-                # max x_0 range on reference screen
-                x0_max = self.x0_at_z_ref(target_segment.x_start, segment.x_end, target_segment.z_position,
-                                          segment.z_position)
-
-                x0_min = self.x0_at_z_ref(target_segment.x_end, segment.x_start, target_segment.z_position,
-                                          segment.z_position)
-
-                # correct for detector dimensions
-                if x0_min < min_x_detector:
-                    x0_min = min_x_detector
-                    if x0_max < min_x_detector:
+        for index, z_position in enumerate(self.z_position_to_layer):
+            for segment in self.segment_list:
+                target_list = []
+                for target_segment in self.segment_list:
+                    if self.setup == "final"
+                    if target_segment.layer != segment.layer + 1:   # only consecutive layers
                         continue
-                if x0_max > max_x_detector:
-                    x0_max = max_x_detector
+                    if target_segment.x_end < segment.x_start:   # heavy scattering excluded
+                        continue
 
-                dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
-                                             self.configuration["doublet"]["eps"],
-                                             self.configuration["doublet"]["dx/x0"] +
-                                             self.configuration["doublet"]["eps"])
+                    min_dy = min([abs(target_segment.y_end - segment.y_start),
+                                  abs(target_segment.y_start - segment.y_end),
+                                  abs(target_segment.y_end - segment.y_end),
+                                  abs(target_segment.y_start - segment.y_start)])
 
-                max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
+                    # max and minimum dx values
+                    max_dx = target_segment.x_end - segment.x_start
+                    min_dx = max([target_segment.x_start - segment.x_end, 0])
 
-                if dx_x0_interval.overlaps(max_dx_interval):
-                    if min_dy / x0_max < self.configuration["doublet"]["dy/x0"]:
-                        target_list.append(target_segment.name)
+                    # max x_0 range on reference screen
+                    x0_max = self.x0_at_z_ref(target_segment.x_start, segment.x_end, target_segment.z_position,
+                                              segment.z_position)
 
-            self.segment_mapping.update({segment.name: target_list})
+                    x0_min = self.x0_at_z_ref(target_segment.x_end, segment.x_start, target_segment.z_position,
+                                              segment.z_position)
+
+                    # correct for detector dimensions
+                    if x0_min < min_x_detector:
+                        x0_min = min_x_detector
+                        if x0_max < min_x_detector:
+                            continue
+                    if x0_max > max_x_detector:
+                        x0_max = max_x_detector
+
+                    dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
+                                                 self.configuration["doublet"]["eps"],
+                                                 self.configuration["doublet"]["dx/x0"] +
+                                                 self.configuration["doublet"]["eps"])
+
+                    max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
+
+                    if dx_x0_interval.overlaps(max_dx_interval):
+                        if min_dy / x0_max < self.configuration["doublet"]["dy/x0"]:
+                            target_list.append(target_segment.name)
+
+                self.segment_mapping.update({segment.name: target_list})
 
     def x0_at_z_ref(self,
                     x_end: float,
