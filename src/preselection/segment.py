@@ -1,4 +1,4 @@
-class Segment:
+class LUXEDetectorSegment:
     def __init__(self,
                  name: str,
                  layer: int,
@@ -8,15 +8,15 @@ class Segment:
                  y_end: float,
                  z_position: float):
         """Manages segments of the detector layers
-        :param name: string created from integer
-        :param layer: 0-3 for simplified model, 0-7 for full setup
+        :param name: unique identifier for the segment
+        :param layer: using layer numbering 0-3 for simplified LUXE and 0-7 for full setup
         :param x_start: start of segment in x [m]
         :param x_end: end of segment in x [m]
         :param y_start: start of segment in y [m]
         :param y_end: end of segment in y [m]
         :param z_position: position in z [m]
         """
-        self.name = name
+        self.segment_name = name
         self.layer = layer
         self.x_start = x_start
         self.x_end = x_end

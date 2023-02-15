@@ -1,35 +1,21 @@
 import pandas as pd
 import csv
 
-from preselection.segment import Segment
+from preselection.segment import LUXEDetectorSegment
 
 
 class SegmentManager:
     def __init__(self,
-                 configuration: dict,
+                 binning: tuple[int, int],
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
-        :param configuration: information needed for the segments, delivered by loading yaml file as a nested
-               python dictionary:
-                {
-                doublet: {dx/x0: float,
-                          eps:   float>,
-                          dy/y0: float},
-                triplet: {max scattering: float}
-                binning: {num bins x: int,
-                          num bins y: int}
-                qubo parameters: {b_ij conflict: float
-                                  b_ij match: <name of an implemented function> or float,
-                                  a_i: <name of an implemented function> or float}
-                scale range parameters: {z_scores: True or False,
-                                         quality: null (= None) or [float, float],
-                                         interaction: null (= None) or [float, float]}
-                }
+        :param binning: [x_bins, y_bins] number of bins in x and y direction
         :param detector_geometry: string with address of a.csv geometry file
         """
 
-        self.configuration = configuration   # dictionary of selection criteria
+        self.binning = binning   # dictionary of selection criteria
         self.detector_layers = []   # list containing coordinate information about detector layers
+        self.detector_layers.sort(key=)
 
         # load detector layers / chips information and add them to the detector layers list
         with open(detector_geometry, 'r') as file:
@@ -43,27 +29,31 @@ class SegmentManager:
         self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)
         self.segment_list = []   # List of segment objects
 
-    def create_segments_simplified_LUXE(self):
-        """Splitting data into num bins segment to reduce the combinatorial computational costs.
-        For the simplified model only.
+    def create_LUXE_segments(self):
+        """Segments are created according to their x, y and z coordinates. The name of the segments gives
+        information about their position and layer.
         """
-        for i, layer in enumerate(self.detector_layers):   # ordered in z value from lowest to highest
+        z_position_to_layer = list(set([layer[4] for layer in self.detector_layers]))  # z-position -> layer number
+
+        for layer in self.detector_layers:   # ordered in z value from lowest to highest
             x_min = layer[0]
             x_max = layer[1]
             y_min = layer[2]
             y_max = layer[3]
+            layer_number = z_position_to_layer.index(layer[4])
 
-            segment_size_x = (x_max - x_min) / int(self.configuration["binning"]["num bins x"])
-            segment_size_y = (y_max - y_min) / int(self.configuration["binning"]["num bins y"])
-            for j in range(int(self.configuration["binning"]["num bins x"])):
-                for k in range(int(self.configuration["binning"]["num bins y"])):
-                    self.segment_list.append(Segment(f"L{i}_SX{j}_SY{k}",  # Layer i segment-x j segment-y k
-                                                     i,
-                                                     x_min + j * segment_size_x,
-                                                     x_min + (j + 1) * segment_size_x,
-                                                     y_min + k * segment_size_y,
-                                                     y_min + (k + 1) * segment_size_y,
-                                                     self.detector_layers[i][-1]))
+            segment_size_x = (x_max - x_min) / int(self.binning[0])
+            segment_size_y = (y_max - y_min) / int(self.binning[1])
+            for j in range(int(self.binning[0])):
+                for k in range(int(self.binning[1])):
+                    # Name of the segment consists of layer number, segment numbering in x and in y
+                    self.segment_list.append(LUXEDetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
+                                                                 layer_number,
+                                                                 x_min + j * segment_size_x,
+                                                                 x_min + (j + 1) * segment_size_x,
+                                                                 y_min + k * segment_size_y,
+                                                                 y_min + (k + 1) * segment_size_y,
+                                                                 self.detector_layers[i][-1]))
 
     def segment_mapping_simplified_LUXE(self):
         """Maps the segments according to the doublet preselection criteria.
