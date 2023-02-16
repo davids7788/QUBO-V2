@@ -1,4 +1,3 @@
-import pandas as pd
 import csv
 
 from preselection.segment import LUXEDetectorSegment
@@ -10,25 +9,12 @@ class SegmentManager:
                  mapping_criteria: dict,
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
-        :param configuration: information needed for the segments:
-                {
-                doublet: {dx/x0: <value>,
-                          eps:   <value>,
-                          dy/x0: <value>},
-                triplet: {angle diff x: <value>,
-                          angle diff y: <value>}
-                binning: {num bins x: <value>,
-                          num bins y: <value>}
-                qubo parameters: {b_ij conflict: <value>,
-                                  b_ij match: value,
-                                  a_i: <value>}
-                scale range parameters: {z_scores: <value>,
-                                         quality: <value>,
-                                         interaction: <value>}
-                }
+        :param binning: binning in x and y
+        :param mapping_criteria : {dx/x0: <value>,
+                                   eps:   <value>,
+                                   dy/x0: <value>}
         :param detector_geometry: .csv detector layer file geometry file
         """
-
         self.mapping_criteria = mapping_criteria
         self.binning = binning
         self.detector_chips = []   # list containing coordinate information about detector layers
@@ -45,8 +31,6 @@ class SegmentManager:
 
         # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
         self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
-        self.detector_range_x = [min([chip[1] for chip in self.detector_chips]),
-                                 max([chip[2] for chip in self.detector_chips])]
 
         # check setup, corresponds to LUXE_sl.csv = simplified, LUXE_fl.csv = full
         if len(self.z_position_to_layer) == 4:
@@ -56,8 +40,13 @@ class SegmentManager:
         else:
             print("No valid LUXE setup was chosen!")
 
-        self.segment_mapping = {}   # <segment> (key): [<segment_name_0>, <segment_name_1>, ...] (value)
-        self.segment_storage = {}   # dictionary for storing and organising segment objects
+        self.segment_mapping = {}   # <segment> (key): [<target_segment_0>, <target_segment_1>, ...] (value)
+        self.segment_storage = {}   # organising segment objects, subdicts ordered by construction in the following way:
+        # <layer> (key):
+        # [<segment_x0_y0>, <segment_x0_y1>, ..., <segment_x0_yn>
+        #  <segment_x1_y0>, <segment_x1_y1>, ...,
+        #  ...,                                 , <segment_xm_yn>]
+        self.layer_ranges = {}
 
     def create_LUXE_segments(self):
         """Segments are created according to their x, y and z coordinates. The name of the segments gives
@@ -104,9 +93,16 @@ class SegmentManager:
                 for target_segment in self.segment_storage[index + 1] + self.segment_storage[index + 2]:
                     check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
                     if check_compatibility:
-                        target_list.append(target_segment.name)
+                        target_list.append(target_segment)
 
                 self.segment_mapping.update({segment.name: target_list})
+
+        # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
+        for i in range(len(self.z_position_to_layer)):
+            self.layer_ranges.update({i: [self.segment_storage[i][0].x_start,
+                                          self.segment_storage[i][-1].x_end,
+                                          self.segment_storage[i][0].y_start,
+                                          self.segment_storage[i][-1].z_end]})
 
     @staticmethod
     def get_min_dy_of_two_segments(source_y: list[float, float],
@@ -123,7 +119,6 @@ class SegmentManager:
             return source_y[0] - target_y[1]
         else:
             return target_y[0] - source_y[1]
-
 
     def is_compatible_with_target_LUXE_segment(self,
                                                source_segment: LUXEDetectorSegment,
@@ -142,50 +137,37 @@ class SegmentManager:
         min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
                                                            [target_segment.y_start, target_segment.y_end])
 
+        detector_range_x_at_z_ref = [self.segment_storage[1][0].x_start,
+                                     self.segment_storage[1][-1].x_end]
 
-        # max x_0 range on reference segment
-        x0_max = self.x0_at_z_ref(target_segment.x_start,
-                                  source_segment.x_end,
-                                  target_segment.z_position,
-                                  source_segment.z_position)
+        # max x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
+        x0_max = min(self.x0_at_z_ref(target_segment.x_start,
+                                      source_segment.x_end,
+                                      target_segment.z_position,
+                                      source_segment.z_position), detector_range_x_at_z_ref[1])
 
         #  exclude heavy scattering in y-direction
         if min_dy / x0_max > self.mapping_criteria["dy/x0"]:
             return False
 
-        x0_min = self.x0_at_z_ref(target_segment.x_end,
-                                  source_segment.x_start,
-                                  target_segment.z_position,
-                                  source_segment.z_position)
+        # min x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
+        x0_min = max(self.x0_at_z_ref(target_segment.x_end,
+                                      source_segment.x_start,
+                                      target_segment.z_position,
+                                      source_segment.z_position), detector_range_x_at_z_ref[0])
 
+        max_dx =  target_segment.x_end - source_segment.x_start
+        min_dx = max([target_segment.x_start - source_segment.x_end, 0])
 
+        if min_dx / x0_max < self.mapping_criteria["dx/x0"] - self.mapping_criteria["eps"]:
+            if max_dx / x0_min < self.mapping_criteria["dx/x0"] - self.mapping_criteria["eps"]:
+                return False
 
-
-
-        # max and minimum dx values
-        max_dx = target_segment.x_end - segment.x_start
-        min_dx = max([target_segment.x_start - segment.x_end, 0])
-
-
-
-        # correct for detector dimensions
-        if x0_min < min_x_detector:
-            x0_min = min_x_detector
-            if x0_max < min_x_detector:
-                continue
-        if x0_max > max_x_detector:
-            x0_max = max_x_detector
-
-        dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
-                                     self.configuration["doublet"]["eps"],
-                                     self.configuration["doublet"]["dx/x0"] +
-                                     self.configuration["doublet"]["eps"])
-
-        max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
-
-        if dx_x0_interval.overlaps(max_dx_interval):
-            if min_dy / x0_max < self.configuration["doublet"]["dy/x0"]:
-        return None
+        elif min_dx / x0_max > self.mapping_criteria["dx/x0"] + self.mapping_criteria["eps"]:
+            if max_dx / x0_min > self.mapping_criteria["dx/x0"] + self.mapping_criteria["eps"]:
+                return False
+        else:
+            return True
 
     def x0_at_z_ref(self,
                     x_end: float,
@@ -206,38 +188,31 @@ class SegmentManager:
         return x_end - dx * (z_end - self.z_position_to_layer[0]) / dz
 
     def target_segments(self,
-                        name: str):
+                        name: str) -> list[type(LUXEDetectorSegment), ...]:
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
         :return:
             target segments
         """
-        segment_names = [segment_name for segment_name in self.segment_mapping[name]]
-        return [segment for segment in self.segment_list if segment.name in segment_names]
+        return [segment for segment in self.segment_mapping[name]]
 
     def get_segment_at_known_xyz_value(self,
                                        x: float,
                                        y: float,
                                        z: float):
-        """Finds the correct segment to store a hit. The segment list is a flattened 3d array with
-        <number layers> * <num segments in x per layer> * <num segments in y per layer> entries.
-        Only possible if all the layers have the exact same length!
+        """Finds the correct segment of a hit, given via x,y,z value.
         :param x: x value of hit
         :param y: y value of hit
         :param z: z value of hit
         :return:
             index of corresponding segment in segment list
         """
-        for i, segment in enumerate(self.segment_list):
-            if segment.z_position != z:
-                continue
-            if segment.x_start > x:
-                continue
-            if segment.x_end < x:
-                continue
-            if segment.y_start > y:
-                continue
-            if segment.y_end < y:
-                continue
-            return i
+        subdict = self.z_position_to_layer.index(z)
 
+        x_index = int((x - self.layer_ranges[subdict][0]) / \
+                      (self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0])
+
+        y_index = int((y - self.layer_ranges[subdict][0]) / \
+                      (self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[2])
+
+        return self.segment_storage[subdict][2 * x_index + y_index + 1]
