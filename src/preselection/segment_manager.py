@@ -6,14 +6,31 @@ from preselection.segment import LUXEDetectorSegment
 
 class SegmentManager:
     def __init__(self,
-                 binning: tuple[int, int],
+                 binning: list[int, int],
+                 mapping_criteria: dict,
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
-        :param binning: [x_bins, y_bins] number of bins in x and y direction
-        :param detector_geometry: string with address of a.csv geometry file
+        :param configuration: information needed for the segments:
+                {
+                doublet: {dx/x0: <value>,
+                          eps:   <value>,
+                          dy/x0: <value>},
+                triplet: {angle diff x: <value>,
+                          angle diff y: <value>}
+                binning: {num bins x: <value>,
+                          num bins y: <value>}
+                qubo parameters: {b_ij conflict: <value>,
+                                  b_ij match: value,
+                                  a_i: <value>}
+                scale range parameters: {z_scores: <value>,
+                                         quality: <value>,
+                                         interaction: <value>}
+                }
+        :param detector_geometry: .csv detector layer file geometry file
         """
 
-        self.binning = binning   # dictionary of selection criteria
+        self.mapping_criteria = mapping_criteria
+        self.binning = binning
         self.detector_chips = []   # list containing coordinate information about detector layers
         self.setup = None
 
@@ -28,6 +45,8 @@ class SegmentManager:
 
         # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
         self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
+        self.detector_range_x = [min([chip[1] for chip in self.detector_chips]),
+                                 max([chip[2] for chip in self.detector_chips])]
 
         # check setup, corresponds to LUXE_sl.csv = simplified, LUXE_fl.csv = full
         if len(self.z_position_to_layer) == 4:
@@ -74,54 +93,99 @@ class SegmentManager:
         the area, defined by the segment, that should be considered for creating doublets, a connection to the target
         segment is stored inside the segment mapping attribute.
         """
-        max_x_detector, max_y_detector, min_x_detector, min_y_detector = self.get_detector_dimensions_LUXE()
-
         for index, z_position in enumerate(self.z_position_to_layer):
-            for segment in self.segment_list:
+            for segment in self.segment_storage[index]:
                 target_list = []
-                for target_segment in self.segment_list:
-                    if self.setup == "final"
-                    if target_segment.layer != segment.layer + 1:   # only consecutive layers
-                        continue
-                    if target_segment.x_end < segment.x_start:   # heavy scattering excluded
-                        continue
+                if self.setup == "full":
+                    target_list = self.segment_storage[index + 1] + self.segment_storage[index + 2]
+                if self.setup == "simplified":
+                    target_list = self.segment_storage[index + 1]
 
-                    min_dy = min([abs(target_segment.y_end - segment.y_start),
-                                  abs(target_segment.y_start - segment.y_end),
-                                  abs(target_segment.y_end - segment.y_end),
-                                  abs(target_segment.y_start - segment.y_start)])
-
-                    # max and minimum dx values
-                    max_dx = target_segment.x_end - segment.x_start
-                    min_dx = max([target_segment.x_start - segment.x_end, 0])
-
-                    # max x_0 range on reference screen
-                    x0_max = self.x0_at_z_ref(target_segment.x_start, segment.x_end, target_segment.z_position,
-                                              segment.z_position)
-
-                    x0_min = self.x0_at_z_ref(target_segment.x_end, segment.x_start, target_segment.z_position,
-                                              segment.z_position)
-
-                    # correct for detector dimensions
-                    if x0_min < min_x_detector:
-                        x0_min = min_x_detector
-                        if x0_max < min_x_detector:
-                            continue
-                    if x0_max > max_x_detector:
-                        x0_max = max_x_detector
-
-                    dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
-                                                 self.configuration["doublet"]["eps"],
-                                                 self.configuration["doublet"]["dx/x0"] +
-                                                 self.configuration["doublet"]["eps"])
-
-                    max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
-
-                    if dx_x0_interval.overlaps(max_dx_interval):
-                        if min_dy / x0_max < self.configuration["doublet"]["dy/x0"]:
-                            target_list.append(target_segment.name)
+                for target_segment in self.segment_storage[index + 1] + self.segment_storage[index + 2]:
+                    check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
+                    if check_compatibility:
+                        target_list.append(target_segment.name)
 
                 self.segment_mapping.update({segment.name: target_list})
+
+    @staticmethod
+    def get_min_dy_of_two_segments(source_y: list[float, float],
+                                   target_y: list[float, float]) -> float:
+        """Calculating the minimum difference in y of two segments depending on their location on the detector.
+        :param source_y: y edge coordinates of source segment
+        :param target_y: y edge coordinates of source segment
+        :return
+            minimum distance of segments in y
+        """
+        if source_y[0] == target_y[0] and source_y[1] == target_y[1]:
+            return 0.0
+        elif source_y[0] > target_y[1]:
+            return source_y[0] - target_y[1]
+        else:
+            return target_y[0] - source_y[1]
+
+
+    def is_compatible_with_target_LUXE_segment(self,
+                                               source_segment: LUXEDetectorSegment,
+                                               target_segment: LUXEDetectorSegment) -> bool:
+        """Takes two segments and checks if they are compatible with the preselection criteria.
+        :param source_segment: segment from which the mapping starts
+        :param target_segment: segment considered as a target
+        :return:
+            True if compatible, else false
+        """
+
+        # exclude heavy scattering in x-direction
+        if target_segment.x_end < source_segment.x_start:
+            return False
+
+        min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
+                                                           [target_segment.y_start, target_segment.y_end])
+
+
+        # max x_0 range on reference segment
+        x0_max = self.x0_at_z_ref(target_segment.x_start,
+                                  source_segment.x_end,
+                                  target_segment.z_position,
+                                  source_segment.z_position)
+
+        #  exclude heavy scattering in y-direction
+        if min_dy / x0_max > self.mapping_criteria["dy/x0"]:
+            return False
+
+        x0_min = self.x0_at_z_ref(target_segment.x_end,
+                                  source_segment.x_start,
+                                  target_segment.z_position,
+                                  source_segment.z_position)
+
+
+
+
+
+        # max and minimum dx values
+        max_dx = target_segment.x_end - segment.x_start
+        min_dx = max([target_segment.x_start - segment.x_end, 0])
+
+
+
+        # correct for detector dimensions
+        if x0_min < min_x_detector:
+            x0_min = min_x_detector
+            if x0_max < min_x_detector:
+                continue
+        if x0_max > max_x_detector:
+            x0_max = max_x_detector
+
+        dx_x0_interval = pd.Interval(self.configuration["doublet"]["dx/x0"] -
+                                     self.configuration["doublet"]["eps"],
+                                     self.configuration["doublet"]["dx/x0"] +
+                                     self.configuration["doublet"]["eps"])
+
+        max_dx_interval = pd.Interval(min_dx / x0_max, max_dx / x0_min)
+
+        if dx_x0_interval.overlaps(max_dx_interval):
+            if min_dy / x0_max < self.configuration["doublet"]["dy/x0"]:
+        return None
 
     def x0_at_z_ref(self,
                     x_end: float,
@@ -139,7 +203,7 @@ class SegmentManager:
         """
         dx = x_end - x_start
         dz = z_end - z_start
-        return x_end - dx * (z_end - self.get_z_reference_layer_LUXE()) / dz
+        return x_end - dx * (z_end - self.z_position_to_layer[0]) / dz
 
     def target_segments(self,
                         name: str):
@@ -177,22 +241,3 @@ class SegmentManager:
                 continue
             return i
 
-    def get_z_reference_layer_LUXE(self):
-        """For LUXE the reference layer is always the layer with the lowest distance to the IP,
-        thus with the lowest z-value.
-        :return
-            z-value of reference layer
-        """
-        return min([layer[-1] for layer in self.detector_layers])
-
-    def get_detector_dimensions_LUXE(self):
-        """Extracts detector dimensions from the LUXE setup files.
-        :return
-            max_x_detector, max_y_detector, min_x_detector, min_y_detector
-        """
-        min_x = min([layer[0] for layer in self.detector_layers])
-        max_x = max([layer[1] for layer in self.detector_layers])
-        min_y = min([layer[2] for layer in self.detector_layers])
-        max_y = max([layer[3] for layer in self.detector_layers])
-
-        return max_x, max_y, min_x, min_y
