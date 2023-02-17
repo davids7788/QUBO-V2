@@ -31,11 +31,12 @@ class SegmentManager:
 
         # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
         self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
-
+        self.z_position_to_layer.sort()
         # check setup, corresponds to LUXE_sl.csv = simplified, LUXE_fl.csv = full
+
         if len(self.z_position_to_layer) == 4:
             self.setup = "simplified"
-        if len(self.z_position_to_layer) == 8:
+        elif len(self.z_position_to_layer) == 8:
             self.setup = "full"
         else:
             print("No valid LUXE setup was chosen!")
@@ -62,7 +63,6 @@ class SegmentManager:
 
             # creating dictionary key for each layer, value is a list
             self.segment_storage.update({layer_number: []})
-
             segment_size_x = (x_max - x_min) / int(self.binning[0])
             segment_size_y = (y_max - y_min) / int(self.binning[1])
             for j in range(int(self.binning[0])):
@@ -75,7 +75,7 @@ class SegmentManager:
                                                       y_min + k * segment_size_y,
                                                       y_min + (k + 1) * segment_size_y,
                                                       self.detector_chips[layer_number][-1])
-                    self.segment_storage[layer_number].insert(len(self.segment_storage[layer_number]), new_segment)
+                    self.segment_storage[layer_number].append(new_segment)
 
     def segment_mapping_LUXE(self):
         """Maps the segments according to the doublet preselection criteria. That means, that if there are hits inside
@@ -83,26 +83,35 @@ class SegmentManager:
         segment is stored inside the segment mapping attribute.
         """
         for index, z_position in enumerate(self.z_position_to_layer):
+            if self.setup == "full":
+                if index > len(self.z_position_to_layer) - 3:
+                    continue
+            if self.setup == "simplified":
+                if index > len(self.z_position_to_layer) - 2:
+                    continue
             for segment in self.segment_storage[index]:
+                print(segment.name)
+
                 target_list = []
                 if self.setup == "full":
                     target_list = self.segment_storage[index + 1] + self.segment_storage[index + 2]
                 if self.setup == "simplified":
                     target_list = self.segment_storage[index + 1]
-
-                for target_segment in self.segment_storage[index + 1] + self.segment_storage[index + 2]:
+                for target_segment in target_list:
                     check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
                     if check_compatibility:
-                        target_list.append(target_segment)
+                        if segment.name in self.segment_mapping.keys():
+                            self.segment_mapping[segment.name].append(target_segment)
+                        else:
+                            self.segment_mapping.update({segment.name:[target_segment]})
 
-                self.segment_mapping.update({segment.name: target_list})
 
         # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
         for i in range(len(self.z_position_to_layer)):
             self.layer_ranges.update({i: [self.segment_storage[i][0].x_start,
                                           self.segment_storage[i][-1].x_end,
                                           self.segment_storage[i][0].y_start,
-                                          self.segment_storage[i][-1].z_end]})
+                                          self.segment_storage[i][-1].z_position]})
 
     @staticmethod
     def get_min_dy_of_two_segments(source_y: list[float, float],
@@ -154,9 +163,10 @@ class SegmentManager:
         x0_min = max(self.x0_at_z_ref(target_segment.x_end,
                                       source_segment.x_start,
                                       target_segment.z_position,
-                                      source_segment.z_position), detector_range_x_at_z_ref[0])
+                                      source_segment.z_position),
+                     detector_range_x_at_z_ref[0])
 
-        max_dx =  target_segment.x_end - source_segment.x_start
+        max_dx = target_segment.x_end - source_segment.x_start
         min_dx = max([target_segment.x_start - source_segment.x_end, 0])
 
         if min_dx / x0_max < self.mapping_criteria["dx/x0"] - self.mapping_criteria["eps"]:
@@ -173,7 +183,7 @@ class SegmentManager:
                     x_end: float,
                     x_start: float,
                     z_end: float,
-                    z_start: float):
+                    z_start: float) -> float:
         """Help function for calculation x position of doublet at a z-reference value, which was set before
         as a class attribute
         :param x_end: x-position of target segment
@@ -199,7 +209,7 @@ class SegmentManager:
     def get_segment_at_known_xyz_value(self,
                                        x: float,
                                        y: float,
-                                       z: float):
+                                       z: float) -> type(LUXEDetectorSegment):
         """Finds the correct segment of a hit, given via x,y,z value.
         :param x: x value of hit
         :param y: y value of hit
@@ -213,6 +223,6 @@ class SegmentManager:
                       (self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0])
 
         y_index = int((y - self.layer_ranges[subdict][0]) / \
-                      (self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[2])
+                      (self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1])
 
-        return self.segment_storage[subdict][2 * x_index + y_index + 1]
+        return self.segment_storage[subdict][2 * x_index + y_index]

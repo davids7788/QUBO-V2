@@ -36,13 +36,16 @@ print("\n-----------------------------------")
 print("\nStarting QUBO creation...\n")
 
 # Segmentation algorithm --> reduce combinatorial tasks
-s_manager = SegmentManager(config_file, geometry_file)
-s_manager.create_segments_simplified_LUXE()
-s_manager.segment_mapping_simplified_LUXE()
+s_manager = SegmentManager([config_file['binning']['num bins x'],
+                            config_file['binning']['num bins y']],
+                           config_file['doublet'],
+                           geometry_file)
+s_manager.create_LUXE_segments()
+s_manager.segment_mapping_LUXE()
 
 # Triplet creation
 triplet_creator = TripletCreatorLUXE(config_file, new_folder)
-triplet_creator.load_tracking_data(tracking_data, s_manager, geometry_file)
+triplet_creator.load_tracking_data(tracking_data, s_manager)
 triplet_creator.create_x_plets_simplified_LUXE(s_manager)
 triplet_creator.write_info_file()
 

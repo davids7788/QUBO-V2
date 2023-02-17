@@ -1,5 +1,7 @@
 import csv
 import time
+from typing import List
+
 import numpy as np
 
 from pattern.doublet import Doublet
@@ -35,6 +37,7 @@ class TripletCreatorLUXE:
         self.doublet_creation_time = None
         self.triplet_creation_time = None
         self.num_particles = 0
+        self.particle_dict = {}
 
         self.preselection_statistic_dx_x0 = []
         self.preselection_statistic_scattering = []
@@ -58,33 +61,12 @@ class TripletCreatorLUXE:
 
     def load_tracking_data(self,
                            tracking_data_file: str,
-                           segment_manager: SegmentManager,
-                           geometry_file: str):
+                           segment_manager: SegmentManager):
         """Loads data from a .csv file and stores it into a 2-dim array. Also converts values which are used for
         calculations to float from string. The file structure is displayed in the class description.
         :param tracking_data_file: Luxe tracking data file
         :param segment_manager: SegmentManager object with already set segments and mapping
-        :param geometry_file: geometry .csv file
         """
-        with open(geometry_file, 'r') as file:
-            csv_reader_geometry_file = csv.reader(file)
-            csv_header_geometry_file = next(csv_reader_geometry_file)
-            z = csv_header_geometry_file.index("z")
-            z_values = []
-            for row in csv_reader_geometry_file:
-                z_values.append(float(row[z]))
-            z_values_unique = list(set(z_values))
-            z_values_unique.sort()
-            if len(z_values_unique) == 4:
-                # Simplified LUXE setup consists of 4 layers, assuming consisting one big chip each
-                last_layer = [z_values_unique[-1], z_values_unique[-1]]
-                first_layer = [z_values_unique[0], z_values_unique[0]]
-            else:
-                # Full LUXE setup consists of 4 layers, each layer has 2 rows of chips, the rows overlap in the middle
-                last_layer = [z_values_unique[-2], z_values_unique[-1]]
-                first_layer = [z_values_unique[0], z_values_unique[1]]
-
-        particle_numbers = {}  # counting particle ID
 
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Distributing data into segments ...\n")
@@ -107,37 +89,50 @@ class TripletCreatorLUXE:
                     else:
                         row_converted.append(row[i])
                 # check if particle ID was already seen
-                if row[self.particle_id_index] in particle_numbers:
-                    particle_numbers[row[self.particle_id_index]].update(
-                                        {z_values_unique.index(row_converted[self.z_index]):
-                                         row_converted[self.z_index]})
+                if row[self.particle_id_index] in self.particle_dict.keys():
+                    self.particle_dict[row[self.particle_id_index]].append(row_converted)
                 else:
-                    particle_numbers.update({row[self.particle_id_index]:
-                                            {z_values_unique.index(row_converted[self.z_index]):
-                                             row_converted[self.z_index]}})
+                    self.particle_dict.update({row[self.particle_id_index]: [row_converted]})
 
                 # adding particle to a segment, used to reduce combinatorial candidates
-                segment_index_for_entry = segment_manager.get_segment_at_known_xyz_value(row_converted[self.x_index],
-                                                                                         row_converted[self.y_index],
-                                                                                         row_converted[self.z_index])
-                if segment_index_for_entry is not None:
-                    segment_manager.segment_list[segment_index_for_entry].data.append(row_converted)
+                segment = segment_manager.get_segment_at_known_xyz_value(row_converted[self.x_index],
+                                                                         row_converted[self.y_index],
+                                                                         row_converted[self.z_index])
+                if segment:
+                    segment.data.append(row_converted)
 
-            for key, outer_value in particle_numbers.items():
-                last = False
-                first = False
-                for inner_value in outer_value.values():
-                    if inner_value in last_layer:
-                        last = True
-                    if inner_value in first_layer:
-                        first = True
-                self.num_particles += 1
-                if last and first:
-                    self.num_complete_tracks += 1
-                    self.xplet_numbers.add(key)
+        if segment_manager.setup == 'full':
+            self.information_about_particle_tracks(first_layer = [segment_manager.z_position_to_layer[0],
+                                                                  segment_manager.z_position_to_layer[1]],
+                                                   last_layer=[segment_manager.z_position_to_layer[-2],
+                                                               segment_manager.z_position_to_layer[-1]])
+        elif segment_manager.setup == 'simplified':
+            self.information_about_particle_tracks(first_layer=[segment_manager.z_position_to_layer[0]],
+                                                   last_layer=[segment_manager.z_position_to_layer[-1]])
 
-            print(f"Number of particles with at least one hit: {self.num_particles}")
-            print(f"Number of complete tracks: {self.num_complete_tracks}\n")
+    def information_about_particle_tracks(self,
+                                          first_layer: list[float, ...],
+                                          last_layer: list[float, ...]):
+        """Prints information about how many particles interact at least once with a detector chip
+        and how many complete tracks can be reconstructed.
+        :param first_layer: depending on the setup the first layer consists of two overlapping chips  or one
+        :param last_layer: depending on the setup the last layer consists of two overlapping chips or one
+        """
+        for key, value in self.particle_dict.items():
+            last = False
+            first = False
+            for entry in value:
+                if entry[self.z_index] in last_layer:
+                    last = True
+                if entry[self.z_index] in first_layer:
+                    first = True
+            self.num_particles += 1
+            if last and first:
+                self.num_complete_tracks += 1
+                self.xplet_numbers.add(key)
+
+        print(f"Number of particles with at least one hit: {self.num_particles}")
+        print(f"Number of complete tracks: {self.num_complete_tracks}\n")
 
     def create_x_plets_simplified_LUXE(self,
                                        segment_manager: SegmentManager):
@@ -147,51 +142,53 @@ class TripletCreatorLUXE:
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
         doublet_list_start = time.process_time()  # doublet list timer
-        for segment in segment_manager.segment_list:
-            if segment.layer > len(segment_manager.detector_layers) - 2:  # no doublets start from last layer
-                continue
-            next_segments = segment_manager.target_segments(segment.name)   # target segments
+        num_layers = len(segment_manager.segment_storage.keys())
 
-            for first_hit in segment.data:
-                for target_segment in next_segments:
-                    for second_hit in target_segment.data:
-                        x0 = self.x0_at_z_ref(first_hit[self.x_index],
-                                              second_hit[self.x_index],
-                                              first_hit[self.z_index],
-                                              second_hit[self.z_index],
-                                              segment_manager.get_z_reference_layer_LUXE())
-                        if abs(second_hit[self.y_index] - first_hit[self.y_index]) / x0 > \
-                                self.configuration["doublet"]["dy/x0"]:
-                            continue
-                        if self.doublet_criteria_check(first_hit[self.x_index],
-                                                       second_hit[self.x_index],
-                                                       first_hit[self.z_index],
-                                                       second_hit[self.z_index],
-                                                       segment_manager.get_z_reference_layer_LUXE()):
-                            doublet = Doublet(first_hit[self.particle_id_index],
-                                              second_hit[self.particle_id_index],
-                                              (first_hit[self.x_index],
-                                               first_hit[self.y_index],
-                                               first_hit[self.z_index]),
-                                              (second_hit[self.x_index],
-                                               second_hit[self.y_index],
-                                               second_hit[self.z_index]),
-                                              first_hit[self.hit_id_index],
-                                              second_hit[self.hit_id_index],
-                                              first_hit[self.particle_energy_index],
-                                              second_hit[self.particle_energy_index])
-                            if doublet.is_correct_match() and doublet.hit_1_particle_key in self.xplet_numbers:
-                                self.found_correct_doublets += 1
-                                self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
-                                                                          doublet.hit_1_position[0]) /
-                                                                         self.x0_at_z_ref(doublet.hit_2_position[0],
-                                                                                          doublet.hit_1_position[0],
-                                                                                          doublet.hit_2_position[2],
-                                                                                          doublet.hit_1_position[2],
-                                                                                          segment_manager.
-                                                                                          get_z_reference_layer_LUXE()))
-                            self.found_doublets += 1
-                            segment.doublet_data.append(doublet)
+        for layer in range(num_layers - 1):
+            for segment in segment_manager.segment_storage[layer]:
+                next_segments = segment_manager.target_segments(segment.name)   # target segments
+                print(len(next_segments))
+
+                for first_hit in segment.data:
+                    for target_segment in next_segments:
+                        for second_hit in target_segment.data:
+                            x0 = self.x0_at_z_ref(first_hit[self.x_index],
+                                                  second_hit[self.x_index],
+                                                  first_hit[self.z_index],
+                                                  second_hit[self.z_index],
+                                                  segment_manager.z_position_to_layer[0])
+                            if abs(second_hit[self.y_index] - first_hit[self.y_index]) / x0 > \
+                                    self.configuration["doublet"]["dy/x0"]:
+                                continue
+                            if self.doublet_criteria_check(first_hit[self.x_index],
+                                                           second_hit[self.x_index],
+                                                           first_hit[self.z_index],
+                                                           second_hit[self.z_index],
+                                                           segment_manager.z_position_to_layer[0]):
+                                doublet = Doublet(first_hit[self.particle_id_index],
+                                                  second_hit[self.particle_id_index],
+                                                  (first_hit[self.x_index],
+                                                   first_hit[self.y_index],
+                                                   first_hit[self.z_index]),
+                                                  (second_hit[self.x_index],
+                                                   second_hit[self.y_index],
+                                                   second_hit[self.z_index]),
+                                                  first_hit[self.hit_id_index],
+                                                  second_hit[self.hit_id_index],
+                                                  first_hit[self.particle_energy_index],
+                                                  second_hit[self.particle_energy_index])
+                                if doublet.is_correct_match() and doublet.hit_1_particle_key in self.xplet_numbers:
+                                    self.found_correct_doublets += 1
+                                    self.preselection_statistic_dx_x0.append((doublet.hit_2_position[0] -
+                                                                              doublet.hit_1_position[0]) /
+                                                                             self.x0_at_z_ref(doublet.hit_2_position[0],
+                                                                                              doublet.hit_1_position[0],
+                                                                                              doublet.hit_2_position[2],
+                                                                                              doublet.hit_1_position[2],
+                                                                                              segment_manager.
+                                                                                              segment_manager.z_position_to_layer[0]))
+                                self.found_doublets += 1
+                                segment.doublet_data.append(doublet)
         doublet_list_end = time.process_time()  # doublet list timer
         self.doublet_creation_time = TripletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
         print(f"Time elapsed for forming doublets: "

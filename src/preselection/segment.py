@@ -16,7 +16,7 @@ class LUXEDetectorSegment:
         :param y_end: end of segment in y [m]
         :param z_position: position in z [m]
         """
-        self.segment_name = name
+        self.name = name
         self.layer = layer
         self.x_start = x_start
         self.x_end = x_end
