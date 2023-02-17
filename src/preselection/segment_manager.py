@@ -90,8 +90,6 @@ class SegmentManager:
                 if index > len(self.z_position_to_layer) - 2:
                     continue
             for segment in self.segment_storage[index]:
-                print(segment.name)
-
                 target_list = []
                 if self.setup == "full":
                     target_list = self.segment_storage[index + 1] + self.segment_storage[index + 2]
@@ -105,13 +103,12 @@ class SegmentManager:
                         else:
                             self.segment_mapping.update({segment.name:[target_segment]})
 
-
         # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
         for i in range(len(self.z_position_to_layer)):
             self.layer_ranges.update({i: [self.segment_storage[i][0].x_start,
                                           self.segment_storage[i][-1].x_end,
                                           self.segment_storage[i][0].y_start,
-                                          self.segment_storage[i][-1].z_position]})
+                                          self.segment_storage[i][-1].y_end]})
 
     @staticmethod
     def get_min_dy_of_two_segments(source_y: list[float, float],
@@ -127,7 +124,7 @@ class SegmentManager:
         elif source_y[0] > target_y[1]:
             return source_y[0] - target_y[1]
         else:
-            return target_y[0] - source_y[1]
+            return source_y[1] - target_y[0]
 
     def is_compatible_with_target_LUXE_segment(self,
                                                source_segment: LUXEDetectorSegment,
@@ -146,36 +143,43 @@ class SegmentManager:
         min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
                                                            [target_segment.y_start, target_segment.y_end])
 
-        detector_range_x_at_z_ref = [self.segment_storage[1][0].x_start,
-                                     self.segment_storage[1][-1].x_end]
+        detector_range_x_at_z_ref = [self.segment_storage[0][0].x_start,
+                                     self.segment_storage[0][-1].x_end]
 
         # max x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
-        x0_max = min(self.x0_at_z_ref(target_segment.x_start,
-                                      source_segment.x_end,
-                                      target_segment.z_position,
-                                      source_segment.z_position), detector_range_x_at_z_ref[1])
+        x0_max = self.x0_at_z_ref(target_segment.x_start,
+                                  source_segment.x_end,
+                                  target_segment.z_position,
+                                  source_segment.z_position)
+
+        if x0_max < detector_range_x_at_z_ref[0]:
+            x0_max = detector_range_x_at_z_ref[0]
+        if x0_max > detector_range_x_at_z_ref[1]:
+            x0_max = detector_range_x_at_z_ref[1]
 
         #  exclude heavy scattering in y-direction
         if min_dy / x0_max > self.mapping_criteria["dy/x0"]:
             return False
 
         # min x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
-        x0_min = max(self.x0_at_z_ref(target_segment.x_end,
-                                      source_segment.x_start,
-                                      target_segment.z_position,
-                                      source_segment.z_position),
-                     detector_range_x_at_z_ref[0])
+        x0_min = self.x0_at_z_ref(target_segment.x_end,
+                                  source_segment.x_start,
+                                  target_segment.z_position,
+                                  source_segment.z_position)
+
+        if x0_min < detector_range_x_at_z_ref[0]:
+            x0_min = detector_range_x_at_z_ref[0]
+        if x0_min > detector_range_x_at_z_ref[1]:
+            x0_min = detector_range_x_at_z_ref[1]
 
         max_dx = target_segment.x_end - source_segment.x_start
         min_dx = max([target_segment.x_start - source_segment.x_end, 0])
 
-        if min_dx / x0_max < self.mapping_criteria["dx/x0"] - self.mapping_criteria["eps"]:
-            if max_dx / x0_min < self.mapping_criteria["dx/x0"] - self.mapping_criteria["eps"]:
-                return False
+        if max_dx / x0_min < self.mapping_criteria["dx/x0"] - self.mapping_criteria["eps"]:
+            return False
 
         elif min_dx / x0_max > self.mapping_criteria["dx/x0"] + self.mapping_criteria["eps"]:
-            if max_dx / x0_min > self.mapping_criteria["dx/x0"] + self.mapping_criteria["eps"]:
-                return False
+            return False
         else:
             return True
 
@@ -204,7 +208,7 @@ class SegmentManager:
         :return:
             target segments
         """
-        return [segment for segment in self.segment_mapping[name]]
+        return self.segment_mapping[name]
 
     def get_segment_at_known_xyz_value(self,
                                        x: float,
@@ -219,10 +223,10 @@ class SegmentManager:
         """
         subdict = self.z_position_to_layer.index(z)
 
-        x_index = int((x - self.layer_ranges[subdict][0]) / \
-                      (self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0])
+        x_index = int((x - self.layer_ranges[subdict][0]) /
+                      ((self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0]))
 
-        y_index = int((y - self.layer_ranges[subdict][0]) / \
-                      (self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1])
+        y_index = int((y - self.layer_ranges[subdict][2]) /
+                      ((self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1]))
 
-        return self.segment_storage[subdict][2 * x_index + y_index]
+        return self.segment_storage[subdict][self.binning[1] * x_index + y_index]

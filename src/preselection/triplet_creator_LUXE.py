@@ -141,14 +141,15 @@ class TripletCreatorLUXE:
         """
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
+
         doublet_list_start = time.process_time()  # doublet list timer
         num_layers = len(segment_manager.segment_storage.keys())
 
         for layer in range(num_layers - 1):
             for segment in segment_manager.segment_storage[layer]:
+                if segment.name not in segment_manager.segment_mapping.keys():
+                    continue
                 next_segments = segment_manager.target_segments(segment.name)   # target segments
-                print(len(next_segments))
-
                 for first_hit in segment.data:
                     for target_segment in next_segments:
                         for second_hit in target_segment.data:
@@ -185,7 +186,6 @@ class TripletCreatorLUXE:
                                                                                               doublet.hit_1_position[0],
                                                                                               doublet.hit_2_position[2],
                                                                                               doublet.hit_1_position[2],
-                                                                                              segment_manager.
                                                                                               segment_manager.z_position_to_layer[0]))
                                 self.found_doublets += 1
                                 segment.doublet_data.append(doublet)
@@ -200,28 +200,29 @@ class TripletCreatorLUXE:
         list_triplet_start = time.process_time()
         print("-----------------------------------\n")
         print("Forming triplets ...\n")
-        for segment in segment_manager.segment_list:
-            if segment.layer > len(segment_manager.detector_layers) - 3:   # triplets start only at first two layers
-                continue
-            next_segments = segment_manager.target_segments(segment.name)  # target segments
-            for target_segment in next_segments:
-                for first_doublet in segment.doublet_data:
-                    for second_doublet in target_segment.doublet_data:
-                        if first_doublet.hit_2_position != second_doublet.hit_1_position:  # check if match
-                            continue
-                        if self.triplet_criteria_check(first_doublet, second_doublet):
-                            triplet = Triplet(first_doublet, second_doublet)
-                            self.found_triplets += 1
-                            segment.triplet_data.append(triplet)
+        for layer in range(num_layers - 1):
+            for segment in segment_manager.segment_storage[layer]:
+                if segment.name not in segment_manager.segment_mapping.keys():
+                    continue
+                next_segments = segment_manager.target_segments(segment.name)  # target segments
+                for target_segment in next_segments:
+                    for first_doublet in segment.doublet_data:
+                        for second_doublet in target_segment.doublet_data:
+                            if first_doublet.hit_2_position != second_doublet.hit_1_position:  # check if match
+                                continue
+                            if self.triplet_criteria_check(first_doublet, second_doublet):
+                                triplet = Triplet(first_doublet, second_doublet)
+                                self.found_triplets += 1
+                                segment.triplet_data.append(triplet)
 
-                            # filling lists for statistical purposes
-                            if triplet.is_correct_match() and triplet.doublet_1.hit_1_particle_key \
-                                    in self.xplet_numbers:
-                                self.preselection_statistic_scattering.append(
-                                    np.sqrt(triplet.angles_between_doublets()[0]**2 +
-                                            triplet.angles_between_doublets()[1]**2))
-                                self.found_correct_triplets += 1
-            segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
+                                # filling lists for statistical purposes
+                                if triplet.is_correct_match() and triplet.doublet_1.hit_1_particle_key \
+                                        in self.xplet_numbers:
+                                    self.preselection_statistic_scattering.append(
+                                        np.sqrt(triplet.angles_between_doublets()[0]**2 +
+                                                triplet.angles_between_doublets()[1]**2))
+                                    self.found_correct_triplets += 1
+                segment.doublet_data.clear()   # --> lower memory usage, num doublets are >> num triplets
 
         list_triplet_end = time.process_time()
         self.triplet_creation_time = TripletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
