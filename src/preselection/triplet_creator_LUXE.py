@@ -299,7 +299,7 @@ class TripletCreatorLUXE:
 
     def triplet_criteria_check(self,
                                doublet1: Doublet,
-                               doublet2: Doublet):
+                               doublet2: Doublet) -> bool:
         """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
         :param doublet1: first doublet, nearer to IP
         :param doublet2: second doublet, further from IP
@@ -316,7 +316,7 @@ class TripletCreatorLUXE:
                     x_start: float,
                     z_end: float,
                     z_start: float,
-                    z_ref: float):
+                    z_ref: float) -> float:
         """Function for calculation x position of a doublet at a z-reference value.
         :param x_end: x-position of second hit
         :param x_start: x-position of first hit
@@ -331,7 +331,7 @@ class TripletCreatorLUXE:
         return x_end - dx * abs(z_end - z_ref) / dz
 
     @staticmethod
-    def hms_string(sec_elapsed):
+    def hms_string(sec_elapsed) -> str:
         """Nicely formatted time string.
         :param sec_elapsed time in ms
         :return
@@ -342,7 +342,7 @@ class TripletCreatorLUXE:
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
-    def write_info_file(self):
+    def write_info_file(self) -> None:
         """Writes information about the Preselection parameters and some statistics into
         'preselection_info.txt' which is stored inside the output folder.
         """

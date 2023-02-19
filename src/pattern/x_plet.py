@@ -49,8 +49,9 @@ class Xplet:
 
         else:
             insert_position = len(self.triplet_ids) + 2
-            if self.coordinates[len(self.triplet_ids)] != triplet.doublet_1.hit_2_position or \
-                    self.coordinates[len(self.triplet_ids) + 1] != triplet.doublet_2.hit_1_position:
+            if self.coordinates[len(self.triplet_ids)] != triplet.doublet_1.hit_1_position or \
+                    self.coordinates[len(self.triplet_ids) + 1] != triplet.doublet_1.hit_2_position:
+                print(self.coordinates, triplet.doublet_2.hit_1_position)
                 print("Triplets are not forming a x-plet. Please check the x-plet creation procedure!")
             self.hit_ids.update({insert_position: triplet.doublet_2.hit_2_id})
             self.particle_ids.update({insert_position: triplet.doublet_2.hit_2_particle_key})
