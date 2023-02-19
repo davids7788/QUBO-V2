@@ -30,7 +30,7 @@ class LUXEDetectorSegment:
     def is_in_segment(self,
                       x: float,
                       y: float,
-                      z: float):
+                      z: float) -> bool:
         """Checks if position x is inside the segment
         :param x: position in x [m]
         :param y: position in y [m]

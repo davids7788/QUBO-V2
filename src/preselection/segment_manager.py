@@ -49,7 +49,7 @@ class SegmentManager:
         #  ...,                                 , <segment_xm_yn>]
         self.layer_ranges = {}
 
-    def create_LUXE_segments(self):
+    def create_LUXE_segments(self) -> None:
         """Segments are created according to their x, y and z coordinates. The name of the segments gives
         information about their position and layer.
         """
@@ -77,7 +77,7 @@ class SegmentManager:
                                                       self.detector_chips[layer_number][-1])
                     self.segment_storage[layer_number].append(new_segment)
 
-    def segment_mapping_LUXE(self):
+    def segment_mapping_LUXE(self) -> None:
         """Maps the segments according to the doublet preselection criteria. That means, that if there are hits inside
         the area, defined by the segment, that should be considered for creating doublets, a connection to the target
         segment is stored inside the segment mapping attribute.
@@ -111,8 +111,8 @@ class SegmentManager:
                                           self.segment_storage[i][-1].y_end]})
 
     @staticmethod
-    def get_min_dy_of_two_segments(source_y: list[float, float],
-                                   target_y: list[float, float]) -> float:
+    def get_min_dy_of_two_segments(source_y: list[float],
+                                   target_y: list[float]) -> float:
         """Calculating the minimum difference in y of two segments depending on their location on the detector.
         :param source_y: y edge coordinates of source segment
         :param target_y: y edge coordinates of source segment
@@ -124,7 +124,7 @@ class SegmentManager:
         elif source_y[0] > target_y[1]:
             return source_y[0] - target_y[1]
         else:
-            return source_y[1] - target_y[0]
+            return target_y[0] - source_y[1]
 
     def is_compatible_with_target_LUXE_segment(self,
                                                source_segment: LUXEDetectorSegment,
@@ -202,7 +202,7 @@ class SegmentManager:
         return x_end - dx * (z_end - self.z_position_to_layer[0]) / dz
 
     def target_segments(self,
-                        name: str) -> list[type(LUXEDetectorSegment), ...]:
+                        name: str) -> list[type(LUXEDetectorSegment)]:
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
         :return:

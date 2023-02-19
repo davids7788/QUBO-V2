@@ -21,7 +21,7 @@ class Xplet:
         """
 
     def add_triplet(self,
-                    triplet: Triplet):
+                    triplet: Triplet) -> None:
         """Adds a triplet to the X-plet structure
         :param triplet: Triplet object
         """
@@ -80,10 +80,11 @@ class Xplet:
                 [value[1] for value in list(self.coordinates.values())],
                 [value[2] for value in list(self.coordinates.values())])
 
-    def fit_lin_track(self, detector_resolution):
+    def fit_lin_track(self,
+                      detector_resolution: float) -> None:
         """Linear fit of the track in xz and yz direction. Chi squared values are averaged. Chi squared and p-value
         attributes are set for the x-plet.
-        :param detector_resolution: resolution of the detector to calculate the reduced chi-squared
+        :param detector_resolution: resolution of the detector to calculate the reduced chi-squared [m]
         """
         x = [value[0] for value in self.coordinates.values()]
         y = [value[1] for value in self.coordinates.values()]
