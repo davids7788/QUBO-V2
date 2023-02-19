@@ -1,6 +1,7 @@
 from pattern.triplet import Triplet
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare, chi2
+from numba import jit
 
 
 class Xplet:
@@ -62,6 +63,7 @@ class Xplet:
         self.triplet_ids.append(triplet.triplet_id)
 
     @staticmethod
+    @jit(nopython=True)
     def lin_func(x: float,
                  a: float,
                  b: float) -> float:
@@ -101,5 +103,5 @@ class Xplet:
         f_exp = [popt_yz[0] * z_i + popt_yz[1] for z_i in z]
         chi_yz = sum([((y_i - e) / detector_resolution) ** 2 for y_i, e in zip(y, f_exp)])
 
-        self.chi_squared = (chi_xz + chi_yz) / (len(x) + len(y) - 4)   # is never zero, len(x) + len(y) >= 6
+        self.chi_squared = (chi_xz + chi_yz) / (len(x) + len(y) - 4)  # is never zero, len(x) + len(y) >= 6
         self.p_value = chi2.sf(0.5 * (chi_xz + chi_yz), df=len(x) - 1 - (len(x) - 2))

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from preselection.connection_metrics import *
 from preselection.segment_manager import SegmentManager
 
 
@@ -46,8 +47,8 @@ class QuboCoefficients:
         self.conflict_functions = {}
 
         # Adding a very simple set of quality and conflict functions
-        self.add_quality_function("two norm angle standard deviation", QuboCoefficients.two_norm_std_angle)
-        self.add_conflict_function("two norm angle standard deviation", QuboCoefficients.two_norm_std_angle)
+        self.add_quality_function("two norm angle standard deviation", two_norm_std_angle)
+        self.add_conflict_function("two norm angle standard deviation", two_norm_std_angle)
 
     def set_triplet_coefficients(self,
                                  segment_manager: SegmentManager) -> None:
@@ -57,7 +58,7 @@ class QuboCoefficients:
         :param segment_manager: segment manager object
         """
         # self checking configuration
-        print("Setting triplet coefficients a_i and b_ij...")
+        print("Calculate triplet coefficients a_i and b_ij...")
         quality = None
         try:
             quality = float(self.configuration["qubo parameters"]["a_i"])
@@ -65,33 +66,36 @@ class QuboCoefficients:
         except ValueError:
             quality_mode = "angle function"
 
-        for segment in segment_manager.segment_list:
-            if segment.layer > len(segment_manager.detector_layers) - 3:
-                continue
-            next_segments = segment_manager.target_segments(segment.name)  # target segments
-            for t1 in segment.triplet_data:
-                if quality_mode == "constant":
-                    t1.quality = quality
-                elif quality_mode == "angle function":
-                    triplet_angles_xz, triplet_angles_yz = t1.angles_between_doublets()
-                    t1.quality = np.sqrt(triplet_angles_xz ** 2 + triplet_angles_yz ** 2)
+        num_layers = len(segment_manager.segment_storage.keys())
+        for layer in range(num_layers - 2):
+            for segment in segment_manager.segment_storage[layer]:
+                if segment.name not in segment_manager.segment_mapping.keys():
+                    continue
+                next_segments = segment_manager.target_segments(segment.name)  # target segments
+                for t1 in segment.triplet_data:
+                    if quality_mode == "constant":
+                        t1.quality = quality
+                    elif quality_mode == "angle function":
+                        triplet_angles_xz, triplet_angles_yz = t1.angles_between_doublets()
+                        t1.quality = np.sqrt(triplet_angles_xz ** 2 + triplet_angles_yz ** 2)
 
-                for target_segment in next_segments + [segment]:   # checking all combinations with other triplets
-                    for t2 in target_segment.triplet_data:
-                        interaction_value = self.triplet_interaction(t1, t2)
-                        # Only interactions != 0 are treated
-                        if interaction_value == 0:
-                            continue
-                        t1.interactions.update({t2.triplet_id: interaction_value})
-                        t2.interactions.update({t1.triplet_id: interaction_value})
+                    for target_segment in next_segments + [segment]:   # checking all combinations with other triplets
+                        for t2 in target_segment.triplet_data:
+                            interaction_value = self.triplet_interaction(t1, t2)
+                            # Only interactions != 0 are treated
+                            if interaction_value == 0:
+                                continue
+                            t1.interactions.update({t2.triplet_id: interaction_value})
+                            t2.interactions.update({t1.triplet_id: interaction_value})
 
         # filling list structure
-        for segment in segment_manager.segment_list:
-            for triplet in segment.triplet_data:
-                self.triplet_list.add(triplet)
+        for layer in range(num_layers - 2):
+            for segment in segment_manager.segment_storage[layer]:
+                for triplet in segment.triplet_data:
+                    self.triplet_list.add(triplet)
             segment.triplet_data.clear()
 
-    def filling_lists_for_statistics(self):
+    def collecting_qubo_parameters(self) -> None:
         """Function for collecting and storing information about quality and interaction values,
         as well as truth information about the triplets.
         """
@@ -99,7 +103,7 @@ class QuboCoefficients:
         t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplet_list],
                                                       np.arange(len(self.triplet_list)))}
 
-        print("Collecting statistics about a_i and b_ij...")
+        print("Collect statistics about a_i and b_ij...")
         for i, t1 in enumerate(self.triplet_list):
             if t1.is_correct_match():
                 self.quality_correct_match_list.append(t1.quality)
@@ -107,85 +111,70 @@ class QuboCoefficients:
                 self.quality_wrong_match_list.append(t1.quality)
 
             for i_key, i_value in t1.interactions.items():
-                if t_mapping[i_key] < i:
-                    t2 = self.triplet_list[t_mapping[i_key]]
-                    if t1.doublet_1.hit_1_particle_key == t1.doublet_1.hit_2_particle_key == \
-                       t1.doublet_2.hit_1_particle_key == t1.doublet_2.hit_2_particle_key == \
-                       t2.doublet_1.hit_1_particle_key == t2.doublet_1.hit_2_particle_key == \
-                       t2.doublet_2.hit_1_particle_key == t2.doublet_2.hit_2_particle_key:
-                        self.connectivity_correct_match_list.append(i_value)
-                    else:
-                        self.connectivity_wrong_match_list.append(i_value)
+                if t_mapping[i_key] > i:
+                    continue
+                t2 = self.triplet_list[t_mapping[i_key]]
+                if t1.is_correct_match() and t2.is_correct_match():   # need to have 2 overlap hits, so this is enough
+                    self.connectivity_correct_match_list.append(i_value)
+                else:
+                    self.connectivity_wrong_match_list.append(i_value)
 
-    def parameter_rescaling(self):
+    def coefficient_rescaling(self) -> None:
         """Rescaling parameters according to the config file.
         """
         print("Starting rescaling of a_i and b_ij parameters...")
-        # additional processing of qubo parameters
+        # additional processing of qubo parameter
+
         if self.configuration["scale range parameters"]["z_scores"]:
-            quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
-            mu = np.mean(quality_values)
-            sigma = np.std(quality_values)
+            mu = np.mean(self.quality_correct_match_list + self.quality_wrong_match_list)
+            sigma = np.std(self.quality_correct_match_list + self.quality_wrong_match_list)
             for triplet in self.triplet_list:
                 triplet.quality = (triplet.quality - mu) / sigma
-            for i, quality in enumerate(self.quality_correct_match_list):
-                self.quality_correct_match_list[i] = (quality - mu) / sigma
-            for i, quality in enumerate(self.quality_wrong_match_list):
-                self.quality_wrong_match_list[i] = (quality - mu) / sigma
+            self.quality_correct_match_list = [(quality - mu) / sigma for quality in self.quality_correct_match_list]
+            self.quality_wrong_match_list = [(quality - mu) / sigma for quality in self.quality_wrong_match_list]
 
-                # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
+        # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
         if self.configuration["scale range parameters"]["quality"] is not None:
+
             a = self.configuration["scale range parameters"]["quality"][0]
             b = self.configuration["scale range parameters"]["quality"][1]
-            quality_values = self.quality_correct_match_list + self.quality_wrong_match_list
-            min_quality = min(quality_values)
-            max_quality = max(quality_values)
+            min_quality = min(min(self.quality_correct_match_list), min(self.quality_wrong_match_list))
+            max_quality = max(min(self.quality_correct_match_list), max(self.quality_wrong_match_list))
             for triplet in self.triplet_list:
                 triplet.quality = a + (triplet.quality - min_quality) * (b - a) / (max_quality - min_quality)
 
             # rewriting a_i lists
-            for i, quality in enumerate(self.quality_correct_match_list):
-                self.quality_correct_match_list[i] = a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
-            for i, quality in enumerate(self.quality_wrong_match_list):
-                self.quality_wrong_match_list[i] = a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
+            self.quality_correct_match_list = [a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
+                                               for quality in self.quality_correct_match_list]
+            self.quality_wrong_match_list = [a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
+                                             for quality in self.quality_wrong_match_list]
 
         # scaling connectivity
         if self.configuration["scale range parameters"]["interaction"] is not None:
+            conflict_term = float(self.configuration["qubo parameters"]["b_ij conflict"])
             # excluding conflict terms
-            connectivity_values = [value for value in self.connectivity_correct_match_list if value !=
-                                   float(self.configuration["qubo parameters"]["b_ij conflict"])] + \
-                                  [value for value in self.connectivity_wrong_match_list if value !=
-                                   float(self.configuration["qubo parameters"]["b_ij conflict"])]
+            connectivity_values = [con for con in self.connectivity_correct_match_list if con != conflict_term] + \
+                                  [con for con in self.connectivity_wrong_match_list if con != conflict_term]
             min_connectivity = min(connectivity_values)
             max_connectivity = max(connectivity_values)
+            range_connectivity = max_connectivity - min_connectivity
 
             a = self.configuration["scale range parameters"]["interaction"][0]
             b = self.configuration["scale range parameters"]["interaction"][1]
+
             for triplet in self.triplet_list:
                 for key in triplet.interactions.keys():
-                    if triplet.interactions[key] == self.configuration["qubo parameters"]["b_ij conflict"]:
+                    if triplet.interactions[key] == conflict_term:
                         continue
                     else:
                         triplet.interactions[key] = a + (triplet.interactions[key] - min_connectivity) * (b - a) / \
-                                                    (max_connectivity - min_connectivity)
+                                                    range_connectivity
 
             # rewriting connectivity lists
-            for i in range(len(self.connectivity_wrong_match_list)):
-                if self.connectivity_wrong_match_list[i] == float(self.configuration["qubo parameters"]
-                                                                  ["b_ij conflict"]):
-                    continue
-                else:
-                    self.connectivity_wrong_match_list[i] = a + (self.connectivity_wrong_match_list[i] -
-                                                                 min_connectivity) * (b - a) / \
-                                                                (max_connectivity - min_connectivity)
-            for i in range(len(self.connectivity_correct_match_list)):
-                if self.connectivity_correct_match_list[i] == float(self.configuration["qubo parameters"]
-                                                                    ["b_ij conflict"]):
-                    continue
-                else:
-                    self.connectivity_correct_match_list[i] = a + (self.connectivity_correct_match_list[i] -
-                                                                   min_connectivity) * (b - a) / \
-                                                                  (max_connectivity - min_connectivity)
+            self.connectivity_wrong_match_list = [a + (v - min_connectivity) * (b - a) / range_connectivity
+                                                  for v in self.connectivity_wrong_match_list if v != conflict_term]
+            self.connectivity_correct_match_list = [a + (v - min_connectivity) * (b - a) / range_connectivity
+                                                    for v in self.connectivity_correct_match_list if v != conflict_term]
 
         print("\nFinished setting and rescaling of parameters.")
         print(f"\nSaving triplet list...")
@@ -201,27 +190,26 @@ class QuboCoefficients:
             value based on connectivity/conflict and chosen set of parameters
         """
         # checking number of shared hits
-        intersection = 0
-
-        t1 = [triplet.doublet_1.hit_1_position,
-              triplet.doublet_1.hit_2_position,
-              triplet.doublet_2.hit_2_position]
-        t2 = [other_triplet.doublet_1.hit_1_position,
-              other_triplet.doublet_1.hit_2_position,
-              other_triplet.doublet_2.hit_2_position]
-        for value_t1 in t1:
-            for value_t2 in t2:
-                if value_t1 == value_t2:
-                    intersection += 1
-
-        # check if triplet origin from same layer
-        if t1[0][2] == t2[0][2] or t1[2][2] == t2[0][2]:
+        z_position_set = {triplet.doublet_1.hit_1_position[2],
+                          triplet.doublet_1.hit_2_position[2],
+                          triplet.doublet_2.hit_2_position[2],
+                          other_triplet.doublet_1.hit_1_position[2],
+                          other_triplet.doublet_1.hit_2_position[2],
+                          other_triplet.doublet_2.hit_2_position[2]}
+        if len(z_position_set) == 3:
             same_layer = True
         else:
             same_layer = False
 
+        hit_list = {triplet.doublet_1.hit_1_position,
+                    triplet.doublet_1.hit_2_position,
+                    triplet.doublet_2.hit_2_position,
+                    other_triplet.doublet_1.hit_1_position,
+                    other_triplet.doublet_1.hit_2_position,
+                    other_triplet.doublet_2.hit_2_position}
+        intersection = 6 - len(hit_list)
         # same and not interacting triplets get a zero as a coefficient
-        if intersection == 0 or intersection == 3:
+        if intersection in [0, 3]:
             return 0
 
         # different mode types
@@ -283,8 +271,6 @@ class QuboCoefficients:
             match = self.configuration["qubo parameters"]["b_ij match"]
 
         return conflict, match
-
-
 
     def add_quality_function(self,
                              quality_function_name,

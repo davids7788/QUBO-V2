@@ -211,6 +211,12 @@ class TripletCreatorLUXE:
         :return
             Doublet object"""
 
+        if not self.time_index:
+            first_hit_time = 0
+            second_hit_time = 0
+        else:
+            first_hit_time = second_hit[self.time_index]
+            second_hit_time = second_hit[self.time_index]
         doublet = Doublet(first_hit[self.particle_id_index],
                           second_hit[self.particle_id_index],
                           (first_hit[self.x_index],
@@ -222,7 +228,9 @@ class TripletCreatorLUXE:
                           first_hit[self.hit_id_index],
                           second_hit[self.hit_id_index],
                           first_hit[self.particle_energy_index],
-                          second_hit[self.particle_energy_index])
+                          second_hit[self.particle_energy_index],
+                          first_hit_time,
+                          second_hit_time)
         return doublet
 
     def create_x_plets_simplified_LUXE(self,
@@ -267,7 +275,7 @@ class TripletCreatorLUXE:
         list_triplet_start = time.process_time()
         print("-----------------------------------\n")
         print("Forming triplets ...\n")
-        for layer in range(num_layers - 1):
+        for layer in range(num_layers - 2):
             for segment in segment_manager.segment_storage[layer]:
                 if segment.name not in segment_manager.segment_mapping.keys():
                     continue

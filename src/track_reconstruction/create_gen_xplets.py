@@ -14,7 +14,7 @@ def gen_xplets_simplified_LUXE(tracking_data_file: str,
         :param save_to_folder: location to save the gen_xplet list
     """
 
-    print("Creating Xplets on generator level with truth information...")
+    print("Create X-plets on generator level with truth information...")
     output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
     if os.path.isfile(output_name):
         return

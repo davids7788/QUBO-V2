@@ -1,5 +1,4 @@
 import numpy as np
-from src.pattern import Doublet
 
 
 def two_norm_std_angle(doublet_1,

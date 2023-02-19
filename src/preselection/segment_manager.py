@@ -77,6 +77,31 @@ class SegmentManager:
                                                       self.detector_chips[layer_number][-1])
                     self.segment_storage[layer_number].append(new_segment)
 
+    def check_if_full_overlap(self,
+                              source_segment: LUXEDetectorSegment,
+                              target_segment: LUXEDetectorSegment) -> bool:
+        """Checks if segments come from not consecutive layers e.g. 1 and 3, 4, and 6 if there is a segment in the
+        in between layer, which covers the path completely.
+        :param source_segment: source segment
+        :param target_segment: target segment
+        :return
+            True if there is an in-between segment covering path of two segments, else False
+        """
+        dz_segments = target_segment.z_position - source_segment.z_position
+        # since segments are the same size, this applies for the end as well
+        dx_segments = target_segment.x_start - source_segment.x_start
+        source_layer_index = self.z_position_to_layer.index(source_segment.z_position)
+        target_layer_index = self.z_position_to_layer.index(target_segment.z_position)
+        if target_layer_index == source_layer_index + 2:
+            in_between_index = int((target_layer_index + source_layer_index) / 2)
+            dz_ratio = (target_segement.z_position - self.z_position_to_layer[in_between_index]) / dz_segments
+            x_start_in_between = target_segment.x_start - (dx_segments * dz_ratio)
+            x_end_in_between = target_segment.x_end - (dx_segments * dz_ratio)
+            if self.layer_ranges[in_between_index][0] < x_start_in_between:
+                if self.layer_ranges[in_between_index][1] > x_end_in_between:
+                    return True
+            return False
+
     def segment_mapping_LUXE(self) -> None:
         """Maps the segments according to the doublet preselection criteria. That means, that if there are hits inside
         the area, defined by the segment, that should be considered for creating doublets, a connection to the target
@@ -96,12 +121,16 @@ class SegmentManager:
                 if self.setup == "simplified":
                     target_list = self.segment_storage[index + 1]
                 for target_segment in target_list:
+                    if self.z_position_to_layer.index(target_segment.z_position) - index == 2:
+                        check_if_overlapping_in_between_layer = self.check_if_full_overlap(segment, target_segment)
+                        if check_if_overlapping_in_between_layer:
+                            continue
                     check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
                     if check_compatibility:
                         if segment.name in self.segment_mapping.keys():
                             self.segment_mapping[segment.name].append(target_segment)
                         else:
-                            self.segment_mapping.update({segment.name:[target_segment]})
+                            self.segment_mapping.update({segment.name: [target_segment]})
 
         # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
         for i in range(len(self.z_position_to_layer)):

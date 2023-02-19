@@ -5,8 +5,8 @@ class Doublet:
     def __init__(self,
                  hit_1_particle_key: str = '',
                  hit_2_particle_key: str = '',
-                 hit_1_position: list[float] = (0.0, 0.0, 0.0),
-                 hit_2_position: list[float] = (0.0, 0.0, 0.0),
+                 hit_1_position: tuple[float] = (0.0, 0.0, 0.0),
+                 hit_2_position: tuple[float] = (0.0, 0.0, 0.0),
                  hit_1_id: str = '',
                  hit_2_id: str = '',
                  energy_1: float = -1.0,
@@ -45,7 +45,7 @@ class Doublet:
             return True
         return False
 
-    def xz_angle(self) -> tuple[float, float]:
+    def xz_angle(self) -> tuple[float]:
         """Calculating the angle in the xz-plane with respect to beam axis in z direction.
         :return
             angle in the xz plane.
@@ -53,7 +53,7 @@ class Doublet:
         return np.arctan2((self.hit_2_position[0] - self.hit_1_position[0]),
                           (self.hit_2_position[2] - self.hit_1_position[2]))
 
-    def yz_angle(self) -> tuple[float, float]:
+    def yz_angle(self) -> tuple[float]:
         """Calculating the angle in the xz-plane with respect to beam axis in z direction.
         :return
             angle in the yz plane.

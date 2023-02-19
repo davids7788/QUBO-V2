@@ -52,13 +52,13 @@ triplet_creator.write_info_file()
 
 # Create truth Xplets
 gen_xplets_simplified_LUXE(tracking_data, "/".join(new_folder.split("/")[0:-1]))
-exit()
 
 # Set and rescale parameters plot statistics
 qubo_coefficients = QuboCoefficients(config_file, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)
-qubo_coefficients.filling_lists_for_statistics()
-qubo_coefficients.parameter_rescaling()
+qubo_coefficients.collecting_qubo_parameters()
+qubo_coefficients.coefficient_rescaling()
+exit()
 
 # Just for visualising coefficients
 qubo_coefficients.plot_and_save_statistics(triplet_creator.num_complete_tracks,
