@@ -1,6 +1,3 @@
-from numba import jit
-
-
 class LUXEDetectorSegment:
     def __init__(self,
                  name: str,
@@ -30,7 +27,6 @@ class LUXEDetectorSegment:
         self.doublet_data = []   # doublet list, first hit of the doublet is considered to be inside the segment
         self.triplet_data = []   # triplet list, first hit of the triplet is considered to be inside the segment
 
-    @jit(nopython=True)
     def is_in_segment(self,
                       x: float,
                       y: float,

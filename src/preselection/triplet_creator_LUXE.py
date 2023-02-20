@@ -3,6 +3,7 @@ import time
 from typing import Union
 
 import numpy as np
+from numba import jit
 
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
@@ -141,33 +142,41 @@ class TripletCreatorLUXE:
         print(f"Number of particles with at least one hit: {self.num_particles}")
         print(f"Number of complete tracks: {self.num_complete_tracks}\n")
 
-    def dy_x0_check(self,
-                    y1: float,
+    @staticmethod
+    @jit(nopython=True)
+    def dy_x0_check(y1: float,
                     y2: float,
-                    x0: float) -> bool:
+                    x0: float,
+                    criteria: float) -> bool:
         """Auxiliary function  for checking dy_x0 criteria.
         :param y1: y value of first hit
         :param y2: y value of second hit
         :param x0: extrapolated x value on reference layer
+        :param criteria to decide if doublet is kept or discarded
         :return
             True if condition is satisfied, else False
         """
-        if abs(y2 - y1) / x0 > self.configuration["doublet"]["dy/x0"]:
+        if abs(y2 - y1) / x0 > criteria:
             return False
         return True
 
-    def dx_x0_check(self,
-                    x1: float,
+    @staticmethod
+    @jit(nopython=True)
+    def dx_x0_check(x1: float,
                     x2: float,
-                    x0: float) -> bool:
+                    x0: float,
+                    criteria_mean,
+                    criteria_eps) -> bool:
         """Checks if hits may be combined to doublets, applying dx/x0 criterion
         :param x1: x value first hit
         :param x2: x value second hit
         :param x0: extrapolated x value on reference layer
+        :param criteria_mean: mean value of expected criteria
+        :param criteria_eps: epsilon range of expected criteria
         :return:
             True if criteria applies, else False
         """
-        if abs((x2 - x1) / x0 - self.configuration["doublet"]["dx/x0"]) > self.configuration["doublet"]["eps"]:
+        if abs((x2 - x1) / x0 - criteria_mean) > criteria_eps:
             return False
         return True
 
@@ -190,15 +199,18 @@ class TripletCreatorLUXE:
                               second_hit[self.z_index],
                               z_ref)
         # check dy / x0 criteria
-        if not self.dy_x0_check(first_hit[self.y_index],
-                                second_hit[self.y_index],
-                                x0):
+        if not TripletCreatorLUXE.dy_x0_check(first_hit[self.y_index],
+                                              second_hit[self.y_index],
+                                              x0,
+                                              self.configuration["doublet"]["dy/x0"]):
             return False
 
         # check dx / x0 criteria
-        if not self.dx_x0_check(first_hit[self.x_index],
-                                second_hit[self.x_index],
-                                x0):
+        if not TripletCreatorLUXE.dx_x0_check(first_hit[self.x_index],
+                                              second_hit[self.x_index],
+                                              x0,
+                                              self.configuration["doublet"]["dx/x0"],
+                                              self.configuration["doublet"]["eps"]):
             return False
         return True
 
@@ -320,6 +332,7 @@ class TripletCreatorLUXE:
         return False
 
     @staticmethod
+    @jit(nopython=True)
     def x0_at_z_ref(x_end: float,
                     x_start: float,
                     z_end: float,
