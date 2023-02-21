@@ -35,7 +35,6 @@ class Triplet:
         :return
             True if triplet originates from one single particle, else False.
         """
-        if self.doublet_1.hit_1_particle_key == self.doublet_1.hit_2_particle_key == \
-                self.doublet_2.hit_1_particle_key == self.doublet_2.hit_2_particle_key:
+        if self.doublet_1.is_correct_match() and self.doublet_1.is_correct_match():
             return True
         return False
