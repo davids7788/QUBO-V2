@@ -3,16 +3,16 @@ from math_functions.geometry import xyz_angle
 
 class Doublet:
     def __init__(self,
-                 hit_1_particle_key='',
-                 hit_2_particle_key='',
-                 hit_1_position=(0.0, 0.0, 0.0),
-                 hit_2_position=(0.0, 0.0, 0.0),
-                 hit_1_id='',
-                 hit_2_id='',
-                 energy_1=-1.0,
-                 energy_2=-1.0,
-                 time_1=-1e10,
-                 time_2=-1e10):
+                 hit_1_particle_key: str = '',
+                 hit_2_particle_key: str = '',
+                 hit_1_position: tuple[float, float, float] = (0.0, 0.0, 0.0),
+                 hit_2_position: tuple[float, float, float] = (0.0, 0.0, 0.0),
+                 hit_1_id: str = '',
+                 hit_2_id: str = '',
+                 energy_1: float = -1.0,
+                 energy_2: float = -1.0,
+                 time_1: float = -1e10,
+                 time_2: float = -1e10):
         """Class for doublet objects, consisting of two hits on consecutive detector layers.
         :param hit_1_particle_key: particle true number (simulation only), default = ''
         :param hit_2_particle_key: particle true number (simulation only), default = ''
