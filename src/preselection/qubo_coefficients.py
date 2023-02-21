@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from preselection.connection_metrics import *
+from math_functions.geometry import two_norm_std_angle
 from preselection.segment_manager import SegmentManager
 
 

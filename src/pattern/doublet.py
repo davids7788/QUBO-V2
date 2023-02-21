@@ -1,4 +1,4 @@
-import numpy as np
+from math_functions.geometry import xyz_angle
 
 
 class Doublet:
@@ -45,18 +45,22 @@ class Doublet:
             return True
         return False
 
-    def xz_angle(self) -> tuple[float]:
+    def xz_angle(self) -> float:
         """Calculating the angle in the xz-plane with respect to beam axis in z direction.
         :return
             angle in the xz plane.
         """
-        return np.arctan2((self.hit_2_position[0] - self.hit_1_position[0]),
-                          (self.hit_2_position[2] - self.hit_1_position[2]))
+        return xyz_angle(self.hit_1_position[0],
+                         self.hit_2_position[0],
+                         self.hit_1_position[2],
+                         self.hit_2_position[2])
 
-    def yz_angle(self) -> tuple[float]:
+    def yz_angle(self) -> float:
         """Calculating the angle in the xz-plane with respect to beam axis in z direction.
         :return
             angle in the yz plane.
         """
-        return np.arctan2((self.hit_2_position[1] - self.hit_1_position[1]),
-                          (self.hit_2_position[2] - self.hit_1_position[2]))
+        return xyz_angle(self.hit_1_position[1],
+                         self.hit_2_position[2],
+                         self.hit_1_position[2],
+                         self.hit_2_position[2])

@@ -5,6 +5,7 @@ from typing import Union
 import numpy as np
 from numba import jit
 
+from math_functions.geometry import x0_at_z_ref, dx_x0_check, dy_x0_check, triplet_criteria_check
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
 from preselection.segment_manager import SegmentManager
@@ -142,44 +143,6 @@ class TripletCreatorLUXE:
         print(f"Number of particles with at least one hit: {self.num_particles}")
         print(f"Number of complete tracks: {self.num_complete_tracks}\n")
 
-    @staticmethod
-    @jit(nopython=True)
-    def dy_x0_check(y1: float,
-                    y2: float,
-                    x0: float,
-                    criteria: float) -> bool:
-        """Auxiliary function  for checking dy_x0 criteria.
-        :param y1: y value of first hit
-        :param y2: y value of second hit
-        :param x0: extrapolated x value on reference layer
-        :param criteria to decide if doublet is kept or discarded
-        :return
-            True if condition is satisfied, else False
-        """
-        if abs(y2 - y1) / x0 > criteria:
-            return False
-        return True
-
-    @staticmethod
-    @jit(nopython=True)
-    def dx_x0_check(x1: float,
-                    x2: float,
-                    x0: float,
-                    criteria_mean,
-                    criteria_eps) -> bool:
-        """Checks if hits may be combined to doublets, applying dx/x0 criterion
-        :param x1: x value first hit
-        :param x2: x value second hit
-        :param x0: extrapolated x value on reference layer
-        :param criteria_mean: mean value of expected criteria
-        :param criteria_eps: epsilon range of expected criteria
-        :return:
-            True if criteria applies, else False
-        """
-        if abs((x2 - x1) / x0 - criteria_mean) > criteria_eps:
-            return False
-        return True
-
     def is_valid_doublet_candidate(self,
                                    first_hit: list[Union[str, float]],
                                    second_hit: list[Union[str, float]],
@@ -193,24 +156,24 @@ class TripletCreatorLUXE:
         """
 
         # calculate x0
-        x0 = self.x0_at_z_ref(first_hit[self.x_index],
-                              second_hit[self.x_index],
-                              first_hit[self.z_index],
-                              second_hit[self.z_index],
-                              z_ref)
+        x0 = x0_at_z_ref(first_hit[self.x_index],
+                         second_hit[self.x_index],
+                         first_hit[self.z_index],
+                         second_hit[self.z_index],
+                         z_ref)
         # check dy / x0 criteria
-        if not TripletCreatorLUXE.dy_x0_check(first_hit[self.y_index],
-                                              second_hit[self.y_index],
-                                              x0,
-                                              self.configuration["doublet"]["dy/x0"]):
+        if not dy_x0_check(first_hit[self.y_index],
+                           second_hit[self.y_index],
+                           x0,
+                           self.configuration["doublet"]["dy/x0"]):
             return False
 
         # check dx / x0 criteria
-        if not TripletCreatorLUXE.dx_x0_check(first_hit[self.x_index],
-                                              second_hit[self.x_index],
-                                              x0,
-                                              self.configuration["doublet"]["dx/x0"],
-                                              self.configuration["doublet"]["eps"]):
+        if not dx_x0_check(first_hit[self.x_index],
+                           second_hit[self.x_index],
+                           x0,
+                           self.configuration["doublet"]["dx/x0"],
+                           self.configuration["doublet"]["eps"]):
             return False
         return True
 
@@ -297,7 +260,11 @@ class TripletCreatorLUXE:
                         for second_doublet in target_segment.doublet_data:
                             if first_doublet.hit_2_position != second_doublet.hit_1_position:  # check if match
                                 continue
-                            if self.triplet_criteria_check(first_doublet, second_doublet):
+                            if triplet_criteria_check(first_doublet.xz_angle(),
+                                                      second_doublet.xz_angle(),
+                                                      first_doublet.yz_angle(),
+                                                      second_doublet.yz_angle(),
+                                                      self.configuration["triplet"]["max scattering"]):
                                 triplet = Triplet(first_doublet, second_doublet)
                                 self.found_triplets += 1
                                 segment.triplet_data.append(triplet)
@@ -316,40 +283,6 @@ class TripletCreatorLUXE:
         print(f"Triplet selection efficiency: "
               f"{np.around(100 * self.found_correct_triplets / self.num_all_triplets, 2)} %\n")
         print("-----------------------------------\n")
-
-    def triplet_criteria_check(self,
-                               doublet1: Doublet,
-                               doublet2: Doublet) -> bool:
-        """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
-        :param doublet1: first doublet, nearer to IP
-        :param doublet2: second doublet, further from IP
-        :return:
-            True if criteria applies, else False
-        """
-        if np.sqrt((doublet2.xz_angle() - doublet1.xz_angle())**2 +
-                   (doublet2.yz_angle() - doublet1.yz_angle())**2) < self.configuration["triplet"]["max scattering"]:
-            return True
-        return False
-
-    @staticmethod
-    @jit(nopython=True)
-    def x0_at_z_ref(x_end: float,
-                    x_start: float,
-                    z_end: float,
-                    z_start: float,
-                    z_ref: float) -> float:
-        """Function for calculation x position of a doublet at a z-reference value.
-        :param x_end: x-position of second hit
-        :param x_start: x-position of first hit
-        :param z_end: z-position of second hit
-        :param z_start: z-position of first hit
-        :param z_ref: z-value reference layer
-        :return:
-            x_position at the reference layer
-        """
-        dx = x_end - x_start
-        dz = z_end - z_start
-        return x_end - dx * abs(z_end - z_ref) / dz
 
     @staticmethod
     def hms_string(sec_elapsed) -> str:

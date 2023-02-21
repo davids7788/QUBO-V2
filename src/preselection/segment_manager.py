@@ -1,5 +1,6 @@
 import csv
 
+from math_functions.geometry import x0_at_z_ref
 from preselection.segment import LUXEDetectorSegment
 
 
@@ -176,10 +177,11 @@ class SegmentManager:
                                      self.segment_storage[0][-1].x_end]
 
         # max x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
-        x0_max = self.x0_at_z_ref(target_segment.x_start,
-                                  source_segment.x_end,
-                                  target_segment.z_position,
-                                  source_segment.z_position)
+        x0_max = x0_at_z_ref(target_segment.x_start,
+                             source_segment.x_end,
+                             target_segment.z_position,
+                             source_segment.z_position,
+                             self.z_position_to_layer[0])
 
         if x0_max < detector_range_x_at_z_ref[0]:
             x0_max = detector_range_x_at_z_ref[0]
@@ -191,10 +193,11 @@ class SegmentManager:
             return False
 
         # min x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
-        x0_min = self.x0_at_z_ref(target_segment.x_end,
-                                  source_segment.x_start,
-                                  target_segment.z_position,
-                                  source_segment.z_position)
+        x0_min = x0_at_z_ref(target_segment.x_end,
+                             source_segment.x_start,
+                             target_segment.z_position,
+                             source_segment.z_position,
+                             self.z_position_to_layer[0])
 
         if x0_min < detector_range_x_at_z_ref[0]:
             x0_min = detector_range_x_at_z_ref[0]
@@ -211,24 +214,6 @@ class SegmentManager:
             return False
         else:
             return True
-
-    def x0_at_z_ref(self,
-                    x_end: float,
-                    x_start: float,
-                    z_end: float,
-                    z_start: float) -> float:
-        """Help function for calculation x position of doublet at a z-reference value, which was set before
-        as a class attribute
-        :param x_end: x-position of target segment
-        :param x_start: x-position of segment
-        :param z_end: z-position of target segment
-        :param z_start: z-position of segment
-        :return:
-            x_position at the reference layer
-        """
-        dx = x_end - x_start
-        dz = z_end - z_start
-        return x_end - dx * (z_end - self.z_position_to_layer[0]) / dz
 
     def target_segments(self,
                         name: str) -> list[type(LUXEDetectorSegment)]:
