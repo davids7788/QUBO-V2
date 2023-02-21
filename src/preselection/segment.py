@@ -1,3 +1,6 @@
+from math_functions.checks import _is_in_segment
+
+
 class LUXEDetectorSegment:
     def __init__(self,
                  name: str,
@@ -38,8 +41,11 @@ class LUXEDetectorSegment:
         :return:
             True if coordinate in segment, else False
         """
-        if self.z_position == z:
-            if self.x_start <= x <= self.x_end:
-                if self.y_start <= y <= self.y_end:
-                    return True
-        return False
+        return _is_in_segment(x,
+                              y,
+                              z,
+                              self.x_start,
+                              self.x_end,
+                              self.y_start,
+                              self.y_end,
+                              self.z_position)

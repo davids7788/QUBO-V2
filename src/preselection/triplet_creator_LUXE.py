@@ -3,9 +3,10 @@ import time
 from typing import Union
 
 import numpy as np
-from numba import jit
 
-from math_functions.geometry import x0_at_z_ref, dx_x0_check, dy_x0_check, triplet_criteria_check
+from math_functions.checks import _is_valid_triplet, dx_x0_check, dy_x0_check
+from math_functions.geometry import x0_at_z_ref
+from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
 from preselection.segment_manager import SegmentManager
@@ -161,6 +162,7 @@ class TripletCreatorLUXE:
                          first_hit[self.z_index],
                          second_hit[self.z_index],
                          z_ref)
+
         # check dy / x0 criteria
         if not dy_x0_check(first_hit[self.y_index],
                            second_hit[self.y_index],
@@ -184,7 +186,8 @@ class TripletCreatorLUXE:
         :param first_hit: first hit of doublet
         :param second_hit: second hit of doublet
         :return
-            Doublet object"""
+            Doublet object
+        """
 
         if not self.time_index:
             first_hit_time = 0
@@ -208,22 +211,18 @@ class TripletCreatorLUXE:
                           second_hit_time)
         return doublet
 
-    def create_x_plets_simplified_LUXE(self,
-                                       segment_manager: SegmentManager) -> None:
-        """Creates doublets and triplets. For the simplified model only.
+    def create_doublet_list(self,
+                            segment_manager: SegmentManager) -> None:
+        """Creates the doublets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
-        print("-----------------------------------\n")
-        print("Forming doublets ...\n")
-
-        doublet_list_start = time.process_time()  # doublet list timer
         num_layers = len(segment_manager.segment_storage.keys())
 
         for layer in range(num_layers - 1):
             for segment in segment_manager.segment_storage[layer]:
                 if segment.name not in segment_manager.segment_mapping.keys():
                     continue
-                next_segments = segment_manager.target_segments(segment.name)   # target segments
+                next_segments = segment_manager.target_segments(segment.name)  # target segments
                 for first_hit in segment.data:
                     for target_segment in next_segments:
                         for second_hit in target_segment.data:
@@ -239,17 +238,12 @@ class TripletCreatorLUXE:
                             if doublet.is_correct_match():
                                 self.found_correct_doublets += 1
 
-        doublet_list_end = time.process_time()  # doublet list timer
-        self.doublet_creation_time = TripletCreatorLUXE.hms_string(doublet_list_end - doublet_list_start)
-        print(f"Time elapsed for forming doublets: "
-              f"{self.doublet_creation_time}")
-        print(f"Number of doublets found: {self.found_doublets}")
-        print(f"Doublet selection efficiency: "
-              f"{np.around(100 * self.found_correct_doublets / self.num_all_doublets, 2)} %\n")
-
-        list_triplet_start = time.process_time()
-        print("-----------------------------------\n")
-        print("Forming triplets ...\n")
+    def create_triplet_list(self,
+                            segment_manager: SegmentManager) -> None:
+        """Creates the doublets. For LUXE detector model only.
+        :param segment_manager: SegmentManager object with already set segments and mapping
+        """
+        num_layers = len(segment_manager.segment_storage.keys())
         for layer in range(num_layers - 2):
             for segment in segment_manager.segment_storage[layer]:
                 if segment.name not in segment_manager.segment_mapping.keys():
@@ -260,11 +254,7 @@ class TripletCreatorLUXE:
                         for second_doublet in target_segment.doublet_data:
                             if first_doublet.hit_2_position != second_doublet.hit_1_position:  # check if match
                                 continue
-                            if triplet_criteria_check(first_doublet.xz_angle(),
-                                                      second_doublet.xz_angle(),
-                                                      first_doublet.yz_angle(),
-                                                      second_doublet.yz_angle(),
-                                                      self.configuration["triplet"]["max scattering"]):
+                            if self.is_valid_triplet(first_doublet, second_doublet):
                                 triplet = Triplet(first_doublet, second_doublet)
                                 self.found_triplets += 1
                                 segment.triplet_data.append(triplet)
@@ -274,8 +264,31 @@ class TripletCreatorLUXE:
                                     self.found_correct_triplets += 1
                 segment.doublet_data.clear()   # --> lower memory usage, num doublets are not needed anymore
 
+    def create_x_plets_LUXE(self,
+                            segment_manager: SegmentManager) -> None:
+        """Creates xplets. For LUXE detector model only.
+        :param segment_manager: SegmentManager object with already set segments and mapping
+        """
+        print("-----------------------------------\n")
+        print("Forming doublets ...\n")
+
+        doublet_list_start = time.process_time()
+        self.create_doublet_list(segment_manager)
+        doublet_list_end = time.process_time()
+
+        self.doublet_creation_time = hms_string(doublet_list_end - doublet_list_start)
+        print(f"Time elapsed for forming doublets: "
+              f"{self.doublet_creation_time}")
+        print(f"Number of doublets found: {self.found_doublets}")
+        print(f"Doublet selection efficiency: "
+              f"{np.around(100 * self.found_correct_doublets / self.num_all_doublets, 2)} %\n")
+
+        print("-----------------------------------\n")
+        print("Forming triplets ...\n")
+        list_triplet_start = time.process_time()
+        self.create_triplet_list(segment_manager)
         list_triplet_end = time.process_time()
-        self.triplet_creation_time = TripletCreatorLUXE.hms_string(list_triplet_end - list_triplet_start)
+        self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
 
         print(f"Time elapsed for  forming triplets: "
               f"{self.triplet_creation_time}")
@@ -284,17 +297,20 @@ class TripletCreatorLUXE:
               f"{np.around(100 * self.found_correct_triplets / self.num_all_triplets, 2)} %\n")
         print("-----------------------------------\n")
 
-    @staticmethod
-    def hms_string(sec_elapsed) -> str:
-        """Nicely formatted time string.
-        :param sec_elapsed time in ms
-        :return
-            hh:mm:ss.msms
+    def is_valid_triplet(self,
+                         first_doublet,
+                         second_doublet):
+        """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
+        :param first_doublet: doublet 1
+        :param second_doublet: doublet 2
+        :return:
+            True if criteria applies, else False
         """
-        h = int(sec_elapsed / (60 * 60))
-        m = int((sec_elapsed % (60 * 60)) / 60)
-        s = sec_elapsed % 60
-        return "{}:{:>02}:{:>05.2f}".format(h, m, s)
+        return _is_valid_triplet(first_doublet.xz_angle(),
+                                 second_doublet.xz_angle(),
+                                 first_doublet.yz_angle(),
+                                 second_doublet.yz_angle(),
+                                 self.configuration["triplet"]["max scattering"])
 
     def write_info_file(self) -> None:
         """Writes information about the Preselection parameters and some statistics into

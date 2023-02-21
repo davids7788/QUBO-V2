@@ -84,7 +84,7 @@ class Xplet:
                 [value[2] for value in list(self.coordinates.values())])
 
     def fit_lin_track(self,
-                      detector_resolution: float) -> None:
+                      detector_resolution: float = 5e-6) -> None:
         """Linear fit of the track in xz and yz direction. Chi squared values are averaged. Chi squared and p-value
         attributes are set for the x-plet.
         :param detector_resolution: resolution of the detector to calculate the reduced chi-squared [m]

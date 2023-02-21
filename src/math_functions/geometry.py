@@ -1,64 +1,7 @@
 import numpy as np
+
 from numba import jit
-from math import sqrt, atan2
-
-
-@jit(nopython=True)
-def triplet_criteria_check(xz_angle_1: float,
-                           xz_angle_2: float,
-                           yz_angle_1: float,
-                           yz_angle_2: float,
-                           max_angle) -> bool:
-    """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
-    :param xz_angle_1: angle xz doublet 1
-    :param xz_angle_2: angle xz doublet 2
-    :param yz_angle_1: angle yz doublet 1
-    :param yz_angle_2: angle yz doublet 2
-    :param max_angle: max angle criteria [rad]
-    :return:
-        True if criteria applies, else False
-    """
-    if sqrt((xz_angle_2 - xz_angle_1) ** 2 + (yz_angle_2 - yz_angle_1) ** 2) < max_angle:
-        return True
-    return False
-
-
-@jit(nopython=True)
-def dy_x0_check(y1: float,
-                y2: float,
-                x0: float,
-                criteria: float) -> bool:
-    """Auxiliary function  for checking dy_x0 criteria.
-    :param y1: y value of first hit
-    :param y2: y value of second hit
-    :param x0: extrapolated x value on reference layer
-    :param criteria to decide if doublet is kept or discarded
-    :return
-        True if condition is satisfied, else False
-    """
-    if abs(y2 - y1) / x0 > criteria:
-        return False
-    return True
-
-
-@jit(nopython=True)
-def dx_x0_check(x1: float,
-                x2: float,
-                x0: float,
-                criteria_mean,
-                criteria_eps) -> bool:
-    """Checks if hits may be combined to doublets, applying dx/x0 criterion
-    :param x1: x value first hit
-    :param x2: x value second hit
-    :param x0: extrapolated x value on reference layer
-    :param criteria_mean: mean value of expected criteria
-    :param criteria_eps: epsilon range of expected criteria
-    :return:
-        True if criteria applies, else False
-    """
-    if abs((x2 - x1) / x0 - criteria_mean) > criteria_eps:
-        return False
-    return True
+from math import atan2, sqrt
 
 
 @jit(nopython=True)
@@ -119,3 +62,25 @@ def two_norm_std_angle(doublet_1,
 
     return np.sqrt(np.std([angle_xz_doublet_1, angle_xz_doublet_2, angle_xz_doublet_3]) ** 2 +
                    np.std([angle_yz_doublet_1, angle_yz_doublet_2, angle_yz_doublet_3]) ** 2)
+
+
+def two_norm_std_angle(angle_xz_1,
+                       angle_xz_2,
+                       angle_xz_3,
+                       angle_yz_1,
+                       angle_yz_2,
+                       angle_yz_3):
+    """Returns 2-norm of angle difference in xz and yz.
+    :param angle_xz_1 : xz angle of first doublet
+    :param angle_xz_2 : xz angle of second doublet
+    :param angle_xz_3 : xz angle of third doublet
+    :param angle_yz_1 : yz angle of first doublet
+    :param angle_yz_2 : yz angle of second doublet
+    :param angle_yz_3 : yz angle of third doublet
+    :return
+        2-norm of angle difference in xz and yz.
+    """
+    return sqrt(np.std(np.array([angle_xz_1, angle_xz_2, angle_xz_3]))**2
+                + np.std(np.array([angle_yz_1, angle_yz_2, angle_yz_3])) ** 2)
+
+
