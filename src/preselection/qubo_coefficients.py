@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from math_functions.geometry import two_norm_std_angle
+from math_functions.geometry import _default_angle_based
 from preselection.segment_manager import SegmentManager
 
 
@@ -43,12 +43,32 @@ class QuboCoefficients:
         self.connectivity_correct_match_list = []
 
         # Dictionary of quality and conflict functions
-        self.quality_functions = {}
-        self.conflict_functions = {}
+        self.match = None
+        self.conflict = None
+        self.quality = None
+        self.parameter_setting()
 
-        # Adding a very simple set of quality and conflict functions
-        self.add_quality_function("two norm angle standard deviation", two_norm_std_angle)
-        self.add_conflict_function("two norm angle standard deviation", two_norm_std_angle)
+    def parameter_setting(self) -> None:
+        """Reads in the parameter setting and returns.
+        """
+        b_ij_conflict = self.configuration["qubo parameters"]["b_ij conflict"]
+        b_ij_match = self.configuration["qubo parameters"]["b_ij conflict"]
+        a_i_quality = self.configuration["qubo parameters"]["quality"]
+
+        if b_ij_match == "default":
+            self.match = self.default_angle_based
+        else:
+            self.match = b_ij_match
+
+        if b_ij_conflict == "default":
+            self.conflict = self.default_angle_based
+        else:
+            self.conflict = b_ij_conflict
+
+        if a_i_quality == "default":
+            self.quality = self.default_angle_based
+        else:
+            self.quality = a_i_quality
 
     def set_triplet_coefficients(self,
                                  segment_manager: SegmentManager) -> None:
@@ -93,7 +113,7 @@ class QuboCoefficients:
             for segment in segment_manager.segment_storage[layer]:
                 for triplet in segment.triplet_data:
                     self.triplet_list.add(triplet)
-            segment.triplet_data.clear()
+                segment.triplet_data.clear()
 
     def collecting_qubo_parameters(self) -> None:
         """Function for collecting and storing information about quality and interaction values,
@@ -118,6 +138,24 @@ class QuboCoefficients:
                     self.connectivity_correct_match_list.append(i_value)
                 else:
                     self.connectivity_wrong_match_list.append(i_value)
+
+    @staticmethod
+    def default_angle_based(doublet_1,
+                            doublet_2,
+                            doublet_3):
+        """Returns value for default angle metric.
+        :param doublet_1 : doublet from hit 1 + 2
+        :param doublet_2 : doublet from hit 2 + 3
+        :param doublet_3 : doublet from hit 3 + 4
+        :return
+            value for default angle metric
+        """
+        return _default_angle_based(doublet_1.xz_angle(),
+                                    doublet_2.xz_angle(),
+                                    doublet_3.xz_angle(),
+                                    doublet_1.yz_angle(),
+                                    doublet_2.yz_angle(),
+                                    doublet_3.yz_angle())
 
     def coefficient_rescaling(self) -> None:
         """Rescaling parameters according to the config file.

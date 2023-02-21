@@ -64,13 +64,13 @@ def two_norm_std_angle(doublet_1,
                    np.std([angle_yz_doublet_1, angle_yz_doublet_2, angle_yz_doublet_3]) ** 2)
 
 
-def two_norm_std_angle(angle_xz_1,
-                       angle_xz_2,
-                       angle_xz_3,
-                       angle_yz_1,
-                       angle_yz_2,
-                       angle_yz_3):
-    """Returns 2-norm of angle difference in xz and yz.
+def _default_angle_based(angle_xz_1,
+                         angle_xz_2,
+                         angle_xz_3,
+                         angle_yz_1,
+                         angle_yz_2,
+                         angle_yz_3):
+    """Returns angle based in xz and yz.
     :param angle_xz_1 : xz angle of first doublet
     :param angle_xz_2 : xz angle of second doublet
     :param angle_xz_3 : xz angle of third doublet
