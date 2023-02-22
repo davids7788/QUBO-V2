@@ -1,7 +1,8 @@
 import numpy as np
 import time
-import matplotlib.pyplot as plt
 
+from pattern.triplet import Triplet
+from pattern.doublet import Doublet
 from utility.time_tracking import hms_string
 from math_functions.geometry import _default_angle_based_quality, _default_angle_based_interaction
 from preselection.segment_manager import SegmentManager
@@ -157,9 +158,9 @@ class QuboCoefficients:
                     self.connectivity_wrong_match_list.append(i_value)
 
     @staticmethod
-    def default_angle_based_interaction(doublet_1,
-                                        doublet_2,
-                                        doublet_3):
+    def default_angle_based_interaction(doublet_1: Doublet,
+                                        doublet_2: Doublet,
+                                        doublet_3: Doublet) -> float:
         """Returns value for default angle metric.
         :param doublet_1 : doublet from hit 1 + 2
         :param doublet_2 : doublet from hit 2 + 3
@@ -244,8 +245,8 @@ class QuboCoefficients:
         np.save(f"{self.save_to_folder}/triplet_list", self.triplet_list)
 
     def triplet_interaction(self,
-                            triplet,
-                            other_triplet):
+                            triplet: Triplet,
+                            other_triplet: Triplet) -> float:
         """Compares two triplets and  how they match.
         :param triplet: first triplet
         :param other_triplet: second triplet which is to compare with the first one
@@ -253,7 +254,6 @@ class QuboCoefficients:
             value based on connectivity/conflict and chosen set of parameters
         """
         # checking number of shared hits
-
         t1_set = {triplet.doublet_1.hit_1_id,
                   triplet.doublet_1.hit_2_id,
                   triplet.doublet_2.hit_2_id}

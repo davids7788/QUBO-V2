@@ -216,7 +216,7 @@ class SegmentManager:
             return True
 
     def target_segments(self,
-                        name: str) -> list[type(LUXEDetectorSegment)]:
+                        name: str) -> list[LUXEDetectorSegment]:
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
         :return:
@@ -227,7 +227,7 @@ class SegmentManager:
     def get_segment_at_known_xyz_value(self,
                                        x: float,
                                        y: float,
-                                       z: float) -> type(LUXEDetectorSegment):
+                                       z: float) -> LUXEDetectorSegment:
         """Finds the correct segment of a hit, given via x,y,z value.
         :param x: x value of hit
         :param y: y value of hit

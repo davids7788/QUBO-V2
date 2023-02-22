@@ -1,2 +1,0 @@
-python qubo_preparation_simplified_LUXE.py ../configuration/preselection/example.yaml ../../simplified_simulation_files/xi_5/smeared/e0gpc_5.0_0000_sl.csv ../con
-figuration/geometry/LUXE_sl.csv ../../qubo_files/xi_5

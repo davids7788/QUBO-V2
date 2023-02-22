@@ -18,7 +18,7 @@ class Xplet:
         """Class for x-plet objects. X-plets are meant to store information about connectable Triplet objects. 
         Connectable means, that there is a chain of n triplets, which can be combined to a xplet of length n + 1.
         Therefore, 2 consecutive chained triplets have to share 2 hits, sharing the middle hit of each triplet is 
-        required. The X-plet can be fitted to a track with a linear function. A curve fit will be added in the future. 
+        required. The X-plet can be fitted to a track with a linear function. 
         """
 
     def add_triplet(self,
