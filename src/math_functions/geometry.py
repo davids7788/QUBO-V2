@@ -27,13 +27,13 @@ def x0_at_z_ref(x_end: float,
 @jit(nopython=True)
 def xyz_angle(xy_1: float,
               xy_2: float,
-              z_2: float,
-              z_1: float) -> float:
+              z_1: float,
+              z_2: float) -> float:
     """Returns the angle in xz or yz with respect to the given coordinates.
     :param xy_1: x or y coordinate of the second hit
     :param xy_2: x or y coordinate of the first hit
-    :param z_1: z coordinate of the second hit
-    :param z_2: z coordinate of the first hit
+    :param z_1: z coordinate of the first hit
+    :param z_2: z coordinate of the second hit
 
     :return:
         angle in rad
@@ -41,35 +41,13 @@ def xyz_angle(xy_1: float,
     return atan2((xy_2 - xy_1), (z_2 - z_1))
 
 
-def two_norm_std_angle(doublet_1,
-                       doublet_2,
-                       doublet_3):
-    """Returns 2-norm of angle difference in xz and yz.
-    :param doublet_1 : doublet from hit 1 + 2
-    :param doublet_2 : doublet from hit 2 + 3
-    :param doublet_3 : doublet from hit 3 + 4
-    :return
-        2-norm of angle difference in xz and yz.
-    """
-    angle_xz_doublet_1 = doublet_1.xz_angle()
-    angle_yz_doublet_1 = doublet_1.yz_angle()
-
-    angle_xz_doublet_2 = doublet_2.xz_angle()
-    angle_yz_doublet_2 = doublet_2.yz_angle()
-
-    angle_xz_doublet_3 = doublet_3.xz_angle()
-    angle_yz_doublet_3 = doublet_3.yz_angle()
-
-    return np.sqrt(np.std([angle_xz_doublet_1, angle_xz_doublet_2, angle_xz_doublet_3]) ** 2 +
-                   np.std([angle_yz_doublet_1, angle_yz_doublet_2, angle_yz_doublet_3]) ** 2)
-
-
-def _default_angle_based(angle_xz_1,
-                         angle_xz_2,
-                         angle_xz_3,
-                         angle_yz_1,
-                         angle_yz_2,
-                         angle_yz_3):
+@jit(nopython=True)
+def _default_angle_based_interaction(angle_xz_1,
+                                     angle_xz_2,
+                                     angle_xz_3,
+                                     angle_yz_1,
+                                     angle_yz_2,
+                                     angle_yz_3) -> float:
     """Returns angle based in xz and yz.
     :param angle_xz_1 : xz angle of first doublet
     :param angle_xz_2 : xz angle of second doublet
@@ -78,9 +56,20 @@ def _default_angle_based(angle_xz_1,
     :param angle_yz_2 : yz angle of second doublet
     :param angle_yz_3 : yz angle of third doublet
     :return
-        2-norm of angle difference in xz and yz.
+        2-norm of the standard deviation of the angle difference in xz and yz.
     """
     return sqrt(np.std(np.array([angle_xz_1, angle_xz_2, angle_xz_3]))**2
-                + np.std(np.array([angle_yz_1, angle_yz_2, angle_yz_3])) ** 2)
+                + np.std(np.array([angle_yz_1, angle_yz_2, angle_yz_3]))**2)
 
 
+@jit(nopython=True)
+def _default_angle_based_quality(angle_between_doublets_xz: float,
+                                 angle_between_doublets_yz: float) -> float:
+    """Returns angle based in xz and yz.
+    :param angle_between_doublets_xz : xz angle between doublets
+    :param angle_between_doublets_yz : xz angle between doublets
+
+    :return
+        two norm of angles in xy and xz between doublets
+    """
+    return sqrt(angle_between_doublets_xz**2 + angle_between_doublets_yz**2)

@@ -7,6 +7,7 @@ from track_reconstruction.create_gen_xplets import *
 from preselection.triplet_creator_LUXE import TripletCreatorLUXE
 from preselection.segment_manager import SegmentManager
 from preselection.qubo_coefficients import QuboCoefficients
+from preselection.plotting import plot_and_save_statistics
 
 # sys argv [1]: config file
 # sys argv [2]: tracking data, csv file
@@ -58,12 +59,10 @@ qubo_coefficients = QuboCoefficients(config_file, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.collecting_qubo_parameters()
 qubo_coefficients.coefficient_rescaling()
-exit()
 
 # Just for visualising coefficients
-qubo_coefficients.plot_and_save_statistics(triplet_creator.num_complete_tracks,
-                                           triplet_creator.preselection_statistic_dx_x0,
-                                           triplet_creator.preselection_statistic_scattering)
+plot_and_save_statistics(triplet_creator.num_particles,
+                         qubo_coefficients)
 
 print("-----------------------------------\n")
 print("QUBO preparation finished successfully!\n")

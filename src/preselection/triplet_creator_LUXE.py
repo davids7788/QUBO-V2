@@ -252,7 +252,7 @@ class TripletCreatorLUXE:
                 for target_segment in next_segments:
                     for first_doublet in segment.doublet_data:
                         for second_doublet in target_segment.doublet_data:
-                            if first_doublet.hit_2_position != second_doublet.hit_1_position:  # check if match
+                            if first_doublet.hit_2_id != second_doublet.hit_1_id:  # check if match
                                 continue
                             if self.is_valid_triplet(first_doublet, second_doublet):
                                 triplet = Triplet(first_doublet, second_doublet)
@@ -263,6 +263,7 @@ class TripletCreatorLUXE:
                                 if triplet.is_correct_match():
                                     self.found_correct_triplets += 1
                 segment.doublet_data.clear()   # --> lower memory usage, num doublets are not needed anymore
+        print(self.found_correct_triplets)
 
     def create_x_plets_LUXE(self,
                             segment_manager: SegmentManager) -> None:

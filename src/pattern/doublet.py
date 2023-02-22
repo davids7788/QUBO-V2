@@ -39,7 +39,7 @@ class Doublet:
     def is_correct_match(self) -> bool:
         """Checks if doublet hits stem from the same particle.
         :return
-            True if created from same particle, else False. If both particles have
+            True if created from same particle, else False.
         """
         if self.hit_1_particle_key == self.hit_2_particle_key:
             return True
@@ -61,6 +61,6 @@ class Doublet:
             angle in the yz plane.
         """
         return xyz_angle(self.hit_1_position[1],
-                         self.hit_2_position[2],
+                         self.hit_2_position[1],
                          self.hit_1_position[2],
                          self.hit_2_position[2])

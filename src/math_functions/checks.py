@@ -7,13 +7,13 @@ def dy_x0_check(y1: float,
                 y2: float,
                 x0: float,
                 criteria: float) -> bool:
-    """Auxiliary function  for checking dy_x0 criteria.
+    """Checks doublet dy_x0 criteria (signature differs from dx_x0 because here the mean is 0).
     :param y1: y value of first hit
     :param y2: y value of second hit
     :param x0: extrapolated x value on reference layer
-    :param criteria to decide if doublet is kept or discarded
+    :param criteria: max allowed value
     :return
-        True if condition is satisfied, else False
+        True if criteria is fulfilled, else False
     """
     if abs(y2 - y1) / x0 > criteria:
         return False
@@ -24,16 +24,16 @@ def dy_x0_check(y1: float,
 def dx_x0_check(x1: float,
                 x2: float,
                 x0: float,
-                criteria_mean,
-                criteria_eps) -> bool:
-    """Checks if hits may be combined to doublets, applying dx/x0 criterion
+                criteria_mean: float,
+                criteria_eps: float) -> bool:
+    """Checks doublet dx/x0 criteria.
     :param x1: x value first hit
     :param x2: x value second hit
     :param x0: extrapolated x value on reference layer
-    :param criteria_mean: mean value of expected criteria
-    :param criteria_eps: epsilon range of expected criteria
+    :param criteria_mean: mean value of dx/x0 criteria
+    :param criteria_eps: allowed epsilon range of dx/x0 criteria
     :return:
-        True if criteria applies, else False
+        True if criteria is fulfilled, else False
     """
     if abs((x2 - x1) / x0 - criteria_mean) > criteria_eps:
         return False
@@ -79,7 +79,7 @@ def _is_valid_triplet(xz_angle_1: float,
     :param yz_angle_2: angle yz doublet 2
     :param max_angle: max angle criteria [rad]
     :return:
-        True if criteria applies, else False
+        True if criteria is fulfilled, else False
     """
     if sqrt((xz_angle_2 - xz_angle_1) ** 2 + (yz_angle_2 - yz_angle_1) ** 2) < max_angle:
         return True

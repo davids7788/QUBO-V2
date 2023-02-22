@@ -1,7 +1,9 @@
 import numpy as np
+import time
 import matplotlib.pyplot as plt
 
-from math_functions.geometry import _default_angle_based
+from utility.time_tracking import hms_string
+from math_functions.geometry import _default_angle_based_quality, _default_angle_based_interaction
 from preselection.segment_manager import SegmentManager
 
 
@@ -30,7 +32,6 @@ class QuboCoefficients:
         :param save_to_folder: folder to store results
         """
         self.configuration = configuration
-        self.mode = self.recognize_parameter_setup()
         self.save_to_folder = save_to_folder
 
         # storing triplets
@@ -43,32 +44,49 @@ class QuboCoefficients:
         self.connectivity_correct_match_list = []
 
         # Dictionary of quality and conflict functions
+        self.match_mode = None
+        self.conflict_mode = None
+        self.quality_mode = None
+
         self.match = None
         self.conflict = None
         self.quality = None
         self.parameter_setting()
 
     def parameter_setting(self) -> None:
-        """Reads in the parameter setting and returns.
+        """Reads in the parameter setting and sets the fields accordingly.
         """
         b_ij_conflict = self.configuration["qubo parameters"]["b_ij conflict"]
-        b_ij_match = self.configuration["qubo parameters"]["b_ij conflict"]
-        a_i_quality = self.configuration["qubo parameters"]["quality"]
+        b_ij_match = self.configuration["qubo parameters"]["b_ij match"]
+        a_i_quality = self.configuration["qubo parameters"]["a_i"]
 
-        if b_ij_match == "default":
-            self.match = self.default_angle_based
+        if b_ij_match == 'default':
+            self.match = self.default_angle_based_interaction
+            self.match_mode = 'default'
         else:
             self.match = b_ij_match
+            self.match_mode = 'constant'
 
         if b_ij_conflict == "default":
-            self.conflict = self.default_angle_based
+            self.conflict = self.default_angle_based_interaction
+            self.conflict_mode = 'default'
         else:
             self.conflict = b_ij_conflict
+            self.conflict_mode = 'constant'
 
-        if a_i_quality == "default":
-            self.quality = self.default_angle_based
+        if a_i_quality == 'default':
+            self.quality = self.default_angle_based_quality
+            self.quality_mode = 'default'
         else:
             self.quality = a_i_quality
+            self.quality_mode = 'constant'
+
+    @staticmethod
+    def default_angle_based_quality(triplet) -> float:
+        """Returns a quality value based on the angles between the two doublets of a triplet.
+        """
+        angle_xz, angle_yz = triplet.angles_between_doublets()
+        return _default_angle_based_quality(angle_xz, angle_yz)
 
     def set_triplet_coefficients(self,
                                  segment_manager: SegmentManager) -> None:
@@ -77,27 +95,21 @@ class QuboCoefficients:
         triplet list is displayed.
         :param segment_manager: segment manager object
         """
-        # self checking configuration
-        print("Calculate triplet coefficients a_i and b_ij...")
-        quality = None
-        try:
-            quality = float(self.configuration["qubo parameters"]["a_i"])
-            quality_mode = "constant"
-        except ValueError:
-            quality_mode = "angle function"
+        print("Calculate triplet coefficients a_i and b_ij...\n")
+        set_triplet_coefficients_start = time.process_time()
 
         num_layers = len(segment_manager.segment_storage.keys())
+
         for layer in range(num_layers - 2):
             for segment in segment_manager.segment_storage[layer]:
                 if segment.name not in segment_manager.segment_mapping.keys():
                     continue
                 next_segments = segment_manager.target_segments(segment.name)  # target segments
                 for t1 in segment.triplet_data:
-                    if quality_mode == "constant":
-                        t1.quality = quality
-                    elif quality_mode == "angle function":
-                        triplet_angles_xz, triplet_angles_yz = t1.angles_between_doublets()
-                        t1.quality = np.sqrt(triplet_angles_xz ** 2 + triplet_angles_yz ** 2)
+                    if self.quality_mode == 'constant':
+                        t1.quality = self.quality
+                    elif self.quality_mode == "default":
+                        t1.quality = QuboCoefficients.default_angle_based_quality(t1)
 
                     for target_segment in next_segments + [segment]:   # checking all combinations with other triplets
                         for t2 in target_segment.triplet_data:
@@ -113,7 +125,12 @@ class QuboCoefficients:
             for segment in segment_manager.segment_storage[layer]:
                 for triplet in segment.triplet_data:
                     self.triplet_list.add(triplet)
-                segment.triplet_data.clear()
+
+        set_triplet_coefficients_end = time.process_time()
+        apply_coefficients_time = hms_string(set_triplet_coefficients_end - set_triplet_coefficients_start)
+
+        print(f"\nTime elapsed for setting triplet coefficients: "
+              f"{apply_coefficients_time}\n")
 
     def collecting_qubo_parameters(self) -> None:
         """Function for collecting and storing information about quality and interaction values,
@@ -140,9 +157,9 @@ class QuboCoefficients:
                     self.connectivity_wrong_match_list.append(i_value)
 
     @staticmethod
-    def default_angle_based(doublet_1,
-                            doublet_2,
-                            doublet_3):
+    def default_angle_based_interaction(doublet_1,
+                                        doublet_2,
+                                        doublet_3):
         """Returns value for default angle metric.
         :param doublet_1 : doublet from hit 1 + 2
         :param doublet_2 : doublet from hit 2 + 3
@@ -150,18 +167,20 @@ class QuboCoefficients:
         :return
             value for default angle metric
         """
-        return _default_angle_based(doublet_1.xz_angle(),
-                                    doublet_2.xz_angle(),
-                                    doublet_3.xz_angle(),
-                                    doublet_1.yz_angle(),
-                                    doublet_2.yz_angle(),
-                                    doublet_3.yz_angle())
+        return _default_angle_based_interaction(doublet_1.xz_angle(),
+                                                doublet_2.xz_angle(),
+                                                doublet_3.xz_angle(),
+                                                doublet_1.yz_angle(),
+                                                doublet_2.yz_angle(),
+                                                doublet_3.yz_angle())
 
     def coefficient_rescaling(self) -> None:
         """Rescaling parameters according to the config file.
         """
-        print("Starting rescaling of a_i and b_ij parameters...")
+        print("Starting rescaling of a_i and b_ij parameters...\n")
         # additional processing of qubo parameter
+
+        rescale_triplet_coefficients_start = time.process_time()
 
         if self.configuration["scale range parameters"]["z_scores"]:
             mu = np.mean(self.quality_correct_match_list + self.quality_wrong_match_list)
@@ -214,8 +233,14 @@ class QuboCoefficients:
             self.connectivity_correct_match_list = [a + (v - min_connectivity) * (b - a) / range_connectivity
                                                     for v in self.connectivity_correct_match_list if v != conflict_term]
 
-        print("\nFinished setting and rescaling of parameters.")
-        print(f"\nSaving triplet list...")
+        rescale_triplet_coefficients_end = time.process_time()
+        rescale_coefficients_time = hms_string(rescale_triplet_coefficients_end - rescale_triplet_coefficients_start)
+
+        print(f"Time elapsed for rescaling triplet coefficients: "
+              f"{rescale_coefficients_time}\n")
+
+        print("Finished setting and rescaling of parameters.\n")
+        print(f"Saving triplet list...")
         np.save(f"{self.save_to_folder}/triplet_list", self.triplet_list)
 
     def triplet_interaction(self,
@@ -223,108 +248,44 @@ class QuboCoefficients:
                             other_triplet):
         """Compares two triplets and  how they match.
         :param triplet: first triplet
-        :param other_triplet: triplet to compare with the first one
+        :param other_triplet: second triplet which is to compare with the first one
         :return
             value based on connectivity/conflict and chosen set of parameters
         """
         # checking number of shared hits
-        z_position_set = {triplet.doublet_1.hit_1_position[2],
-                          triplet.doublet_1.hit_2_position[2],
-                          triplet.doublet_2.hit_2_position[2],
-                          other_triplet.doublet_1.hit_1_position[2],
-                          other_triplet.doublet_1.hit_2_position[2],
-                          other_triplet.doublet_2.hit_2_position[2]}
-        if len(z_position_set) == 3:
-            same_layer = True
-        else:
-            same_layer = False
 
-        hit_list = {triplet.doublet_1.hit_1_position,
-                    triplet.doublet_1.hit_2_position,
-                    triplet.doublet_2.hit_2_position,
-                    other_triplet.doublet_1.hit_1_position,
-                    other_triplet.doublet_1.hit_2_position,
-                    other_triplet.doublet_2.hit_2_position}
-        intersection = 6 - len(hit_list)
+        t1_set = {triplet.doublet_1.hit_1_id,
+                  triplet.doublet_1.hit_2_id,
+                  triplet.doublet_2.hit_2_id}
+        t2_set = {other_triplet.doublet_1.hit_1_id,
+                  other_triplet.doublet_1.hit_2_id,
+                  other_triplet.doublet_2.hit_2_id}
+        intersection = len(t1_set.intersection(t2_set))
+
         # same and not interacting triplets get a zero as a coefficient
         if intersection in [0, 3]:
             return 0
 
-        # different mode types
-        if self.mode[0] == "constant" and self.mode[1] == "constant":
-            if intersection == 1:
-                return float(self.configuration["qubo parameters"]["b_ij conflict"])
-            elif intersection == 2 and not same_layer:
-                return float(self.configuration["qubo parameters"]["b_ij match"])
+        if intersection == 1:
+            if triplet.doublet_2.hit_2_id == other_triplet.doublet_1.hit_1_id:
+                return - 1 + self.match(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+            if self.conflict_mode == 'constant':
+                return self.conflict
             else:
-                return float(self.configuration["qubo parameters"]["b_ij conflict"])
+                return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
 
-        # constant for conflict, quality for function
-        elif self.mode[0] == "constant" and self.mode[1] != "constant":
-            if intersection == 1:
-                return float(self.configuration["qubo parameters"]["b_ij conflict"])
-            elif intersection == 2 and not same_layer:
-                return - 1 + self.quality_functions[self.configuration["qubo parameters"]["b_ij match"]](
-                    triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+        if intersection == 2:
+            if triplet.doublet_1.hit_1_id == other_triplet.doublet_1.hit_1_id and \
+                    triplet.doublet_2.hit_2_id == other_triplet.doublet_2.hit_2_id:
+                same_layer = True
             else:
-                return float(self.configuration["qubo parameters"]["b_ij conflict"])
-
-        # function for conflict, constant for quality
-        elif self.mode[0] != "constant" and self.mode[1] == "constant":
-            if intersection == 1:
-                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
-                    triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
-            elif intersection == 2 and not same_layer:
-                return float(self.configuration["qubo parameters"]["b_ij match"])
+                same_layer = False
+            if self.match_mode == 'constant':
+                if same_layer:
+                    if self.conflict_mode == 'constant':
+                        return self.conflict
+                    else:
+                        return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+                return self.match
             else:
-                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
-                    triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
-
-        # only functions for conflicts / quality
-        elif self.mode[0] != "constant" and self.mode[1] != "constant":
-            if intersection == 1:
-                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
-                    triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
-            elif intersection == 2 and not same_layer:
-                return - 1 + self.quality_functions[self.configuration["qubo parameters"]["b_ij match"]](
-                    triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
-            else:
-                return 1 + self.conflict_functions[self.configuration["qubo parameters"]["b_ij conflict"]](
-                    triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
-
-    def recognize_parameter_setup(self):
-        """Recognizes the chosen parameter setup for the QUBO
-        :return:
-            tuple of strings with setup information
-        """
-        try:
-            float(self.configuration["qubo parameters"]["b_ij conflict"])
-            conflict = "constant"
-        except ValueError:
-            conflict = self.configuration["qubo parameters"]["b_ij conflict"]
-        try:
-            float(self.configuration["qubo parameters"]["b_ij match"])
-            match = "constant"
-        except ValueError:
-            match = self.configuration["qubo parameters"]["b_ij match"]
-
-        return conflict, match
-
-    def add_quality_function(self,
-                             quality_function_name,
-                             quality_function_object):
-        """Adds a function to the quality function dictionary
-        :param quality_function_name: name of the function
-        :param quality_function_object: a function object
-        """
-        self.quality_functions.update({quality_function_name: quality_function_object})
-
-    def add_conflict_function(self,
-                              conflict_function_name,
-                              conflict_function_object):
-        """Adds a function to the conflict function dictionary
-        :param conflict_function_name: name of the function
-        :param conflict_function_object: a function object
-        """
-        self.conflict_functions.update({conflict_function_name: conflict_function_object})
-
+                return - 1 + self.match(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
