@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from qiskit_optimization import QuadraticProgram
 from qiskit.opflow.primitive_ops.pauli_sum_op import PauliSumOp
@@ -11,8 +10,7 @@ class Hamiltonian:
                  t_mapping,
                  solution_candidate,
                  rescaling=None,
-                 only_specified_connections=None,
-                 k=1):
+                 only_specified_connections=None):
         """Class for handling the Hamiltonian
         :param triplet_slice: slice of triplets participating in the SubQUBO
         :param t_mapping: name of triplets consist of <hit_ID>_<hit_ID>_<hit_ID> and is mapped to its position
@@ -21,7 +19,6 @@ class Hamiltonian:
         :param rescaling: "complete"    : (a_i + sum(outer_terms_bij)) / (#outer_terms_bij + 1)
                           "outer terms" :  a_i + (sum(outer_terms_bij) / #outer_terms_bij)
                           "None"        :  a_i + sum(outer_terms_bij)
-                          "k value"     : some mysterious k scaling factor
         :param only_specified_connections: dictionary of triplet ids which have to be considered for accumulating
                                            relations from outside the (sub)qubo
         :param k: some mysterious value, maybe helpful, maybe not
@@ -32,7 +29,6 @@ class Hamiltonian:
         self.solution_candidate = solution_candidate
         self.triplet_ids = [triplet.triplet_id for triplet in triplet_slice]
         self.rescaling = rescaling
-        self.k = k
 
     def linear_term(self):
         """Pseudo-linear term, sums (and normalizes if chosen) all interaction values outside the
@@ -71,8 +67,6 @@ class Hamiltonian:
                 if lin_out_connection or lin_out_conflict:
                     linear[i] += (sum(lin_out_connection) + sum(lin_out_conflict)) / \
                                  (len(lin_out_connection) + len(lin_out_conflict) + 1)
-            elif self.rescaling == "k value":
-                linear[i] += (sum(lin_out_connection) + min(sum(lin_out_conflict), self.k))
             else:
                 linear[i] += (sum(lin_out_connection) + sum(lin_out_conflict))
         return linear

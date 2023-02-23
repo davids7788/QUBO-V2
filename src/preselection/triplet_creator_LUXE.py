@@ -263,7 +263,6 @@ class TripletCreatorLUXE:
                                 if triplet.is_correct_match():
                                     self.found_correct_triplets += 1
                 segment.doublet_data.clear()   # --> lower memory usage, num doublets are not needed anymore
-        print(self.found_correct_triplets)
 
     def create_x_plets_LUXE(self,
                             segment_manager: SegmentManager) -> None:

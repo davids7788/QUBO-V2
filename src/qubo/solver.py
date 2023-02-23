@@ -62,7 +62,7 @@ class Solver:
         """Configures the Solver object for VQE, QAOA or NumpyEigensolver.
         :param ansatz: ansatz circuit
         """
-        # Set up the the chosen algorithm, VQE, QAOA or NumpyEigensolver
+        # Set up the chosen algorithm, VQE, QAOA or NumpyEigensolver
         # VQE --> ansatz can be chosen
         if self.config["solver"]["algorithm"] == "VQE":
             self.set_vqe(ansatz)

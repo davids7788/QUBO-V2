@@ -275,17 +275,14 @@ class QuboCoefficients:
                 return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
 
         if intersection == 2:
-            if triplet.doublet_1.hit_1_id == other_triplet.doublet_1.hit_1_id and \
-                    triplet.doublet_2.hit_2_id == other_triplet.doublet_2.hit_2_id:
-                same_layer = True
-            else:
-                same_layer = False
+            # triplets on same layer always have a conflict
+            if triplet.doublet_1.hit_1_position[2] == other_triplet.doublet_1.hit_1_position[2]:
+                if self.conflict_mode == 'constant':
+                    return self.conflict
+                else:
+                    return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+
             if self.match_mode == 'constant':
-                if same_layer:
-                    if self.conflict_mode == 'constant':
-                        return self.conflict
-                    else:
-                        return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
                 return self.match
             else:
                 return - 1 + self.match(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)

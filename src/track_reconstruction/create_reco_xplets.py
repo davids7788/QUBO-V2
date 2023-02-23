@@ -24,40 +24,49 @@ def reco_xplets_simplified_LUXE(triplets,
     for triplet in triplets:
         triplet_start_value.add(triplet.doublet_1.hit_1_position[2])
     triplets.sort(key=triplet_start)
-    xplet_start = min(list(triplet_start_value))
 
-    reco_x_plets = []
-    triplets_used = set()
-    for i, t1 in enumerate(triplets):
-        if t1.doublet_1.hit_1_position[2] == xplet_start:
-            t_list = [t1]
-            for t2 in triplets[i + 1:]:
-                if t_list[-1].doublet_2 == t2.doublet_1:
-                    t_list.append(t2)
+    # check for
+    sorted_z = sorted(triplet_start_value)
+    if len(triplet_start_value) == 2:
+        t_possible_start = [sorted_z[0]]
+    else:
+        t_possible_start = sorted_z[0:2]
 
+    reco_x_plets_candidates = []
+    for i, t_s in enumerate(triplets):
+        if t_s.doublet_1.hit_1_position[2] not in t_possible_start:
+            continue
+        t_s_list = [[t_s]]
+        for t_next in triplets[i + 1:]:
+            for sublist in t_s_list:
+                if sublist[-1].doublet_2 == t_next.doublet_1:
+                    new_entry = []
+                    for item in sublist:
+                        new_entry.append(item)
+                    new_entry.append(t_next)
+        reduced_t_s_list = []
+        for xplet_candidate in t_s_list:
+            is_subset = False
+            for other_xplet_candidate in t_s_list:
+                if xplet_candidate != other_xplet_candidate:
+                    if set(xplet_candidate).issubset(set(other_xplet_candidate)):
+                        is_subset = True
+            if not is_subset:
+                reduced_t_s_list.append(xplet_candidate)
+        for xplet_candidate in reduced_t_s_list:
             reco_pattern = Xplet()
-            for triplet in t_list:
-                triplets_used.add(triplet.triplet_id)
+            for triplet in xplet_candidate:
                 reco_pattern.add_triplet(triplet)
             if fit == "chi squared lin track":
                 reco_pattern.fit_lin_track()
-            reco_x_plets.append(reco_pattern)
+            reco_x_plets_candidates.append(reco_pattern)
 
-    # tracks starting from the second layer
-    for t3 in triplets:
-        if t3.triplet_id not in triplets_used:
-            reco_pattern = Xplet()
-            reco_pattern.add_triplet(t3)
-            if fit == "chi squared lin track":
-                reco_pattern.fit_lin_track()
-            reco_x_plets.append(reco_pattern)
-
-    print(f"Number of combinatorial reco Xplets: {len(reco_x_plets)}\n"
+    print(f"Number of combinatorial reco Xplets: {len(reco_x_plets_candidates)}\n"
           f"Saving combinatorial Xplets to file {save_folder}/reco_xplet_list")
-    np.save(f"{save_folder}/reco_xplet_list", reco_x_plets)
+    np.save(f"{save_folder}/reco_xplet_list", reco_x_plets_candidates)
 
     hit_to_xplet_map = {}
-    for xplet in reco_x_plets:
+    for xplet in reco_x_plets_candidates:
         for hit_id in xplet.hit_ids.values():
             if hit_id not in hit_to_xplet_map.keys():
                 hit_to_xplet_map.update({hit_id: 1})
@@ -92,7 +101,7 @@ def reco_xplets_simplified_LUXE(triplets,
     reco_ambiguity_solved = None
     for i in range(3):
         selected_tracks = []
-        for track in reco_x_plets:
+        for track in reco_x_plets_candidates:
             if not select_triplets_with_max_overlap(track, 4 - i):
                 selected_tracks.append(track)
         reco_ambiguity_solved = selected_tracks
