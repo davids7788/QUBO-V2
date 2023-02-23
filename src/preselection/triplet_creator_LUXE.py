@@ -4,7 +4,7 @@ from typing import Union
 
 import numpy as np
 
-from math_functions.checks import _is_valid_triplet, dx_x0_check, dy_x0_check
+from math_functions.checks import w_is_valid_triplet, dxy_x0_check
 from math_functions.geometry import x0_at_z_ref
 from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
@@ -164,18 +164,19 @@ class TripletCreatorLUXE:
                          z_ref)
 
         # check dy / x0 criteria
-        if not dy_x0_check(first_hit[self.y_index],
-                           second_hit[self.y_index],
-                           x0,
-                           self.configuration["doublet"]["dy/x0"]):
+        if not dxy_x0_check(first_hit[self.y_index],
+                            second_hit[self.y_index],
+                            x0,
+                            criteria_mean=0,
+                            criteria_eps=self.configuration["doublet"]["dy/x0"]):
             return False
 
         # check dx / x0 criteria
-        if not dx_x0_check(first_hit[self.x_index],
-                           second_hit[self.x_index],
-                           x0,
-                           self.configuration["doublet"]["dx/x0"],
-                           self.configuration["doublet"]["eps"]):
+        if not dxy_x0_check(first_hit[self.x_index],
+                            second_hit[self.x_index],
+                            x0,
+                            criteria_mean=self.configuration["doublet"]["dx/x0"],
+                            criteria_eps=self.configuration["doublet"]["eps"]):
             return False
         return True
 
@@ -298,19 +299,19 @@ class TripletCreatorLUXE:
         print("-----------------------------------\n")
 
     def is_valid_triplet(self,
-                         first_doublet,
-                         second_doublet):
+                         first_doublet: Doublet,
+                         second_doublet: Doublet):
         """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
         :param first_doublet: doublet 1
         :param second_doublet: doublet 2
         :return:
             True if criteria applies, else False
         """
-        return _is_valid_triplet(first_doublet.xz_angle(),
-                                 second_doublet.xz_angle(),
-                                 first_doublet.yz_angle(),
-                                 second_doublet.yz_angle(),
-                                 self.configuration["triplet"]["max scattering"])
+        return w_is_valid_triplet(first_doublet.xz_angle(),
+                                  second_doublet.xz_angle(),
+                                  first_doublet.yz_angle(),
+                                  second_doublet.yz_angle(),
+                                  self.configuration["triplet"]["max scattering"])
 
     def write_info_file(self) -> None:
         """Writes information about the Preselection parameters and some statistics into

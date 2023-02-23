@@ -7,7 +7,7 @@ from track_reconstruction.create_gen_xplets import *
 from preselection.triplet_creator_LUXE import TripletCreatorLUXE
 from preselection.segment_manager import SegmentManager
 from preselection.qubo_coefficients import QuboCoefficients
-from preselection.plotting import plot_and_save_statistics
+from preselection.plot_statistics import plot_and_save_statistics
 
 # sys argv [1]: config file
 # sys argv [2]: tracking data, csv file

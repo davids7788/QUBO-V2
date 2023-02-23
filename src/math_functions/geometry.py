@@ -42,12 +42,12 @@ def xyz_angle(xy_1: float,
 
 
 @jit(nopython=True)
-def _default_angle_based_interaction(angle_xz_1,
-                                     angle_xz_2,
-                                     angle_xz_3,
-                                     angle_yz_1,
-                                     angle_yz_2,
-                                     angle_yz_3) -> float:
+def w_default_angle_based_interaction(angle_xz_1,
+                                      angle_xz_2,
+                                      angle_xz_3,
+                                      angle_yz_1,
+                                      angle_yz_2,
+                                      angle_yz_3) -> float:
     """Returns angle based in xz and yz.
     :param angle_xz_1 : xz angle of first doublet
     :param angle_xz_2 : xz angle of second doublet
@@ -63,8 +63,8 @@ def _default_angle_based_interaction(angle_xz_1,
 
 
 @jit(nopython=True)
-def _default_angle_based_quality(angle_between_doublets_xz: float,
-                                 angle_between_doublets_yz: float) -> float:
+def w_default_angle_based_quality(angle_between_doublets_xz: float,
+                                  angle_between_doublets_yz: float) -> float:
     """Returns angle based in xz and yz.
     :param angle_between_doublets_xz : xz angle between doublets
     :param angle_between_doublets_yz : xz angle between doublets

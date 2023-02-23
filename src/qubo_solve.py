@@ -67,19 +67,7 @@ qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
                                 qubo_logging=qubo_logger,
                                 save_folder=new_folder,
                                 verbose=1)
-
-
-# Select solving method
-if "impact list" in config_file["qubo"]["optimisation strategy"]:
-    qubo_processor.qubo_processing()
-if "connection list" in config_file["qubo"]["optimisation strategy"]:
-    qubo_processor.qubo_processing()
-if "paired list" in config_file["qubo"]["optimisation strategy"]:
-    qubo_processor.qubo_processing()
-if "impact without conflicts" in config_file["qubo"]["optimisation strategy"]:
-    qubo_processor.qubo_processing()
-else:
-    qubo_processor.qubo_processing()
+qubo_processor.qubo_processing()
 
 reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
                             new_folder)

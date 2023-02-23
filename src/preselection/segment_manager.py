@@ -6,7 +6,7 @@ from preselection.segment import LUXEDetectorSegment
 
 class SegmentManager:
     def __init__(self,
-                 binning: list[int, int],
+                 binning: list[int],
                  mapping_criteria: dict,
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
@@ -98,10 +98,10 @@ class SegmentManager:
             dz_ratio = (target_segement.z_position - self.z_position_to_layer[in_between_index]) / dz_segments
             x_start_in_between = target_segment.x_start - (dx_segments * dz_ratio)
             x_end_in_between = target_segment.x_end - (dx_segments * dz_ratio)
-            if self.layer_ranges[in_between_index][0] < x_start_in_between:
-                if self.layer_ranges[in_between_index][1] > x_end_in_between:
+            for chip in self.layer_ranges[in_between_index]:
+                if chip.x_start < x_start_in_between and chip.x_end > x_end_in_between:
                     return True
-            return False
+        return False
 
     def segment_mapping_LUXE(self) -> None:
         """Maps the segments according to the doublet preselection criteria. That means, that if there are hits inside

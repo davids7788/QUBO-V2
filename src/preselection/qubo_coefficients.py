@@ -4,7 +4,7 @@ import time
 from pattern.triplet import Triplet
 from pattern.doublet import Doublet
 from utility.time_tracking import hms_string
-from math_functions.geometry import _default_angle_based_quality, _default_angle_based_interaction
+from math_functions.geometry import w_default_angle_based_quality, w_default_angle_based_interaction
 from preselection.segment_manager import SegmentManager
 
 
@@ -87,7 +87,7 @@ class QuboCoefficients:
         """Returns a quality value based on the angles between the two doublets of a triplet.
         """
         angle_xz, angle_yz = triplet.angles_between_doublets()
-        return _default_angle_based_quality(angle_xz, angle_yz)
+        return w_default_angle_based_quality(angle_xz, angle_yz)
 
     def set_triplet_coefficients(self,
                                  segment_manager: SegmentManager) -> None:
@@ -168,12 +168,12 @@ class QuboCoefficients:
         :return
             value for default angle metric
         """
-        return _default_angle_based_interaction(doublet_1.xz_angle(),
-                                                doublet_2.xz_angle(),
-                                                doublet_3.xz_angle(),
-                                                doublet_1.yz_angle(),
-                                                doublet_2.yz_angle(),
-                                                doublet_3.yz_angle())
+        return w_default_angle_based_interaction(doublet_1.xz_angle(),
+                                                 doublet_2.xz_angle(),
+                                                 doublet_3.xz_angle(),
+                                                 doublet_1.yz_angle(),
+                                                 doublet_2.yz_angle(),
+                                                 doublet_3.yz_angle())
 
     def coefficient_rescaling(self) -> None:
         """Rescaling parameters according to the config file.

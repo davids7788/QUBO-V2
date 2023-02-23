@@ -1,4 +1,4 @@
-from math_functions.checks import _is_in_segment
+from math_functions.checks import w_is_in_segment
 
 
 class LUXEDetectorSegment:
