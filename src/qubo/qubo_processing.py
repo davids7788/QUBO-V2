@@ -188,9 +188,6 @@ class QuboProcessing:
             else:
                 self.pass_count += 1
 
-            print(f"Energy after iteration {self.loop_count} at pass count {self.pass_count}: "
-                  f"{np.around(self.energy_candidate, 2)}")
-
             # increasing overall loop count
             self.loop_count += 1
 
@@ -200,6 +197,10 @@ class QuboProcessing:
             self.qubo_logging.add_entry("time tracking qubo iteration",
                                         str(self.loop_count),
                                         loop_time)
+
+            print(f"Energy after iteration {self.loop_count} at pass count {self.pass_count}: "
+                  f"{np.around(self.energy_candidate, 2)}  |  "
+                  f"Time elapsed: {QuboProcessing.hms_string(loop_time)}")
 
             self.qubo_logging.save_results(self.save_folder)
 

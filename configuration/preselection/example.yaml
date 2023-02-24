@@ -12,11 +12,11 @@ binning:
   num bins y: 2
 
 qubo parameters:
-  b_ij conflict: 2.0
+  b_ij conflict: 1.0
   b_ij match: "default"
   a_i: "default"
 
 scale range parameters:
   z_scores: True
-  quality: [-0.01, 0.01]
-  interaction: [-1.0, -0.5]
+  quality: [-1.0, 1.0]
+  interaction: [-1.0, -0.9]

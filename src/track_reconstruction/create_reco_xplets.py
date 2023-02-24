@@ -28,38 +28,58 @@ def reco_xplets_simplified_LUXE(triplets,
     # check for
     sorted_z = sorted(triplet_start_value)
     if len(triplet_start_value) == 2:
-        t_possible_start = [sorted_z[0]]
+        t_possible_start = [0]
     else:
-        t_possible_start = sorted_z[0:2]
+        t_possible_start = [0, 1]
+
+    triplets_ordered_by_start_value = {}
+    for v in sorted_z:
+        triplets_ordered_by_start_value.update({sorted_z.index(v): []})
+    for t in triplets:
+        triplets_ordered_by_start_value[sorted_z.index(triplet_start(t))].append(t)
 
     reco_x_plets_candidates = []
-    for i, t_s in enumerate(triplets):
-        if t_s.doublet_1.hit_1_position[2] not in t_possible_start:
-            continue
-        t_s_list = [[t_s]]
-        for t_next in triplets[i + 1:]:
-            for sublist in t_s_list:
-                if sublist[-1].doublet_2 == t_next.doublet_1:
-                    new_entry = []
-                    for item in sublist:
-                        new_entry.append(item)
-                    new_entry.append(t_next)
-        reduced_t_s_list = []
-        for xplet_candidate in t_s_list:
-            is_subset = False
-            for other_xplet_candidate in t_s_list:
-                if xplet_candidate != other_xplet_candidate:
-                    if set(xplet_candidate).issubset(set(other_xplet_candidate)):
-                        is_subset = True
-            if not is_subset:
-                reduced_t_s_list.append(xplet_candidate)
-        for xplet_candidate in reduced_t_s_list:
-            reco_pattern = Xplet()
-            for triplet in xplet_candidate:
-                reco_pattern.add_triplet(triplet)
-            if fit == "chi squared lin track":
-                reco_pattern.fit_lin_track()
-            reco_x_plets_candidates.append(reco_pattern)
+
+    for i in range(len(sorted_z)):
+        # start of xplets
+        if i in t_possible_start:
+            reco_x_plets_candidates_update = []
+            for t in triplets_ordered_by_start_value[i]:
+                reco_x_plets_candidates_update.append([t])
+            reco_x_plets_candidates += reco_x_plets_candidates_update
+
+        else:
+            reco_x_plets_candidates_update = []
+            for t_root in reco_x_plets_candidates:
+                found_next = False
+                for t_next in triplets_ordered_by_start_value[i]:
+                    if t_next.doublet_1 == t_root[-1].doublet_2:
+                        growing_xplet = [t_r for t_r in t_root]
+                        growing_xplet.append(t_next)
+                        reco_x_plets_candidates_update.append(growing_xplet)
+                        found_next = True
+                if not found_next:
+                    reco_x_plets_candidates_update.append(t_root)
+            reco_x_plets_candidates = reco_x_plets_candidates_update
+
+    reco_xplets_subsets_removed = []
+    for xplet_candidate in reco_x_plets_candidates:
+        is_subset = False
+        for other_xplet_candidate in reco_x_plets_candidates:
+            if xplet_candidate != other_xplet_candidate:
+                if set(xplet_candidate).issubset(set(other_xplet_candidate)):
+                    is_subset = True
+        if not is_subset:
+            reco_xplets_subsets_removed.append(xplet_candidate)
+
+    reco_x_plets_candidates = []
+    for xplet_candidate in reco_xplets_subsets_removed:
+        reco_pattern = Xplet()
+        for triplet in xplet_candidate:
+            reco_pattern.add_triplet(triplet)
+        if fit == "chi squared lin track":
+            reco_pattern.fit_lin_track()
+        reco_x_plets_candidates.append(reco_pattern)
 
     print(f"Number of combinatorial reco Xplets: {len(reco_x_plets_candidates)}\n"
           f"Saving combinatorial Xplets to file {save_folder}/reco_xplet_list")

@@ -1,8 +1,6 @@
-import os
-
 import numpy as np
 
-from pattern.x_plet import Xplet
+from math import floor
 
 
 def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str):
@@ -27,13 +25,10 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str):
     for track in reco_xplets:
         matched = False
         p_id = None
-        ids = set(track.particle_ids.values())
+        ids = list(track.particle_ids.values())   # ids  corresponds to the particle id's of each hit
         for test_id in ids:
-            count = 0
-            for particle_id in track.particle_ids.values():
-                if test_id == particle_id:
-                    count += 1
-            if count >= 3:
+            # more than half of the hits from same particle
+            if ids.count(test_id) > len(list(track.particle_ids.values())) / 2:
                 p_id = test_id
                 matched = True
         if matched:

@@ -53,12 +53,13 @@ class Hamiltonian:
                                 lin_out_conflict.append(triplet.interactions[interaction_key])
                 else:
                     if interaction_key not in self.triplet_ids:
-                        if interaction_key in self.only_specified_connections:
-                            if self.solution_candidate[self.t_mapping[interaction_key]] == 1:
-                                if interaction_value < 0:
-                                    lin_out_connection.append(triplet.interactions[interaction_key])
-                                else:
-                                    lin_out_conflict.append(triplet.interactions[interaction_key])
+                        if interaction_key not in self.only_specified_connections:
+                            continue
+                        if self.solution_candidate[self.t_mapping[interaction_key]] == 1:
+                            if interaction_value < 0:
+                                lin_out_connection.append(triplet.interactions[interaction_key])
+                            else:
+                                lin_out_conflict.append(triplet.interactions[interaction_key])
 
             if self.rescaling == "complete":
                 linear[i] += (sum(lin_out_connection) + sum(lin_out_conflict))
