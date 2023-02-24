@@ -1,6 +1,7 @@
 import numpy as np
 
 from pattern.x_plet import Xplet
+from pattern.triplet import Triplet
 
 
 def reco_xplets_simplified_LUXE(triplets,
@@ -15,10 +16,10 @@ def reco_xplets_simplified_LUXE(triplets,
     print("\n-----------------------------------\n")
     print("Creating reco Xplets and fitting resulting tracks...\n")
 
-    def triplet_start(t):
+    def triplet_start(t_obj: Triplet):
         """Returns z value of first triplet hit
         """
-        return t.doublet_1.hit_1_position[2]
+        return t_obj.doublet_1.hit_1_position[2]
 
     triplet_start_value = set()
     for triplet in triplets:
