@@ -123,7 +123,7 @@ class QuboCoefficients:
 
         set_triplet_coefficients_end = time.process_time()
         apply_coefficients_time = hms_string(set_triplet_coefficients_end - set_triplet_coefficients_start)
-
+        self.triplet_list = list(self.triplet_list)
         print(f"Time elapsed for setting triplet coefficients: "
               f"{apply_coefficients_time}\n")
 
