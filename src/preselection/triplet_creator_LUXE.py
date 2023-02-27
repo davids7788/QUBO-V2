@@ -163,21 +163,22 @@ class TripletCreatorLUXE:
                          second_hit[self.z_index],
                          z_ref)
 
-        # check dy / x0 criteria
-        if not dxy_x0_check(first_hit[self.y_index],
-                            second_hit[self.y_index],
-                            x0,
-                            criteria_mean=0,
-                            criteria_eps=self.configuration["doublet"]["dy/x0"]):
-            return False
-
         # check dx / x0 criteria
         if not dxy_x0_check(first_hit[self.x_index],
                             second_hit[self.x_index],
                             x0,
                             criteria_mean=self.configuration["doublet"]["dx/x0"],
-                            criteria_eps=self.configuration["doublet"]["eps"]):
+                            criteria_eps=self.configuration["doublet"]["dx/x0 eps"]):
             return False
+
+        # check dy / x0 criteria
+        if not dxy_x0_check(first_hit[self.y_index],
+                            second_hit[self.y_index],
+                            x0,
+                            criteria_mean=self.configuration["doublet"]["dy/x0"],
+                            criteria_eps=self.configuration["doublet"]["dy/x0 eps"]):
+            return False
+
         return True
 
     def create_doublet(self,

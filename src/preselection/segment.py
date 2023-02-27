@@ -41,11 +41,13 @@ class LUXEDetectorSegment:
         :return:
             True if coordinate in segment, else False
         """
-        return _is_in_segment(x,
-                              y,
-                              z,
-                              self.x_start,
-                              self.x_end,
-                              self.y_start,
-                              self.y_end,
-                              self.z_position)
+        print("adweqwewqe")
+        return w_is_in_segment(x,
+                               y,
+                               z,
+                               self.x_start,
+                               self.x_end,
+                               self.y_start,
+                               self.y_end,
+                               self.z_position)
+
