@@ -1,4 +1,4 @@
-import sys
+import argparse
 import os
 import yaml
 import numpy as np
@@ -12,22 +12,36 @@ from qubo.solver import Solver
 from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
 from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
+parser = argparse.ArgumentParser(description='QUBO preselection Simplified LUXE',
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-# sys argv [1]: config file
-# sys argv [2]: folder containing a .npy triplet list file
+parser.add_argument('--config_file',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='QUBO configuration file')
+
+parser.add_argument('--qubo_folder',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='Folder with a triplet_list.npy file')
+
+
+parser_args = parser.parse_args()
+config_file = parser_args.config_file
+qubo_folder = parser_args.qubo_folder
+
 
 print("\n-----------------------------------")
 print("\nStarting to solve the QUBO...\n")
 
-with open(sys.argv[1], 'r') as f:
-    config_file = yaml.safe_load(f)
+with open(config_file, 'r') as f:
+    configuration = yaml.safe_load(f)
 
-# Create new folder
-folder = sys.argv[2]
+file_extension = "_" + config_file.split("/")[-1].split(".")[0]
 
-file_extension = "_" + sys.argv[1].split("/")[-1].split(".")[0]
-
-new_folder = folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
+new_folder = qubo_folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
 if Path(new_folder).is_dir():
     pass
 else:
@@ -38,30 +52,30 @@ else:
 qubo_logger = QuboLogging()
 
 # Create ansatz object and set parameters from config file
-if config_file["ansatz"]["layout"] is None:
+if configuration["ansatz"]["layout"] is None:
     ansatz = None
 else:
     ansatz = Ansatz(config=config_file)
 
 # If not "hamiltonian driven" additional parameters are set
-if config_file["ansatz"]["layout"] == "TwoLocal":
+if configuration["ansatz"]["layout"] == "TwoLocal":
     ansatz.set_two_local()
-elif config_file["ansatz"]["layout"] is None:
-    if config_file["solver"]["algorithm"] == "QAOA":
+elif configuration["ansatz"]["layout"] is None:
+    if configuration["solver"]["algorithm"] == "QAOA":
         pass
-    elif config_file["solver"]["algorithm"] is not None:
-        if config_file["solver"]["algorithm"] != "Numpy Eigensolver":
+    elif configuration["solver"]["algorithm"] is not None:
+        if configuration["solver"]["algorithm"] != "Numpy Eigensolver":
             ansatz.set_no_entanglements()
 
 # Create Solver object and set parameters from config file
-if config_file["solver"]["algorithm"] != "Numpy Eigensolver" and config_file["solver"]["algorithm"] is not None:
-    solver = Solver(config_file)
+if configuration["solver"]["algorithm"] != "Numpy Eigensolver" and configuration["solver"]["algorithm"] is not None:
+    solver = Solver(configuration)
 else:
     solver = None
 
 # Create and configure solving process
-qubo_processor = QuboProcessing(folder + "/triplet_list.npy",
-                                config=config_file,
+qubo_processor = QuboProcessing(qubo_folder + "/triplet_list.npy",
+                                config=configuration,
                                 solver=solver,
                                 ansatz=ansatz,
                                 qubo_logging=qubo_logger,

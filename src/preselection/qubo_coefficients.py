@@ -38,12 +38,6 @@ class QuboCoefficients:
         # storing triplets
         self.triplet_list = set()
 
-        # Keeping track of coefficients and saving them for statistic purposes
-        self.quality_wrong_match_list = []
-        self.connectivity_wrong_match_list = []
-        self.quality_correct_match_list = []
-        self.connectivity_correct_match_list = []
-
         # Dictionary of quality and conflict functions
         self.match_mode = None
         self.conflict_mode = None
@@ -96,7 +90,7 @@ class QuboCoefficients:
         triplet list is displayed.
         :param segment_manager: segment manager object
         """
-        print("Calculate triplet coefficients a_i and b_ij...\n")
+        print("Calculate triplet coefficients a_i and b_ij...")
         set_triplet_coefficients_start = time.process_time()
 
         num_layers = len(segment_manager.segment_storage.keys())
@@ -130,32 +124,8 @@ class QuboCoefficients:
         set_triplet_coefficients_end = time.process_time()
         apply_coefficients_time = hms_string(set_triplet_coefficients_end - set_triplet_coefficients_start)
 
-        print(f"\nTime elapsed for setting triplet coefficients: "
+        print(f"Time elapsed for setting triplet coefficients: "
               f"{apply_coefficients_time}\n")
-
-    def collecting_qubo_parameters(self) -> None:
-        """Function for collecting and storing information about quality and interaction values,
-        as well as truth information about the triplets.
-        """
-        self.triplet_list = list(self.triplet_list)
-        t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplet_list],
-                                                      np.arange(len(self.triplet_list)))}
-
-        print("Collect statistics about a_i and b_ij...")
-        for i, t1 in enumerate(self.triplet_list):
-            if t1.is_correct_match():
-                self.quality_correct_match_list.append(t1.quality)
-            else:
-                self.quality_wrong_match_list.append(t1.quality)
-
-            for i_key, i_value in t1.interactions.items():
-                if t_mapping[i_key] > i:
-                    continue
-                t2 = self.triplet_list[t_mapping[i_key]]
-                if t1.is_correct_match() and t2.is_correct_match():   # need to have 2 overlap hits, so this is enough
-                    self.connectivity_correct_match_list.append(i_value)
-                else:
-                    self.connectivity_wrong_match_list.append(i_value)
 
     @staticmethod
     def default_angle_based_interaction(doublet_1: Doublet,
@@ -178,41 +148,35 @@ class QuboCoefficients:
     def coefficient_rescaling(self) -> None:
         """Rescaling parameters according to the config file.
         """
-        print("Starting rescaling of a_i and b_ij parameters...\n")
+        print("Starting rescaling of a_i and b_ij parameters...")
         # additional processing of qubo parameter
 
         rescale_triplet_coefficients_start = time.process_time()
 
         if self.configuration["scale range parameters"]["z_scores"]:
-            mu = np.mean(self.quality_correct_match_list + self.quality_wrong_match_list)
-            sigma = np.std(self.quality_correct_match_list + self.quality_wrong_match_list)
+            mu = np.mean([t.quality for t in self.triplet_list])
+            sigma = np.std([t.quality for t in self.triplet_list])
             for triplet in self.triplet_list:
                 triplet.quality = (triplet.quality - mu) / sigma
-            self.quality_correct_match_list = [(quality - mu) / sigma for quality in self.quality_correct_match_list]
-            self.quality_wrong_match_list = [(quality - mu) / sigma for quality in self.quality_wrong_match_list]
 
         # Scaling in the following way to [a, b] : X' = a + (X - X_min) (b - a) / (X_max - X_min)
         if self.configuration["scale range parameters"]["quality"] is not None:
 
             a = self.configuration["scale range parameters"]["quality"][0]
             b = self.configuration["scale range parameters"]["quality"][1]
-            min_quality = min(min(self.quality_correct_match_list), min(self.quality_wrong_match_list))
-            max_quality = max(min(self.quality_correct_match_list), max(self.quality_wrong_match_list))
+            min_quality = min([t.quality for t in self.triplet_list])
+            max_quality = max([t.quality for t in self.triplet_list])
             for triplet in self.triplet_list:
                 triplet.quality = a + (triplet.quality - min_quality) * (b - a) / (max_quality - min_quality)
-
-            # rewriting a_i lists
-            self.quality_correct_match_list = [a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
-                                               for quality in self.quality_correct_match_list]
-            self.quality_wrong_match_list = [a + (quality - min_quality) * (b - a) / (max_quality - min_quality)
-                                             for quality in self.quality_wrong_match_list]
 
         # scaling connectivity
         if self.configuration["scale range parameters"]["interaction"] is not None:
             conflict_term = float(self.configuration["qubo parameters"]["b_ij conflict"])
             # excluding conflict terms
-            connectivity_values = [con for con in self.connectivity_correct_match_list if con != conflict_term] + \
-                                  [con for con in self.connectivity_wrong_match_list if con != conflict_term]
+            connectivity_values = [interaction
+                                   for t in self.triplet_list
+                                   for interaction in t.interactions.values() if interaction <= 0]
+
             min_connectivity = min(connectivity_values)
             max_connectivity = max(connectivity_values)
             range_connectivity = max_connectivity - min_connectivity
@@ -228,12 +192,6 @@ class QuboCoefficients:
                         triplet.interactions[key] = a + (triplet.interactions[key] - min_connectivity) * (b - a) / \
                                                     range_connectivity
 
-            # rewriting connectivity lists
-            self.connectivity_wrong_match_list = [a + (v - min_connectivity) * (b - a) / range_connectivity
-                                                  for v in self.connectivity_wrong_match_list if v != conflict_term]
-            self.connectivity_correct_match_list = [a + (v - min_connectivity) * (b - a) / range_connectivity
-                                                    for v in self.connectivity_correct_match_list if v != conflict_term]
-
         rescale_triplet_coefficients_end = time.process_time()
         rescale_coefficients_time = hms_string(rescale_triplet_coefficients_end - rescale_triplet_coefficients_start)
 
@@ -241,7 +199,7 @@ class QuboCoefficients:
               f"{rescale_coefficients_time}\n")
 
         print("Finished setting and rescaling of parameters.\n")
-        print(f"Saving triplet list...")
+        print(f"Save triplet list...")
         np.save(f"{self.save_to_folder}/triplet_list", self.triplet_list)
 
     def triplet_interaction(self,

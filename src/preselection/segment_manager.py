@@ -6,18 +6,14 @@ from preselection.segment import LUXEDetectorSegment
 
 class SegmentManager:
     def __init__(self,
-                 binning: list[int],
-                 mapping_criteria: dict,
+                 configuration,
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
-        :param binning: binning in x and y
-        :param mapping_criteria : {dx/x0: <value>,
-                                   eps:   <value>,
-                                   dy/x0: <value>}
+        :param configuration: preselection configuration file
         :param detector_geometry: .csv detector layer file geometry file
         """
-        self.mapping_criteria = mapping_criteria
-        self.binning = binning
+        self.mapping_criteria = configuration['doublet']
+        self.binning = [configuration['binning']['num bins x'], configuration['binning']['num bins y']]
         self.detector_chips = []   # list containing coordinate information about detector layers
         self.setup = None
 

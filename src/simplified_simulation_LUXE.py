@@ -1,6 +1,5 @@
-import csv
-import sys
 import yaml
+import argparse
 
 from simplified_simulation.ptarmigan import PtargmiganSimData
 from simplified_simulation.experimental_results_MC_toy import ExperimentalResults
@@ -9,10 +8,38 @@ from simplified_simulation.detector_plane import DetectorPlane
 from simplified_simulation.dipole_magnet import DipoleMagnet
 from simplified_simulation.convert_to_csv import *
 
-config_file = sys.argv[1]
-ptarmigan = sys.argv[2]
-geometry = sys.argv[3]
-save_location = sys.argv[4]
+parser = argparse.ArgumentParser(description='Simplified Simulation',
+                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+parser.add_argument('--config_file',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='Simplified simulation configuration file')
+
+parser.add_argument('--ptarmigan_file',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='Ptarmigan event file')
+
+parser.add_argument('--geometry_file',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='LUXE geometry csv file')
+
+parser.add_argument('--target_folder',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='Folder to store results')
+
+parser_args = parser.parse_args()
+config_file = parser_args.config_file
+ptarmigan = parser_args.ptarmigan_file
+geometry = parser_args.geometry_file
+target_folder = parser_args.target_folder
 
 outfile_name = ".".join(ptarmigan.split("/")[-1].split(".")[0:-1])
 
@@ -35,6 +62,7 @@ with open(geometry, 'r') as file:
                           float(row[y_end]),
                           float(row[z])))
 
+# In the simplified case, there is one big chip instead of 18 per layer. The pixel scale accounts for that.
 if "sl" in geometry:
     pixel_scale = 18
     outfile_appendix = "_sl"
@@ -75,7 +103,7 @@ Experiment_1 = MCToyExperiment(source,
 
 Experiment_1.start_experiment()
 
-result.save_results(save_location + "/" + outfile_name + outfile_appendix)
-convert_to_csv_true(save_location + "/" + outfile_name + outfile_appendix)
-convert_to_csv_smeared(save_location + "/" + outfile_name + outfile_appendix)
-# convert_to_csv_pixel(save_location + "/" + outfile_name + outfile_appendix)
+result.save_results(target_folder + "/" + outfile_name + outfile_appendix)
+convert_to_csv_true(target_folder + "/" + outfile_name + outfile_appendix)
+convert_to_csv_smeared(target_folder + "/" + outfile_name + outfile_appendix)
+# convert_to_csv_pixel(target_folder + "/" + outfile_name + outfile_appendix)
