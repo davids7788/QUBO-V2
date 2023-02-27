@@ -1,5 +1,5 @@
 # Configuration file for `solve_qubo.py`
-The `solve_qubo.py` script takes a YAML configuration file as first input argument. 
+The `qubo_solve.py` script takes a YAML configuration file as first input argument. 
 It consists of the sections [ansatz](#ansatz), [solver](#solver), [qubo](#qubo) and 
 [bit flip optimisation](#bit%20flip%20optimisation).
 

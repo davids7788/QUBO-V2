@@ -1,5 +1,5 @@
 # Running Simplified Simulation
-The Simplified Simulations take a  .yaml file as input.
+The `simplified_simulation_LUXE.py` script takes a  .yaml file as input.
 This .yaml file is divided into the sections [detector](#detector), [dipole magnet](#dipole&20magnet) and 
 [settings](#settings). All values, but the dipole field are converted to SI-conform units.
 

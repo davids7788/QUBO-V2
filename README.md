@@ -20,13 +20,13 @@ costs of this combinatorial task, constraints on the creation of these Xplets ar
 pattern recognition task in the form of a Quadratic Unconstrained Binary Optimisation (QUBO) are set.
 Additionally, generator level Xplets from truth information are computed and saved into a single .npy file.
 To run the preselection the following arguments are needed:
-   * `configuration:` configuration of the preselection, see [here](docs/make_triplets_input.md)
+   * `configuration:` configuration of the preselection, see [here](docs/qubo_preparation_LUXE.md)
    * `tracking_data:` detector hit information in .csv similar [TrackML challenge](https://www.kaggle.com/c/trackml-particle-identification)
    * `geometry:` file of the detector configuration in .csv format
    * `save_to:` folder to which results are saved
 
 ```bash
-python qubo_preparation_simplified_LUXE.py configuration tracking_data geometry save_to
+python qubo_preparation_LUXE.py configuration tracking_data geometry save_to
 ```
 
 At the end of the preselection, plots can be created with truth information to check if parameters are set well and results 
