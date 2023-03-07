@@ -40,7 +40,7 @@ an integrated track reconstruction efficiency and fake rate is calculated on the
    * `qubo folder:` folder with a solved qubo (has a 9-digit number in the front by default)
 
 ```bash
-python qubo_solve.py [-h] [--config_file CONFIG_FILE] [--qubo_folder QUBO_FOLDER]
+python LUXE_qubo_solve.py [-h] [--config_file CONFIG_FILE] [--qubo_folder QUBO_FOLDER]
 
 ```
 

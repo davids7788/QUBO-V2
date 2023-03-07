@@ -3,7 +3,7 @@ from ROOT import *
 import numpy as np
 import sys
 sys.path.append("../src")
-sys.path.append("../src/preselection")
+sys.path.append("../src/pattern_building")
 sys.path.append("../src/pattern")
 from doublet import Doublet
 from triplet import Triplet
@@ -171,7 +171,7 @@ for xplet in gen_x:
     
 gStyle.SetPadTickY(0)
 
-canv = TCanvas("example", "preselection efficiency ", 800, 600)
+canv = TCanvas("example", "pattern_building efficiency ", 800, 600)
 
 gPad.SetTopMargin(0.15)
 h_frame = TH1F('frame', 'energy', len(edges) - 1, edges)

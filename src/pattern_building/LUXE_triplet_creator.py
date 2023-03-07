@@ -12,11 +12,11 @@ from pattern.triplet import Triplet
 from preselection.segment_manager import SegmentManager
 
 
-class TripletCreatorLUXE:
+class LUXETripletCreator:
     def __init__(self,
                  configuration: dict,
                  save_to_folder: str):
-        """Class for creating x_plets from detector hits
+        """Class for creating x_plets from LUXE detector hits
         :param configuration: information needed for the segments, delivered by loading yaml file as a nested
                python dictionary:
                 {

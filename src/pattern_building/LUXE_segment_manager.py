@@ -9,7 +9,7 @@ class SegmentManager:
                  configuration,
                  detector_geometry: str):
         """Class for handling segments for doublet and triplet creation
-        :param configuration: preselection configuration file
+        :param configuration: pattern_building configuration file
         :param detector_geometry: .csv detector layer file geometry file
         """
         self.mapping_criteria = configuration['doublet']
@@ -100,7 +100,7 @@ class SegmentManager:
         return False
 
     def segment_mapping_LUXE(self) -> None:
-        """Maps the segments according to the doublet preselection criteria. That means, that if there are hits inside
+        """Maps the segments according to the doublet pattern_building criteria. That means, that if there are hits inside
         the area, defined by the segment, that should be considered for creating doublets, a connection to the target
         segment is stored inside the segment mapping attribute.
         """
@@ -155,7 +155,7 @@ class SegmentManager:
     def is_compatible_with_target_LUXE_segment(self,
                                                source_segment: LUXEDetectorSegment,
                                                target_segment: LUXEDetectorSegment) -> bool:
-        """Takes two segments and checks if they are compatible with the preselection criteria.
+        """Takes two segments and checks if they are compatible with the pattern_building criteria.
         :param source_segment: segment from which the mapping starts
         :param target_segment: segment considered as a target
         :return:

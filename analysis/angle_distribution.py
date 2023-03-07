@@ -3,7 +3,7 @@ from ROOT import *
 import numpy as np
 import sys
 sys.path.append("../src")
-sys.path.append("../src/preselection")
+sys.path.append("../src/pattern_building")
 sys.path.append("../src/pattern")
 from doublet import Doublet
 from triplet import Triplet

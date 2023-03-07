@@ -71,7 +71,7 @@ class Solver:
         elif self.config["solver"]["algorithm"] == "QAOA":
             self.set_qaoa()
 
-        # Numpy Eigensolver does not need further preselection
+        # Numpy Eigensolver does not need further pattern_building
         elif self.config["algorithm"] == "Numpy Eigensolver":
             pass
         else:

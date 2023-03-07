@@ -12,7 +12,7 @@ from qubo.solver import Solver
 from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
 from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
-parser = argparse.ArgumentParser(description='QUBO preselection Simplified LUXE',
+parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('--config_file',

@@ -4,12 +4,12 @@ import argparse
 from pathlib import Path
 from track_reconstruction.create_gen_xplets import *
 
-from preselection.triplet_creator_LUXE import TripletCreatorLUXE
-from preselection.segment_manager import SegmentManager
-from preselection.qubo_coefficients import QuboCoefficients
-from preselection.plot_statistics import plot_coefficients_statistics
+from pattern_building.LUXE_triplet_creator import LUXETripletCreator
+from pattern_building.LUXE_segment_manager import SegmentManager
+from pattern_building.qubo_coefficients import QuboCoefficients
+from pattern_building.plot_statistics import plot_coefficients_statistics
 
-parser = argparse.ArgumentParser(description='QUBO preselection Simplified LUXE',
+parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('--config_file',
@@ -69,7 +69,7 @@ s_manager.create_LUXE_segments()
 s_manager.segment_mapping_LUXE()
 
 # Triplet creation
-triplet_creator = TripletCreatorLUXE(configuration, new_folder)
+triplet_creator = LUXETripletCreator(configuration, new_folder)
 triplet_creator.load_tracking_data(tracking_data, s_manager)
 triplet_creator.create_x_plets_LUXE(s_manager)
 triplet_creator.write_info_file()
