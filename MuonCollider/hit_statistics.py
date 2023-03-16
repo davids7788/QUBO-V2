@@ -25,5 +25,6 @@ with open(tracking_data_file, 'r') as file:
         data.append([float(r) if row.index(r) not in [time_index, hit_id_index] else r for r in row])
 
 
-plt.hist([float(entry[time_index]) for entry in data], bins=100)
+plt.hist([np.sqrt(float(entry[x_index])**2 + float(entry[x_index])**2) for entry in data], bins=100)
+plt.savefig("x-y_distribution.pdf")
 plt.show()

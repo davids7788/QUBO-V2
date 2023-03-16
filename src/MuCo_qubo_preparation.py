@@ -4,7 +4,7 @@ from pattern_building.MuCo_triplet_creator import MuCoTripletCreator
 parser = argparse.ArgumentParser(description='Muon Collider Pattern Builder',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--MuonColliderTrackerFile',
+parser.add_argument('--Muon_Collider_Tracker_File',
                     action='store',
                     type=str,
                     default=None,
@@ -18,7 +18,7 @@ parser.add_argument('--target_folder',
 
 
 args = parser.parse_args()
-tracking_file = args.MuonColliderTrackerFile
+tracking_file = args.Muon_Collider_Tracker_File
 target_folder = args.target_folder
 
 mu_co_creator = MuCoTripletCreator()
