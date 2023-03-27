@@ -1,0 +1,15 @@
+---
+detector:
+    radiation length: 220.0
+    rho: 2200.0
+    thickness: 0.000357
+    num pixel x : 1024
+    num pixel y : 512
+
+dipole magnet:
+    dipole field: [1.5]
+    dipole start: 1.434
+    dipole end: 2.672
+
+settings:
+    scattering: True

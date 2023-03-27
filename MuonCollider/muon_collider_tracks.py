@@ -20,8 +20,8 @@ def radial_distance(triplet):
     return np.sqrt(triplet.doublet_1.hit_1_position[0]**2 + triplet.doublet_1.hit_1_position[1]**2)
 
 
-for i in range(10):
-    prefix = f'/nfs/dust/luxe/user/spatarod/Muon-Collider/DPG2023/Muon{energy}/DLFiltered/event_{i}'
+for i in range(250):
+    prefix = f'/nfs/dust/luxe/user/spatarod/Muon-Collider/DPG2023-update/{energy}/{i}'
     triplet_list = np.load(f'{prefix}/triplet_list.npy', allow_pickle=True)
     for t_i in triplet_list:
         t_complete.append(t_i)
@@ -70,7 +70,20 @@ for i in range(10):
             full_tracks.append(f_track)
             
     for full_track in full_tracks:
-        tracks.append(full_track)    
+        count = 0
+        for triplet in full_track:
+            if triplet.doublet_1.hit_1_particle_key != 13:
+                count += 1
+        if full_track[-1].doublet_2.hit_1_particle_key != 13:
+            count += 1
+        if full_track[-1].doublet_2.hit_2_particle_key != 13:
+            count += 1
+        if count > 3:
+            for triplet in full_track:
+                combinatorial_triplets.add(triplet)
+                   
+        else:
+            tracks.append(full_track)    
         
     for triplet, result in zip(triplet_list, qubo_result["computed solution vector"]):
         if result == 1:
@@ -81,30 +94,32 @@ for i in range(10):
 fig = plt.figure(figsize=(12,12), dpi=500)
 ax = fig.add_subplot()
  
-# for triplet in combinatorial_triplets:
-#     ax.plot([triplet.doublet_1.hit_1_position[0],
-#              triplet.doublet_1.hit_2_position[0],
-#              triplet.doublet_2.hit_2_position[0]], 
-#             [triplet.doublet_1.hit_1_position[1],
-#              triplet.doublet_1.hit_2_position[1],
-#              triplet.doublet_2.hit_2_position[1]], marker="o", c="k", mfc='k', markersize=12, alpha=0.7)
-    
-# for track in tracks:
-#     for triplet in track:
-#         ax.plot([triplet.doublet_1.hit_1_position[0],
-#                  triplet.doublet_1.hit_2_position[0],
-#                  triplet.doublet_2.hit_2_position[0]], 
-#                 [triplet.doublet_1.hit_1_position[1],
-#                  triplet.doublet_1.hit_2_position[1],
-#                  triplet.doublet_2.hit_2_position[1]], marker="o", c="blue", mfc='red', markersize=12)
-
-for triplet in t_complete:
+for triplet in combinatorial_triplets:
     ax.plot([triplet.doublet_1.hit_1_position[0],
              triplet.doublet_1.hit_2_position[0],
              triplet.doublet_2.hit_2_position[0]], 
             [triplet.doublet_1.hit_1_position[1],
              triplet.doublet_1.hit_2_position[1],
-             triplet.doublet_2.hit_2_position[1]], marker="o", c="blue", mfc='red', markersize=12)
+             triplet.doublet_2.hit_2_position[1]], marker="o", c="k", mfc='k', markersize=12, alpha=0.7)
+    
+for i, track in enumerate(tracks):
+    if i > 20:
+        break
+    for triplet in track:
+        ax.plot([triplet.doublet_1.hit_1_position[0],
+                 triplet.doublet_1.hit_2_position[0],
+                 triplet.doublet_2.hit_2_position[0]], 
+                [triplet.doublet_1.hit_1_position[1],
+                 triplet.doublet_1.hit_2_position[1],
+                 triplet.doublet_2.hit_2_position[1]], marker="o", c="blue", mfc='red', markersize=12)
+
+# for triplet in t_complete:
+#     ax.plot([triplet.doublet_1.hit_1_position[0],
+#              triplet.doublet_1.hit_2_position[0],
+#              triplet.doublet_2.hit_2_position[0]], 
+#             [triplet.doublet_1.hit_1_position[1],
+#              triplet.doublet_1.hit_2_position[1],
+#              triplet.doublet_2.hit_2_position[1]], marker="o", c="blue", mfc='red', markersize=12)
 
 
 legend_elements = [Line2D([0], [0], marker='o', mfc='r', color='w', label='tracks', markersize=12),
@@ -118,7 +133,7 @@ plt.xlabel("x [mm]", fontsize=20)
 plt.ylabel("y [mm]", fontsize=20)
 plt.xlim(-135, 135)
 plt.ylim(-135, 135)
-plt.title(f'$E_{{muon}}$ = {energy}, track reconstruction efficiency for 10 events: {100 * np.around(len(tracks) / 10, 2)} %', fontsize=20, loc='left') 
+plt.title(f'$E_{{muon}}$ = {energy}, track reconstruction efficiency for 250 events: {100 * np.around(len(tracks) / 250, 3)} %', fontsize=20, loc='left') 
 
 plt.savefig(f"reconstructed_tracks_{energy}.pdf")
 plt.savefig(f"reconstructed_tracks_{energy}.jpg")

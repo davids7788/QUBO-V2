@@ -6,6 +6,9 @@ venv
 virtualenv
 submit/
 
+/MuonCollider/*.jpg
+/MuonCollider/*.pdf
+/MuonCollider/*.C
 /analysis/*.pdf
 /analysis/*.png
 

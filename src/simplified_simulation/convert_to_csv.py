@@ -90,8 +90,8 @@ def convert_to_csv_pixel(path_to_file):
         file_name = '_'.join(file.split("_")[0:-2]) + "_fl"
 
     # every file gets a folder for train images data -> up to 72 per simulation
-    if not os.path.isdir(f"{folder}/train_images_NN/" + file_name):
-        os.mkdir(f"{folder}/train_images_NN/" + file_name)
+    # if not os.path.isdir(f"{folder}/train_images_NN/" + file_name):
+    #     os.mkdir(f"{folder}/train_images_NN/" + file_name)
 
     if not os.path.isdir(f"{folder}/occupancy/" + file_name):
         os.mkdir(f"{folder}/occupancy/" + file_name)
@@ -267,27 +267,27 @@ def convert_to_csv_pixel(path_to_file):
                   int(1 / correction_factor * plane.num_bins[1])],
             range=[[plane.limits_x[0], plane.limits_x[1]],
                    [plane.limits_y[0], plane.limits_y[1]]])
-
-        plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[0], plane.limits_y[0]], "k", linewidth=15)
-        plt.vlines(plane.limits_x[0], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15)
-        plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[1], plane.limits_y[1]], "k", linewidth=15)
-        plt.vlines(plane.limits_x[1], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15,
-                   label="detector edges")
-        plt.xlabel("x [m]", fontsize=18)
-        plt.ylabel("y [m]", fontsize=18)
-        plt.xticks(fontsize=18)
-        plt.yticks(fontsize=18)
-        plt.xlim([plane.limits_x[0], plane.limits_x[1]])
-        plt.ylim([plane.limits_y[0], plane.limits_y[1]])
-        plt.legend(loc="best", fontsize=18)
-        cbar = plt.colorbar()
-        cbar.set_label(label, size=18)
-        cbar.ax.tick_params(labelsize=18)
-        plt.title(r"Pixel occupancy", fontsize=18, loc="left")
-
-        plt.savefig(f"{folder}/occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
-                    "_single_pixel_hit.pdf")
         plt.close()
+        # plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[0], plane.limits_y[0]], "k", linewidth=15)
+        # plt.vlines(plane.limits_x[0], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15)
+        # plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[1], plane.limits_y[1]], "k", linewidth=15)
+        # plt.vlines(plane.limits_x[1], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15,
+        #            label="detector edges")
+        # plt.xlabel("x [m]", fontsize=18)
+        # plt.ylabel("y [m]", fontsize=18)
+        # plt.xticks(fontsize=18)
+        # plt.yticks(fontsize=18)
+        # plt.xlim([plane.limits_x[0], plane.limits_x[1]])
+        # plt.ylim([plane.limits_y[0], plane.limits_y[1]])
+        # plt.legend(loc="best", fontsize=18)
+        # cbar = plt.colorbar()
+        # cbar.set_label(label, size=18)
+        # cbar.ax.tick_params(labelsize=18)
+        # plt.title(r"Pixel occupancy", fontsize=18, loc="left")
+
+        # plt.savefig(f"{folder}/occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
+        #             "_single_pixel_hit.pdf")
+        # plt.close()
 
         # flatten to make a histogram out of the data
         flattened_2d_single = h_single.reshape(1, int(1 / correction_factor * plane.num_bins[0]) *
@@ -311,8 +311,7 @@ def convert_to_csv_pixel(path_to_file):
                         h_single[j, k] = 1
 
         # save as train image for NN
-        np.save(f"{folder}/train_images_NN/" + file + "/single_pixel_hit_" +
-                plane_name.replace(" ", "_"), h_single)
+        # np.save(f"{folder}/train_images_NN/{file}_single_pixel_hit_{plane_name.replace(" ", "_")}", h_single)
 
         # net triggered pixels
         net_single_pixel_hits_occupancy.update({f"Net single hits on {plane_name}":
@@ -329,24 +328,24 @@ def convert_to_csv_pixel(path_to_file):
                                                          range=[[plane.limits_x[0], plane.limits_x[1]],
                                                                 [plane.limits_y[0], plane.limits_y[1]]])
 
-        plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[0], plane.limits_y[0]], "k", linewidth=15)
-        plt.vlines(plane.limits_x[0], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15)
-        plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[1], plane.limits_y[1]], "k", linewidth=15)
-        plt.vlines(plane.limits_x[1], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15,
-                   label="detector edges")
-        plt.xlabel("x [m]", fontsize=18)
-        plt.ylabel("y [m]", fontsize=18)
-        plt.xticks(fontsize=18)
-        plt.yticks(fontsize=18)
-        plt.xlim([plane.limits_x[0], plane.limits_x[1]])
-        plt.ylim([plane.limits_y[0], plane.limits_y[1]])
-        plt.legend(loc="best", fontsize=18)
-        cbar = plt.colorbar()
-        cbar.set_label(label, size=18)
-        cbar.ax.tick_params(labelsize=18)
-        plt.title(r"Pixel occupancy", fontsize=18, loc="left")
-        plt.savefig(f"{folder}/occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
-                    "_multi_pixel_hit.pdf")
+        # plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[0], plane.limits_y[0]], "k", linewidth=15)
+        # plt.vlines(plane.limits_x[0], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15)
+        # plt.plot([plane.limits_x[0], plane.limits_x[1]], [plane.limits_y[1], plane.limits_y[1]], "k", linewidth=15)
+        # plt.vlines(plane.limits_x[1], plane.limits_y[0], plane.limits_y[1], "k", linewidth=15,
+        #            label="detector edges")
+        # plt.xlabel("x [m]", fontsize=18)
+        # plt.ylabel("y [m]", fontsize=18)
+        # plt.xticks(fontsize=18)
+        # plt.yticks(fontsize=18)
+        # plt.xlim([plane.limits_x[0], plane.limits_x[1]])
+        # plt.ylim([plane.limits_y[0], plane.limits_y[1]])
+        # plt.legend(loc="best", fontsize=18)
+        # cbar = plt.colorbar()
+        # cbar.set_label(label, size=18)
+        # cbar.ax.tick_params(labelsize=18)
+        # plt.title(r"Pixel occupancy", fontsize=18, loc="left")
+        # plt.savefig(f"{folder}/occupancy/" + file_name + "/" + plane_name.replace(" ", "_") +
+        #             "_multi_pixel_hit.pdf")
         plt.close()
 
         # flatten to make a histogram out of the data
@@ -370,8 +369,8 @@ def convert_to_csv_pixel(path_to_file):
                         h_multi[j, k] = 1
 
         # save as train image for NN
-        np.save(f"{folder}/train_images_NN/" + file_name + "/multi_pixel_hit_" + plane_name.replace(" ", "_"),
-                h_multi)
+        # np.save(f"{folder}/train_images_NN/" + file_name + "/multi_pixel_hit_" + plane_name.replace(" ", "_"),
+        #         h_multi)
 
         # net triggered pixels
         net_multi_pixel_hits_occupancy.update({f"Net multi hits on {plane_name}":
@@ -381,8 +380,8 @@ def convert_to_csv_pixel(path_to_file):
 
         # writing csv files to make the data set compatible with the ML track challenge
     hit_id = 0
-    with open(f'{folder}/pixel/single_pixel_hits_' + file_name + '.csv', 'w', newline='') as csv_file:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID']
+    with open(f'{folder}/pixel/single_pixel_hits_{file_name}.csv', 'w', newline='') as csv_file:
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for key, hit in zip(single_hits_pixel_for_tracking.keys(), single_hits_pixel_for_tracking.values()):
@@ -391,12 +390,14 @@ def convert_to_csv_pixel(path_to_file):
                              'y': hit[1],
                              'z': hit[2],
                              'layer_ID': key.split("_")[0],
-                             'particle_ID': key.split("_")[1]})
+                             'particle_ID': key.split("_")[1],
+                             'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]][key.split("_")[0]])})                           
+
             hit_id += 1
 
     hit_id = 0
-    with open(f'{folder}/pixel/multi_pixel_hits_' + file_name + '.csv', 'w', newline='') as csv_file:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID']
+    with open(f'{folder}/pixel/multi_pixel_hits_{file_name}.csv', 'w', newline='') as csv_file:
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for key, hit in zip(multi_hits_pixel_for_tracking.keys(), multi_hits_pixel_for_tracking.values()):
@@ -405,7 +406,8 @@ def convert_to_csv_pixel(path_to_file):
                              'y': hit[1],
                              'z': hit[2],
                              'layer_ID': key.split("_")[0],
-                             'particle_ID': key.split("_")[1]})
+                             'particle_ID': key.split("_")[1],
+                             'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]][key.split("_")[0]])})
             hit_id += 1
 
     np.save(f"{folder}/occupancy/occupancy_info_" + file_name,

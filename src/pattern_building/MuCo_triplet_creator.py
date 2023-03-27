@@ -173,7 +173,7 @@ class MuCoTripletCreator:
                         continue
                     if hit_1[self.pdg_index] == hit_2[self.pdg_index] == 13: 
                         muon_match = True
-                    if abs(float(hit_2[self.time_index]) - float(hit_1[self.time_index])) > 0.12:
+                    if abs(float(hit_2[self.time_index]) - float(hit_1[self.time_index])) > 0.09:
                         rejected_doublet_because_of_time += 1
                         continue
                     if muon_match:
@@ -186,10 +186,7 @@ class MuCoTripletCreator:
         plt.figure(figsize=(12,12))
         for d in doublets_plotting:
             plt.plot(d[0], d[1], marker="o", c="blue", mfc='red', markersize=12)
-            
-        plt.savefig("test.pdf")
-        exit()
-        
+                    
         if self.muon_hits > 0:
             print(f"Found correct doublets: {found_correct_doublets} --> "
                   f"{100 * np.around(found_correct_doublets / (self.muon_hits / 8 * 7), 2)} %")
