@@ -141,4 +141,5 @@ leg.SetTextSize(0.05)
 # leg.AddEntry(ff2, "a #cdot exp(#xi)", "p");
 leg.Draw();
 
-canvas.SaveAs(f"doublet_triplet_multiplicities_vs_xi.pdf")                      
+canvas.SaveAs(f"PAPER_doublet_triplet_multiplicities_vs_xi.pdf")
+canvas.SaveAs(f"PAPER_doublet_triplet_multiplicities_vs_xi.C")  

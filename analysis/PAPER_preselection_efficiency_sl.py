@@ -259,4 +259,5 @@ leg.Draw()
 
 
 
-canv.SaveAs(f"preselection_efficiency_{xi}.pdf")
+canv.SaveAs(f"PAPER_preselection_efficiency_xi_{xi}.pdf")
+canv.SaveAs(f"PAPER_preselection_efficiency_xi_{xi}.C")

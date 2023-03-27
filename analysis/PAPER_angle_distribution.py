@@ -212,7 +212,9 @@ leg.SetTextSize(0.05)
 leg.Draw()
 
 
-canv.SaveAs(f"doublet_angles_{xi}.pdf")
+canv.SaveAs(f"PAPER_doublet_angles_xi_{xi}.pdf")
+canv.SaveAs(f"PAPER_doublet_angles_xi_{xi}.C")
+
 if canv: 
     canv.Close()
     gSystem.ProcessEvents()
@@ -258,5 +260,6 @@ leg.SetFillColor(0)
 leg.SetTextSize(0.05)
 leg.Draw()
 
-canv2.SaveAs(f"triplet_angles_{xi}.pdf")
+canv2.SaveAs(f"PAPER_triplet_angles_xi_{xi}.pdf")
+canv2.SaveAs(f"PAPER_triplet_angles_xi_{xi}.C")
 
