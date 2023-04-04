@@ -11,7 +11,7 @@ a tracking detector. To run the simulation the following arguments are needed:
    * `target folder:` folder to which results are saved
 
 ```bash
-python simplified_simulation_LUXE.py [-h] [--config_file CONFIG_FILE] [--ptarmigan_file PTARMIGAN_FILE] [--geometry_file GEOMETRY_FILE] [--target_folder TARGET_FOLDER]
+python LUXE_simplified_simulation.py [-h] [--config_file CONFIG_FILE] [--ptarmigan_file PTARMIGAN_FILE] [--geometry_file GEOMETRY_FILE] [--target_folder TARGET_FOLDER]
 ```
 
 ## Preselection and QUBO-building
@@ -26,7 +26,7 @@ To run the preselection the following arguments are needed:
    * `target folder:` folder to which results are saved
 
 ```bash
-python qubo_preparation_simplified_LUXE.py [-h] [--config_file CONFIG_FILE] [--tracking_data TRACKING_DATA] [--geometry_file GEOMETRY_FILE] [--target_folder TARGET_FOLDER]
+python LUXE_qubo_preparation.py [-h] [--config_file CONFIG_FILE] [--tracking_data TRACKING_DATA] [--geometry_file GEOMETRY_FILE] [--target_folder TARGET_FOLDER]
 ```
 
 At the end of the preselection, plots can be created with truth information to check if parameters are set well and results 
