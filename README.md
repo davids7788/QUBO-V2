@@ -37,7 +37,7 @@ The qubo is solved and results are saved into a .npy file with a dictionary with
 solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
 an integrated track reconstruction efficiency and fake rate is calculated on the fly The following arguments are needed:
    * `configuration:` configuration of the qubo, see [here](docs/qubo_solve_LUXE_input.md) 
-   * `qubo folder:` folder with a solved qubo (has a 9-digit number in the front by default)
+   * `qubo folder:` folder with a prepared triplet list
 
 ```bash
 python LUXE_qubo_solve.py [-h] [--config_file CONFIG_FILE] [--qubo_folder QUBO_FOLDER]
