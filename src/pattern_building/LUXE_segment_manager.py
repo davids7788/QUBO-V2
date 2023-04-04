@@ -1,7 +1,7 @@
 import csv
 
 from math_functions.geometry import x0_at_z_ref
-from preselection.segment import LUXEDetectorSegment
+from pattern_building.LUXE_segment import LUXEDetectorSegment
 
 
 class SegmentManager:

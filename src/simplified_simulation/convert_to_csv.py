@@ -80,21 +80,14 @@ def convert_to_csv_pixel(path_to_file):
 
     if not os.path.isdir(f"{folder}/occupancy"):
         os.mkdir(f"{folder}/occupancy")
-    if not os.path.isdir(f"{folder}/train_images_NN"):
-        os.mkdir(f"{folder}/train_images_NN")
+    # if not os.path.isdir(f"{folder}/train_images_NN"):
+    #     os.mkdir(f"{folder}/train_images_NN")
     if not os.path.isdir(f"{folder}/pixel"):
         os.mkdir(f"{folder}/pixel")
     if "sl" in file:
         file_name = '_'.join(file.split("_")[0:-2]) + "_sl"
     if "fl" in file:
         file_name = '_'.join(file.split("_")[0:-2]) + "_fl"
-
-    # every file gets a folder for train images data -> up to 72 per simulation
-    # if not os.path.isdir(f"{folder}/train_images_NN/" + file_name):
-    #     os.mkdir(f"{folder}/train_images_NN/" + file_name)
-
-    if not os.path.isdir(f"{folder}/occupancy/" + file_name):
-        os.mkdir(f"{folder}/occupancy/" + file_name)
 
     # single: one particle triggers exactly one pixel
     # multi: one particle may trigger more than one pixel
@@ -252,11 +245,11 @@ def convert_to_csv_pixel(path_to_file):
 
         # histogram part
         if "sl" in file:
-            label = r"occupancy / $2^6$ pixel"
             correction_factor = 2 ** 3
+            #     label = r"occupancy / $2^6$ pixel"
         elif "fl" in file:
-            label = r"occupancy / pixel"
             correction_factor = 1
+            #     label = r"occupancy / pixel"
 
         # single pixel hit case
         plt.figure(figsize=(16, 9), dpi=200)
@@ -391,7 +384,8 @@ def convert_to_csv_pixel(path_to_file):
                              'z': hit[2],
                              'layer_ID': key.split("_")[0],
                              'particle_ID': key.split("_")[1],
-                             'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]][key.split("_")[0]])})                           
+                             'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]]
+                                                     [key.split("_")[0]])})
 
             hit_id += 1
 
@@ -407,7 +401,8 @@ def convert_to_csv_pixel(path_to_file):
                              'z': hit[2],
                              'layer_ID': key.split("_")[0],
                              'particle_ID': key.split("_")[1],
-                             'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]][key.split("_")[0]])})
+                             'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]]
+                                                     [key.split("_")[0]])})
             hit_id += 1
 
     np.save(f"{folder}/occupancy/occupancy_info_" + file_name,

@@ -9,7 +9,7 @@ from math_functions.geometry import x0_at_z_ref
 from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
-from preselection.segment_manager import SegmentManager
+from pattern_building.LUXE_segment_manager import SegmentManager
 
 
 class LUXETripletCreator:

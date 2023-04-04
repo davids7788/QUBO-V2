@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from preselection.qubo_coefficients import QuboCoefficients
+from pattern_building.qubo_coefficients import QuboCoefficients
 
 
 def plot_coefficients_statistics(num_particles: float,

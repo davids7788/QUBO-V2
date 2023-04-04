@@ -5,7 +5,7 @@ from pattern.triplet import Triplet
 from pattern.doublet import Doublet
 from utility.time_tracking import hms_string
 from math_functions.geometry import w_default_angle_based_quality, w_default_angle_based_interaction
-from preselection.segment_manager import SegmentManager
+from pattern_building.LUXE_segment_manager import SegmentManager
 
 
 class QuboCoefficients:

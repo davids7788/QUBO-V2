@@ -1,5 +1,6 @@
 import yaml
 import argparse
+import time
 
 from simplified_simulation.ptarmigan import PtargmiganSimData
 from simplified_simulation.experimental_results_MC_toy import ExperimentalResults
@@ -7,6 +8,7 @@ from simplified_simulation.toy_experiment import MCToyExperiment
 from simplified_simulation.detector_plane import DetectorPlane
 from simplified_simulation.dipole_magnet import DipoleMagnet
 from simplified_simulation.convert_to_csv import *
+from utility.time_tracking import hms_string
 
 parser = argparse.ArgumentParser(description='Simplified Simulation',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -42,6 +44,8 @@ geometry = parser_args.geometry_file
 target_folder = parser_args.target_folder
 
 outfile_name = ".".join(ptarmigan.split("/")[-1].split(".")[0:-1])
+print("\nStarting simulation...")
+print(f"Loading file {ptarmigan}")
 
 with open(config_file) as f:
     input_file = yaml.safe_load(f)
@@ -101,9 +105,25 @@ Experiment_1 = MCToyExperiment(source,
                                result,
                                scattering=input_file["settings"]["scattering"])
 
+time_simulation_start= time.time()
 Experiment_1.start_experiment()
+time_simulation_end = time.time()
+print(f"Time to run simulation: {hms_string(time_simulation_end - time_simulation_start)}")
 
 result.save_results(target_folder + "/" + outfile_name + outfile_appendix)
+print("Simulation finished!\n")
+
+time_converting_start = time.time()
+print("Converting to .csv files:")
+print("Processing true hits...")
 convert_to_csv_true(target_folder + "/" + outfile_name + outfile_appendix)
+
+print("Smearing hits...")
 convert_to_csv_smeared(target_folder + "/" + outfile_name + outfile_appendix)
+
+print("Calculating mid of fired pixels...\n")
 convert_to_csv_pixel(target_folder + "/" + outfile_name + outfile_appendix)
+
+print("Converting finished successfully!")
+time_converting_end = time.time()
+print(f"Time to convert results to .csv files: {hms_string(time_converting_end - time_converting_start)}")
