@@ -5,7 +5,7 @@ This framework provides a chain of scripts for track reconstruction at [LUXE](ht
 ## Simplified simulation
 A simplified simulation is employed to compute the path of positrons through a dipole magnet and the interaction with 
 a tracking detector. To run the simulation the following arguments are needed:
-   * `config:` configuration of the simulation, see [here](docs/simplified_simulation_input.md)
+   * `config:` configuration of the simulation, see [here](docs/simplified_simulation_LUXE_input.md)
    * `particles:` particles (positrons) from output file of ptarmigan in .h5 format, see [here](https://github.com/tgblackburn)
    * `geometry:` file of the detector configuration in .csv format
    * `target folder:` folder to which results are saved
@@ -36,7 +36,7 @@ make sense.
 The qubo is solved and results are saved into a .npy file with a dictionary with various information about the 
 solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
 an integrated track reconstruction efficiency and fake rate is calculated on the fly The following arguments are needed:
-   * `config:` 
+   * `configuration:` configuration of the qubo, see [here](docs/qubo_LUXE.md) 
    * `qubo folder:` folder with a solved qubo (has a 9-digit number in the front by default)
 
 ```bash
