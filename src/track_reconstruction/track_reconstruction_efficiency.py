@@ -3,19 +3,19 @@ import numpy as np
 from math import floor
 
 
-def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str):
+def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
+                                                    gen_xplet_file: str):
     """Takes a reco Xplet file and looks for the corresponding gen_Xplet file and computes the
     track reconstruction efficiency. The metrics are:
             efficiency: #matched tracks / #generated tracks
-            fake rate: # fake tracks/ #reconstructed tracks
+            fake rate: #fake tracks/ #reconstructed tracks
     with a matched track being a track in which the majority of hits belong to a single particle. A fake track is
     defined as not a matched track.
     :param reco_xplet_file: string
+    :param gen_xplet_file: string
     """
     reco_xplets = np.load(reco_xplet_file, allow_pickle=True)
-    gen_prefix = reco_xplet_file.split("/")[-3].split("-")[0]
-    gen_xplet = np.load("/".join(reco_xplet_file.split("/")[0:-3]) + "/" + gen_prefix + "_gen_xplet_list.npy",
-                        allow_pickle=True)
+    gen_xplet = np.load(gen_xplet_file, allow_pickle=True)
 
     matched_tracks = 0
     fake_tracks = 0

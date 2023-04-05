@@ -128,6 +128,6 @@ def reco_xplets_simplified_LUXE(triplets,
         reco_ambiguity_solved = selected_tracks
 
     print(f"Number of reco Xplets after ambiguity solving: {len(reco_ambiguity_solved)}\n"
-          f"Saving ambiguity solved Xplets to file {save_folder}/reco_xplet_list_ambiguity_solved")
+          f"Saving ambiguity solved Xplets to file {save_folder}/reco_xplet_list_ambiguity_solved.npy")
 
     np.save(f"{save_folder}/reco_xplet_list_ambiguity_solved", reco_ambiguity_solved)

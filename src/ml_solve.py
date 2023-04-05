@@ -14,17 +14,19 @@ from tensorflow.keras.layers import Dense, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras import backend
+from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
+from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
 from sklearn.metrics import roc_curve, auc
 
-# train_data_list = ["10", "11", "12", "13", "14", "15", "16", "17"]
-# val_data_list = ["18", "19"]
+train_data_list = ["10", "11", "12", "13", "14", "15", "16", "17"]
+val_data_list = ["18", "19"]
 # test_data_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09"]
 
 xi = 5.0
-train_data_list = ["10", "11"]
-val_data_list = ["18"]
-test_data_list = ["00"]
+# train_data_list = ["10", "11", "12", "13", "14"]
+# val_data_list = ["18"]
+# test_data_list = ["00"]
 
 directory = "../../qubo_ml_datasets/xi_5"
 files_in_directory = os.listdir(directory)
@@ -37,7 +39,8 @@ print(f"Starting ml_solve for xi={xi}:")
 
 training_samples = []
 validation_samples = []
-test_samples = []
+test_samples = ["../../qubo_ml_datasets/xi_7/e0gpc_7.0_0000_sl-example/triplet_list.npy"]
+
 
 for folder in files_in_directory:
     if not os.path.isdir(f"{directory}/{folder}"):
@@ -46,8 +49,8 @@ for folder in files_in_directory:
         training_samples.append(f"{directory}/{folder}/triplet_list.npy")
     if folder.split("_")[2][2:] in val_data_list:
         validation_samples.append(f"{directory}/{folder}/triplet_list.npy")
-    if folder.split("_")[2][2:] in test_data_list:
-        test_samples.append(f"{directory}/{folder}/triplet_list.npy")
+    # if folder.split("_")[2][2:] in test_data_list:
+    #     test_samples.append(f"{directory}/{folder}/triplet_list.npy")
 
 print("\nSample(s) used for training:")
 for sample in training_samples:
@@ -63,7 +66,7 @@ for sample in test_samples:
 def extract_feature_vector(triplet):
     interactions = list(triplet.interactions.values())
     connections = [0]
-    conflicts = [0]
+    conflicts = [1]
     for value in interactions:
         if value < 0:
             connections.append(value)
@@ -72,12 +75,11 @@ def extract_feature_vector(triplet):
     quality = triplet.quality
 
     return [triplet.doublet_1.hit_1_position[0],
-            quality,
+            100 * quality,
             min(connections),
             max(connections),
-            len(connections) - 1,
-            interactions.count(1)]
-
+            1 / (len(connections)),
+            1 / (len(conflicts))]
 
 train_input_labels = []
 train_input_feature_vector = []
@@ -87,6 +89,7 @@ val_input_feature_vector = []
 
 test_input_labels = []
 test_input_feature_vector = []
+test_triplets_complete = []
 
 
 for train_sample in training_samples:
@@ -111,6 +114,7 @@ for test_sample in test_samples:
     test_file = np.load(test_sample, allow_pickle=True)
     for t in test_file:
         test_input_feature_vector.append(extract_feature_vector(t))
+        test_triplets_complete.append(t)
         if t.is_correct_match():
             test_input_labels.append(1)
         else:
@@ -157,7 +161,7 @@ def create_model(optimizer,
 
 # specifying parameters for optimizer
 LR = 1e-3
-EPOCHS = 5
+EPOCHS = 100
 DECAY = LR / EPOCHS     # in some cases LR / EPOCHS might be useful
 BETA_1 = 0.9
 BETA_2 = 0.99
@@ -178,8 +182,8 @@ print('############################################################', '\n')
 
 # model loss
 
-file_path_val_loss = 'weights_best_val_loss.h5'
-file_path_val_accuracy = 'weights_best_val_accuracy.h5'
+file_path_val_loss = f"{new_folder}/weights_best_val_loss.h5"
+file_path_val_accuracy = f"{new_folder}/weights_best_val_accuracy.h5"
 
 start = time.time()
 classifier = create_model(adam,
@@ -236,7 +240,7 @@ plt.ylabel('Accuracy')
 plt.xlabel('Epoch')
 plt.legend(['Train', 'Test'], loc='best')
 plt.savefig(f"{new_folder}/model_history-model accuracy")
-plt.show()
+# plt.show()
 
 # Plot training & validation loss values
 plt.figure()
@@ -247,7 +251,7 @@ plt.ylabel('Loss')
 plt.xlabel('Epoch')
 plt.legend(['Train', 'Val'], loc='best')
 plt.savefig(f"{new_folder}/model_history-model accuracy")
-plt.show()
+# plt.show()
 
 print(f'elapsed time: {hms_string(end - start)}')
 
@@ -259,9 +263,9 @@ loaded_model = model_from_json(loaded_model_json)
 # load weights into new model
 
 loaded_model.load_weights(f"{new_folder}/weights_best_val_loss.h5")
-predictions = loaded_model.predict(train_input_feature_vector)
-fpr, tpr, thresholds = roc_curve(test_input_feature_vector,
-                                 test_input_labels[:, 1])
+predictions = loaded_model.predict(test_input_feature_vector)
+fpr, tpr, thresholds = roc_curve(test_input_labels,
+                                 predictions[:, 1])
 roc_auc = auc(fpr, tpr)
 
 plt.figure()
@@ -281,4 +285,25 @@ plt.plot(fpr, tpr, color='g',
          lw=2, alpha=.8)
 
 plt.legend(loc="best")
-plt.show()
+# plt.show()
+
+# predictions
+plt.figure()
+plt.hist(predictions[:, 1], bins=50)
+plt.xlabel('Prediction')
+plt.ylabel('Counts')
+plt.legend(loc="lower right")
+plt.savefig(f"{new_folder}/predictions")
+
+# Reconstruction
+kept_triplets = []
+for triplets, prediction in zip(test_triplets_complete, predictions[:, 1]):
+    if prediction > 0.5:
+        kept_triplets.append(triplets)
+
+reco_xplets_simplified_LUXE(kept_triplets, new_folder, fit="chi squared lin track")
+# track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy",
+#                                                 "../../qubo_ml_datasets/xi_5/e0gpc_5.0_0000_sl_gen_xplet_list.npy")
+
+track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy",
+                                                "../../qubo_ml_datasets/xi_7/e0gpc_7.0_0000_sl_gen_xplet_list.npy")
