@@ -13,7 +13,12 @@ ROOT.gROOT.LoadMacro("macros/LuxeLabels.C")
 
 SetLuxeStyle()
 
-gen_x = np.load("/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase-0/gpc/7.0/e0gpc_7.0_0000_sl_gen_xplet_list.npy", allow_pickle=True)[()]
+gen_x = []
+for i in range(10):
+    gen_x_single = np.load(f"/nfs/dust/luxe/user/spatarod/towards_paper/e-laser/phase"               
+                           f"-0/gpc/7.0/e0gpc_7.0_000{i}_sl_gen_xplet_list.npy", allow_pickle=True)[()]
+    for g in gen_x_single:
+        gen_x.append(g)
 
 xi = 7
 
@@ -104,7 +109,7 @@ for xplet in gen_x:
     except:
         pass
 
-    if d1.energy_1 > 3:
+    if d1.energy_1 < 3:
         doublet_angles_low_energy.Fill((d1.hit_2_position[0] - d1.hit_1_position[0]) / x0_at_z_ref(d1.hit_1_position[0],
                                                                                         d1.hit_2_position[0],
                                                                                         d1.hit_1_position[2],
@@ -115,7 +120,7 @@ for xplet in gen_x:
                                                                                         d1.hit_1_position[2],
                                                                                         d1.hit_2_position[2])) 
     
-    if d2.energy_1 > 3:
+    if d2.energy_1 < 3:
         doublet_angles_low_energy.Fill((d2.hit_2_position[0] - d2.hit_1_position[0]) / x0_at_z_ref(d2.hit_1_position[0],
                                                                                        d2.hit_2_position[0],
                                                                                        d2.hit_1_position[2],
@@ -126,7 +131,7 @@ for xplet in gen_x:
                                                                                         d2.hit_1_position[2],
                                                                                         d2.hit_2_position[2]))  
         
-    if d3.energy_1 > 3:
+    if d3.energy_1 < 3:
         doublet_angles_low_energy.Fill((d3.hit_2_position[0] - d3.hit_1_position[0]) / x0_at_z_ref(d3.hit_1_position[0],
                                                                                        d3.hit_2_position[0],
                                                                                        d3.hit_1_position[2],
