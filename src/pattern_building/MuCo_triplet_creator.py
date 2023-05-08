@@ -7,7 +7,6 @@ from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from random import randint
 
 
@@ -110,8 +109,6 @@ class MuCoTripletCreator:
             print(f"{self.muon_hits} muon hits found")
             print(f"Number of expected signal doublets: {self.muon_hits / 8 * 7}")
             print(f"Number of expected signal triplets: {self.muon_hits / 8 * 6}")
-                 
-                
 
     def create_doublet(self,
                        first_hit: list[float],
@@ -124,7 +121,7 @@ class MuCoTripletCreator:
         """
         first_hit_particle_key = first_hit[self.pdg_index]
         if first_hit_particle_key != 13:
-            first_hit_particle_key  = randint(14, 1e16)
+            first_hit_particle_key = randint(14, 1e16)
         second_hit_particle_key = second_hit[self.pdg_index]
         if second_hit_particle_key != 13:
             second_hit_particle_key  = randint(14, 1e16)

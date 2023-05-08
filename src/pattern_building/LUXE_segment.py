@@ -10,7 +10,7 @@ class LUXEDetectorSegment:
                  y_start: float,
                  y_end: float,
                  z_position: float):
-        """Manages segments of the detector layers
+        """Manages a segment of the LUXE detector layers.
         :param name: unique identifier for the segment
         :param layer: using layer numbering 0-3 for simplified LUXE and 0-7 for full setup
         :param x_start: start of segment in x [m]
@@ -41,7 +41,6 @@ class LUXEDetectorSegment:
         :return:
             True if coordinate in segment, else False
         """
-        print("adweqwewqe")
         return w_is_in_segment(x,
                                y,
                                z,
