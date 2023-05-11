@@ -5,8 +5,8 @@ from pathlib import Path
 from track_reconstruction.create_gen_xplets import *
 
 from pattern_building.LUXE_triplet_creator import LUXETripletCreator
-from pattern_building.LUXE_segment_manager import SegmentManager
-from pattern_building.qubo_coefficients import QuboCoefficients
+from pattern_building.LUXE_segment_manager import LUXESegmentManager
+from pattern_building.LUXE_qubo_coefficients import QuboCoefficients
 from pattern_building.plot_statistics import plot_coefficients_statistics
 
 parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
@@ -63,8 +63,8 @@ print("\n-----------------------------------")
 print("\nStarting QUBO creation...\n")
 
 # Segmentation algorithm --> reduce combinatorial tasks
-s_manager = SegmentManager(configuration,
-                           geometry_file)
+s_manager = LUXESegmentManager(configuration,
+                               geometry_file)
 s_manager.create_LUXE_segments()
 s_manager.segment_mapping_LUXE()
 

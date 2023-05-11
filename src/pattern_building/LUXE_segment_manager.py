@@ -4,12 +4,12 @@ from math_functions.geometry import x0_at_z_ref
 from pattern_building.LUXE_segment import LUXEDetectorSegment
 
 
-class SegmentManager:
+class LUXESegmentManager:
     def __init__(self,
                  configuration,
                  detector_geometry: str):
-        """Class for handling segments for doublet and triplet creation
-        :param configuration: pattern_building configuration file
+        """Class for handling segments for doublet and triplet creation for LUXE data.
+        :param configuration: pattern building configuration file
         :param detector_geometry: .csv detector layer file geometry file
         """
         self.mapping_criteria = configuration['doublet']
@@ -91,7 +91,7 @@ class SegmentManager:
         target_layer_index = self.z_position_to_layer.index(target_segment.z_position)
         if target_layer_index == source_layer_index + 2:
             in_between_index = int((target_layer_index + source_layer_index) / 2)
-            dz_ratio = (target_segement.z_position - self.z_position_to_layer[in_between_index]) / dz_segments
+            dz_ratio = (target_segment.z_position - self.z_position_to_layer[in_between_index]) / dz_segments
             x_start_in_between = target_segment.x_start - (dx_segments * dz_ratio)
             x_end_in_between = target_segment.x_end - (dx_segments * dz_ratio)
             for chip in self.layer_ranges[in_between_index]:
@@ -166,8 +166,8 @@ class SegmentManager:
         if target_segment.x_end < source_segment.x_start:
             return False
 
-        min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
-                                                           [target_segment.y_start, target_segment.y_end])
+        min_dy = LUXESegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
+                                                               [target_segment.y_start, target_segment.y_end])
 
         detector_range_x_at_z_ref = [self.segment_storage[0][0].x_start,
                                      self.segment_storage[0][-1].x_end]
