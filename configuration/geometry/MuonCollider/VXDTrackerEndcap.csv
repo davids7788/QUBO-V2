@@ -1,0 +1,11 @@
+name,r_start,r_end,z_start,z_end
+ITrackerEndcap_0,95.0,563.0,-2195.0,-2180.0
+ITrackerEndcap_1,95.0,563.0,-1961.0,-1931.0
+ITrackerEndcap_2,95.0,563.0,-1391.0,-1360.0
+ITrackerEndcap_3,95.0,563.0,-1113.0,-1082.0
+ITrackerEndcap_4,95.0,563.0,-542.0,-512.0
+ITrackerEndcap_5,95.0,563.0,512.0,542.0
+ITrackerEndcap_6,95.0,563.0,1082.0,1113.0
+ITrackerEndcap_7,95.0,563.0,1360.0,1391.0
+ITrackerEndcap_8,95.0,563.0,1931.0,1961.0
+ITrackerEndcap_9,95.0,563.0,2180.0,2195.0

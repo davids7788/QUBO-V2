@@ -1,0 +1,9 @@
+name,r_start,r_end,z_start,z_end
+OTrackerEndcap_l0,617.0,1435.1,-2194.0,-2180.0
+OTrackerEndcap_l1,617.0,1435.1,-1888.0,-1872.0
+OTrackerEndcap_l2,617.0,1435.1,-1625.0,-1609.0
+OTrackerEndcap_l3,617.0,1435.1,-1317.0,-1302.0
+OTrackerEndcap_r0,617.0,1435.1,1302.0,1317.0
+OTrackerEndcap_r1,617.0,1435.1,1609.0,1625.0
+OTrackerEndcap_r2,617.0,1435.1,1872.0,1888.0
+OTrackerEndcap_r3,617.0,1435.1,2180.0,2194.0
