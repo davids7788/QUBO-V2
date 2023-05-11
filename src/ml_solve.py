@@ -19,14 +19,14 @@ from track_reconstruction.track_reconstruction_efficiency import track_reconstru
 
 from sklearn.metrics import roc_curve, auc
 
-train_data_list = ["10", "11", "12", "13", "14", "15", "16", "17"]
-val_data_list = ["18", "19"]
+# train_data_list = ["10", "11", "12", "13", "14", "15", "16", "17"]
+# val_data_list = ["18", "19"]
 # test_data_list = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09"]
 
 xi = 5.0
-# train_data_list = ["10", "11", "12", "13", "14"]
-# val_data_list = ["18"]
-# test_data_list = ["00"]
+train_data_list = ["10", "11", "12"]
+val_data_list = ["18"]
+test_data_list = ["00"]
 
 directory = "../../qubo_ml_datasets/xi_5"
 files_in_directory = os.listdir(directory)
@@ -39,7 +39,8 @@ print(f"Starting ml_solve for xi={xi}:")
 
 training_samples = []
 validation_samples = []
-test_samples = ["../../qubo_ml_datasets/xi_7/e0gpc_7.0_0000_sl-example/triplet_list.npy"]
+# test_samples = ["../../qubo_ml_datasets/xi_7/e0gpc_7.0_0000_sl-example/triplet_list.npy"]
+test_samples = []
 
 
 for folder in files_in_directory:
@@ -49,8 +50,8 @@ for folder in files_in_directory:
         training_samples.append(f"{directory}/{folder}/triplet_list.npy")
     if folder.split("_")[2][2:] in val_data_list:
         validation_samples.append(f"{directory}/{folder}/triplet_list.npy")
-    # if folder.split("_")[2][2:] in test_data_list:
-    #     test_samples.append(f"{directory}/{folder}/triplet_list.npy")
+    if folder.split("_")[2][2:] in test_data_list:
+        test_samples.append(f"{directory}/{folder}/triplet_list.npy")
 
 print("\nSample(s) used for training:")
 for sample in training_samples:
@@ -62,24 +63,66 @@ print("\nSample(s) used for validation:")
 for sample in test_samples:
     print(sample)
 
+# norm training samples
+conflicts_train = []
+connections_train = []
+for train_sample in training_samples:
+    train_file = np.load(train_sample, allow_pickle=True)
+    for triplet in train_file:
+        interactions = list(triplet.interactions.values())
+        connections = 0
+        conflicts = 0
+        for value in interactions:
+            if value < 0:
+                connections += 1
+            else:
+                conflicts += 1
+        conflicts_train.append(conflicts)
+        connections_train.append(connections)
 
-def extract_feature_vector(triplet):
+max_num_conflicts_train = max(conflicts_train)
+max_num_connections_train = max(connections_train)
+
+# norm test samples
+conflicts_test = []
+connections_test = []
+for test_sample in test_samples:
+    test_file = np.load(test_sample, allow_pickle=True)
+    for triplet in test_file:
+        interactions = list(triplet.interactions.values())
+        connections = 0
+        conflicts = 0
+        for value in interactions:
+            if value < 0:
+                connections += 1
+            else:
+                conflicts += 1
+        conflicts_test.append(conflicts)
+        connections_test.append(connections)
+
+max_num_conflicts_test = max(conflicts_test)
+max_num_connections_test = max(connections_test)
+
+
+def extract_feature_vector(triplet, max_conflicts, max_connections):
     interactions = list(triplet.interactions.values())
     connections = [0]
     conflicts = [1]
-    for value in interactions:
-        if value < 0:
-            connections.append(value)
+    for v in interactions:
+        if v < 0:
+            connections.append(v)
         else:
-            conflicts.append(value)
+            conflicts.append(v)
     quality = triplet.quality
 
     return [triplet.doublet_1.hit_1_position[0],
+            triplet.doublet_1.hit_1_position[1],
             100 * quality,
             min(connections),
             max(connections),
-            1 / (len(connections)),
-            1 / (len(conflicts))]
+            len(connections) / max_connections,
+            len(conflicts) / max_conflicts]
+
 
 train_input_labels = []
 train_input_feature_vector = []
@@ -89,13 +132,16 @@ val_input_feature_vector = []
 
 test_input_labels = []
 test_input_feature_vector = []
+
 test_triplets_complete = []
 
 
 for train_sample in training_samples:
     train_file = np.load(train_sample, allow_pickle=True)
     for t in train_file:
-        train_input_feature_vector.append(extract_feature_vector(t))
+        train_input_feature_vector.append(extract_feature_vector(t,
+                                                                 max_num_conflicts_train,
+                                                                 max_num_connections_train))
         if t.is_correct_match():
             train_input_labels.append(1)
         else:
@@ -104,7 +150,9 @@ for train_sample in training_samples:
 for val_sample in validation_samples:
     val_file = np.load(val_sample, allow_pickle=True)
     for t in val_file:
-        val_input_feature_vector.append(extract_feature_vector(t))
+        val_input_feature_vector.append(extract_feature_vector(t,
+                                                               max_num_conflicts_train,
+                                                               max_num_connections_train))
         if t.is_correct_match():
             val_input_labels.append(1)
         else:
@@ -113,7 +161,9 @@ for val_sample in validation_samples:
 for test_sample in test_samples:
     test_file = np.load(test_sample, allow_pickle=True)
     for t in test_file:
-        test_input_feature_vector.append(extract_feature_vector(t))
+        test_input_feature_vector.append(extract_feature_vector(t,
+                                                                max_num_conflicts_test,
+                                                                max_num_connections_test))
         test_triplets_complete.append(t)
         if t.is_correct_match():
             test_input_labels.append(1)
@@ -163,7 +213,7 @@ def create_model(optimizer,
 LR = 1e-3
 EPOCHS = 100
 DECAY = LR / EPOCHS     # in some cases LR / EPOCHS might be useful
-BETA_1 = 0.9
+BETA_1 = 0.8
 BETA_2 = 0.99
 AMSGRAD = True
 
@@ -187,12 +237,12 @@ file_path_val_accuracy = f"{new_folder}/weights_best_val_accuracy.h5"
 
 start = time.time()
 classifier = create_model(adam,
-                          nodes_list=(16, 32, 64, 32, 16, 8),
+                          nodes_list=(8, 16, 32, 32, 16, 8),
                           batch_normalization=True,
                           activation_function='selu',
                           kernel_initializer='glorot_normal',
                           bias_initializer='glorot_normal',
-                          batch_size=256,
+                          batch_size=1024,
                           loss='sparse_categorical_crossentropy',
                           metrics='accuracy')
 
@@ -275,9 +325,6 @@ plt.ylim([0, 1.0])
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('ROC-Curve')
-plt.legend(loc="lower right")
-plt.savefig(f"{new_folder}/ROC_Curve")
-
 # Evaluation data
 
 plt.plot(fpr, tpr, color='g',
@@ -285,6 +332,7 @@ plt.plot(fpr, tpr, color='g',
          lw=2, alpha=.8)
 
 plt.legend(loc="best")
+plt.savefig(f"{new_folder}/ROC_Curve")
 # plt.show()
 
 # predictions
@@ -298,12 +346,12 @@ plt.savefig(f"{new_folder}/predictions")
 # Reconstruction
 kept_triplets = []
 for triplets, prediction in zip(test_triplets_complete, predictions[:, 1]):
-    if prediction > 0.5:
+    if prediction > 0.1:
         kept_triplets.append(triplets)
 
 reco_xplets_simplified_LUXE(kept_triplets, new_folder, fit="chi squared lin track")
 # track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy",
 #                                                 "../../qubo_ml_datasets/xi_5/e0gpc_5.0_0000_sl_gen_xplet_list.npy")
 
-track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy",
-                                                "../../qubo_ml_datasets/xi_7/e0gpc_7.0_0000_sl_gen_xplet_list.npy")
+track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list_ambiguity_solved.npy",
+                                                "../../qubo_ml_datasets/xi_5/e0gpc_5.0_0000_sl_gen_xplet_list.npy")

@@ -88,7 +88,7 @@ reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
 
 gen_prefix = f"{new_folder}/reco_xplet_list.npy".split("/")[-3].split("-")[0]
 gen_xplet = "/".join(f"{new_folder}/reco_xplet_list.npy".split("/")[0:-3]) + "/" + gen_prefix + "_gen_xplet_list"
-track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy",
+track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list_ambiguity_solved.npy",
                                                 f"{gen_xplet}.npy")
 
 print("-----------------------------------\n")
