@@ -41,8 +41,7 @@ target_folder = args.target_folder
 
 s_manager = MuCoSegmentManager(configuration, geometry_folder)
 s_manager.create_MuCo_segments()
-print(s_manager.vxd_tracker_barrel_segments['30.1_31.5'])
-exit()
+
 # s_manager.segment_mapping_MuCo
 
 mu_co_creator = MuCoTripletCreator()

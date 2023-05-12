@@ -100,3 +100,13 @@ class MuCoSegmentManager:
                         self.inner_tracker_barrel_segments.update({f'{det_limits[0]}_{det_limits[1]}': segment_list})
                     if tracker_file_name == 'OTracker.csv':
                         self.outer_tracker_barrel_segments.update({f'{det_limits[0]}_{det_limits[1]}': segment_list})
+
+    def get_segment_at_known_xyz_value(self,
+                                       x: float,
+                                       y: float,
+                                       z: float) -> MuCoDetectorSegment:
+        """Gets segment of layer at given coordinates.
+        :param x: x value of hit
+        :param y: y value of hit
+        :param z: z value of hit
+        """
