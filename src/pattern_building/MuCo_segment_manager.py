@@ -72,12 +72,12 @@ class MuCoSegmentManager:
                                                              r_start=r * segment_size_r + det_limits[0],
                                                              r_end=(r + 1) * segment_size_r + det_limits[0])
                     segment_list.append(new_barrel_segment)
-                    if tracker_file_name == 'VXDTrackerEndcaps.csv':
-                        self.vxd_tracker_endcap_segments.update({f'{layer_name}': segment_list})
-                    if tracker_file_name == 'ITrackerEndcaps.csv':
-                        self.inner_tracker_endcap_segments.update({f'{layer_name}': segment_list})
-                    if tracker_file_name == 'OTrackerEndcaps.csv':
-                        self.outer_tracker_endcap_segments.update({f'{layer_name}': segment_list})
+            if tracker_file_name == 'VXDTrackerEndcap.csv':
+                self.vxd_tracker_endcap_segments.update({f'{layer_name}': segment_list})
+            if tracker_file_name == 'ITrackerEndcap.csv':
+                self.inner_tracker_endcap_segments.update({f'{layer_name}': segment_list})
+            if tracker_file_name == 'OTrackerEndcap.csv':
+                self.outer_tracker_endcap_segments.update({f'{layer_name}': segment_list})
 
     def process_barrel_geometry(self, detector_layers, tracker_file_name) -> None:
         """Creates segments from an endcap geometry file
@@ -98,12 +98,12 @@ class MuCoSegmentManager:
                                                              r_start=det_limits[0],
                                                              r_end=det_limits[1])
                     segment_list.append(new_barrel_segment)
-                    if tracker_file_name == 'VXDTracker.csv':
-                        self.vxd_tracker_barrel_segments.update({f'{layer_name}': segment_list})
-                    if tracker_file_name == 'ITracker.csv':
-                        self.inner_tracker_barrel_segments.update({f'{layer_name}': segment_list})
-                    if tracker_file_name == 'OTracker.csv':
-                        self.outer_tracker_barrel_segments.update({f'{layer_name}': segment_list})
+            if tracker_file_name == 'VXDTracker.csv':
+                self.vxd_tracker_barrel_segments.update({f'{layer_name}': segment_list})
+            if tracker_file_name == 'ITracker.csv':
+                self.inner_tracker_barrel_segments.update({f'{layer_name}': segment_list})
+            if tracker_file_name == 'OTracker.csv':
+                self.outer_tracker_barrel_segments.update({f'{layer_name}': segment_list})
 
     def get_segment_at_known_xyz_value(self,
                                        x: float,
@@ -121,17 +121,15 @@ class MuCoSegmentManager:
         if "_" in layer_number:
             layer_number = int(layer_number.split("_")[0])
         else:
-            layer_number = int(layer_number)
+            layer_number = int(float(layer_number))
+
         detector_layer_name = MuCoSegmentManager.get_detector_layer_name_at_known_xyz_value(z,
                                                                                             file_name,
                                                                                             layer_number)
-
         detector_file = '.'.join([detector_layer_name.split('_')[0], 'csv'])
         detector_layer_information = self.detector_layer_information[detector_file][detector_layer_name]
 
         phi = np.arctan2(y, x)
-        print(f'phi: {phi}')
-        print(f'z: {z}')
 
         if "Endcap" in file_name:
             segment_size_phi = 2 * np.pi / self.segments_endcap_phi
@@ -139,7 +137,6 @@ class MuCoSegmentManager:
             r_end = detector_layer_information[1]
             segment_size_r = (r_end - r_start) / self.segments_endcap_r
             r = np.sqrt(x**2 + y**2)
-            print(f'r: {r}')
             segment_position = self.get_endcap_segment(segment_size_phi,
                                                        segment_size_r,
                                                        r,
@@ -148,7 +145,6 @@ class MuCoSegmentManager:
             if "VXD" in file_name:
                 return self.vxd_tracker_endcap_segments[detector_layer_name][segment_position]
             if "ITracker" in file_name:
-                print(self.inner_tracker_endcap_segments).keys()
                 return self.inner_tracker_endcap_segments[detector_layer_name][segment_position]
             if "OTracker" in file_name:
                 return self.outer_tracker_endcap_segments[detector_layer_name][segment_position]
@@ -177,12 +173,8 @@ class MuCoSegmentManager:
                            phi: float,
                            z_start: float):
         """Returns the index of the barrel segment in the corresponding segment list"""
-        print(phi)
-        print(segment_size_phi)
         phi_index = int((phi + np.pi) / segment_size_phi)
-        print(phi_index)
         z_index = int((z - z_start) / segment_size_z)
-        print(z_index)
         return self.segments_barrel_z * phi_index + z_index
 
     def get_endcap_segment(self,

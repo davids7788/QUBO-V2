@@ -1,5 +1,6 @@
 import csv
 import time
+import os
 
 import numpy as np
 
@@ -14,101 +15,57 @@ class MuCoTripletCreator:
     def __init__(self):
         """Class for creating triplets from Muon Collider detector hits.
         """
-        self.doublet_creation_time = None
-        self.triplet_creation_time = None
+        self.doublet_creation_time = 0
+        self.triplet_creation_time = 0
         self.num_signal_events = 0
         self.num_all_doublets = 0
         self.num_all_triplets = 0
-
-        self.hit_id_index = None
-        self.x_index = None
-        self.y_index = None
-        self.z_index = None
-        self.mc_particle_id_index = None
-        self.time_index = None
-        self.pdg_index = None
-
-        self.doublets_dict = {"L-01": [],
-                              "L-12": [],
-                              "L-23": [],
-                              "L-34": [],
-                              "L-45": [],
-                              "L-56": [],
-                              "L-67": []}
-        self.triplets_dict = {"L-012": [],
-                              "L-123": [],
-                              "L-234": [],
-                              "L-345": [],
-                              "L-456": [],
-                              "L-567": []}
         self.muon_hits = 0
-        
-        # Dictionary for storying hits with respect to their radial distance to the IP
-        # L-0: 30.0 < d < 31.4
-        # L-1: 32.1 < d < 33.4
-        # L-2: 51.0 < d < 52.9
-        # L-3: 53.1 < d < 54.9
-        # L-4: 74.0 < d < 75.5
-        # L-5: 76.1 < d < 77.5
-        # L-6: 102.0 < d < 103.2
-        # L-7: 104.1 < d < 105.2
 
-        self.vxd_hits_dict = {"L-0": [],
-                              "L-1": [],
-                              "L-2": [],
-                              "L-3": [],
-                              "L-4": [],
-                              "L-5": [],
-                              "L-6": [],
-                              "L-7": []}
+        # fieldnames according to .csv naming
+        self.fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer', 'MC_particle_ID', 'px', 'py', 'pz', 'time', 'PDG', 'event']
 
     def load_tracking_data(self,
-                           tracking_data_file: str) -> None:
-        """Loads data from a .csv file and stores it into a 2-dim array. Also converts values which are used for
-        calculations to float from string. The file structure is displayed in the class description.
-        :param tracking_data_file: Luxe tracking data file
+                           event_folder: str,
+                           dlfilter: bool,
+                           s_manager) -> None:
+        """Loads data from the event stored in various .csv files inside the specified folder.
+        Also converts values which are used for calculations to float from string.
+        :param event_folder: folder containing a muon collider event
+        :param dlfilter: if True, then the double layer filtered hits are used instead of the whole VXDTracker sample
+        :param s_manager: segment manager
         """
-        print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n")
+        print(f'Processing folder: {event_folder}')
+        event_files = os.listdir(event_folder)
+        if not dlfilter:
+            for f in event_files:
+                if "_DLFiltered_" in f:
+                    event_files.remove(f)
+        else:
+            for f in event_files:
+                if "_VXD_" in f:
+                    event_files.remove(f)
 
-        with open(tracking_data_file, 'r') as file:
-            csv_reader = csv.reader(file)
-            csv_header = next(csv_reader)  # access header, csv files should consist of one line of header
-            self.x_index = csv_header.index("x")
-            self.y_index = csv_header.index("y")
-            self.z_index = csv_header.index("z")
-            self.hit_id_index = csv_header.index("hit_ID")
-            self.mc_particle_id_index = csv_header.index("MC_particle_ID")
-            self.pdg_index = csv_header.index("PDG")
-            self.time_index = csv_header.index("time")
+        for e_file in event_files:
+            print(f'Processing file: {e_file}')
+            with open(f'{event_folder}/{e_file}', 'r') as file:
+                csv_reader = csv.reader(file)
+                next(csv_reader)  # skip header
+                for row in csv_reader:
+                    hit_converted = ([float(r) if row.index(r) != self.fieldnames.index('layer') else r for r in row])
+                    target_segment = s_manager.get_segment_at_known_xyz_value(hit_converted[self.fieldnames.index('x')],
+                                                                              hit_converted[self.fieldnames.index('y')],
+                                                                              hit_converted[self.fieldnames.index('z')],
+                                                                              e_file,
+                                                                              str(hit_converted[
+                                                                                  self.fieldnames.index('layer')]))
+                target_segment.data.append(row)
 
-            for row in csv_reader:
-                hit_converted = ([float(r) if row.index(r) not in [self.time_index, self.hit_id_index]
-                                  else r for r in row])
-                if hit_converted[self.pdg_index] == 13:
+                if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
                     self.muon_hits += 1
-                d = self.radial_distance_to_IP(hit_converted)
-                if 30.0 < d < 31.4:
-                    self.vxd_hits_dict['L-0'].append(hit_converted)
-                elif 32.1 < d < 33.4:
-                    self.vxd_hits_dict['L-1'].append(hit_converted)
-                elif 51.0 < d < 53.0:
-                    self.vxd_hits_dict['L-2'].append(hit_converted)
-                elif 53.1 < d < 54.9:
-                    self.vxd_hits_dict['L-3'].append(hit_converted)
-                elif 74.0 < d < 75.5:
-                    self.vxd_hits_dict['L-4'].append(hit_converted)
-                elif 76.1 < d < 77.5:
-                    self.vxd_hits_dict['L-5'].append(hit_converted)
-                elif 102.0 < d < 103.2:
-                    self.vxd_hits_dict['L-6'].append(hit_converted)
-                elif 104.1 < d < 105.2:
-                    self.vxd_hits_dict['L-7'].append(hit_converted)
-                else:
-                    print(f"Hit not in VXD Tracker! d = {d}")
-                
-            print(f"{self.muon_hits} muon hits found")
-            print(f"Number of expected signal doublets: {self.muon_hits / 8 * 7}")
-            print(f"Number of expected signal triplets: {self.muon_hits / 8 * 6}")
+
+
+        print(f"{self.muon_hits} muon hits found")
 
     def create_doublet(self,
                        first_hit: list[float],
