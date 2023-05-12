@@ -47,11 +47,12 @@ class MuCoTripletCreator:
                     event_files.remove(f)
 
         for e_file in event_files:
-            print(f'Processing file: {e_file}')
+            print(f'\nProcessing file: {e_file}')
             with open(f'{event_folder}/{e_file}', 'r') as file:
                 csv_reader = csv.reader(file)
                 next(csv_reader)  # skip header
-                for row in csv_reader:
+                for i, row in enumerate(csv_reader):
+                    print(f'Processing hit : {i}', end="\r")
                     hit_converted = ([float(r) if row.index(r) != self.fieldnames.index('layer') else r for r in row])
                     target_segment = s_manager.get_segment_at_known_xyz_value(hit_converted[self.fieldnames.index('x')],
                                                                               hit_converted[self.fieldnames.index('y')],
@@ -59,13 +60,11 @@ class MuCoTripletCreator:
                                                                               e_file,
                                                                               str(hit_converted[
                                                                                   self.fieldnames.index('layer')]))
-                target_segment.data.append(row)
+                    target_segment.data.append(row)
 
-                if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
-                    self.muon_hits += 1
-
-
-        print(f"{self.muon_hits} muon hits found")
+                    if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
+                        self.muon_hits += 1
+        print(f'\n{self.muon_hits} muon hits found')
 
     def create_doublet(self,
                        first_hit: list[float],
