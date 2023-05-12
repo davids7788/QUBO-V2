@@ -39,16 +39,17 @@ with open(args.configuration, 'r') as f:
     configuration = yaml.safe_load(f)
 target_folder = args.target_folder
 fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer', 'MC_particle_ID', 'px', 'py', 'pz', 'time', 'PDG', 'event']
-x = [-1.6092182473447714, -6.8953764319931565]
-y = [-30.165, -129.4685]
-z = [-9.247761474434203, -5.73165722903271]
-layer = [0, 0]
-file_name = ["Output_REC.000_VXD_0.csv", "Output_REC.000_ITracker_0.csv"]
+
+x = [-1.6092182473447714, -6.8953764319931565, -462.8257255902779]
+y = [-30.165, -129.4685, 115.298]
+z = [-9.247761474434203, -5.73165722903271, 1659.8515]
+layer = ["0", "0", "4_right"]
+file_name = ["Output_REC.000_VXD_0.csv", "Output_REC.000_ITracker_0.csv","Output_REC.000_ITrackerEndcap_0.csv"]
 
 
 s_manager = MuCoSegmentManager(configuration, geometry_folder)
 s_manager.create_MuCo_segments()
-for i in range(2):
+for i in range(3):
     segment = s_manager.get_segment_at_known_xyz_value(x[i],
                                                        y[i],
                                                        z[i],

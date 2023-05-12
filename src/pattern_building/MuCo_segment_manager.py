@@ -46,7 +46,8 @@ class MuCoSegmentManager:
                 next(csv_reader)  # header structure: ["name", "r_start", "r_end", "z_start", "z_end"]
                 for row in csv_reader:
                     detector_layers.update({row[0]: [float(r) for r in (row[1:])]})
-            self.detector_layer_information.update({tracker_file: detector_layers})  # save information in class attribute
+            self.detector_layer_information.update({tracker_file: detector_layers})
+            # save information in class attribute
             if "Endcap" in tracker_file:
                 self.process_endcap_geometry(detector_layers, tracker_file)
             else:
@@ -109,7 +110,7 @@ class MuCoSegmentManager:
                                        y: float,
                                        z: float,
                                        file_name: str,
-                                       layer_number: int) -> MuCoDetectorSegment:
+                                       layer_number: str) -> MuCoDetectorSegment:
         """Gets segment of layer at given coordinates.
         :param x: x value of hit
         :param y: y value of hit
@@ -117,6 +118,10 @@ class MuCoSegmentManager:
         :param file_name: name of file
         :param layer_number: detector layer
         """
+        if "_" in layer_number:
+            layer_number = int(layer_number.split("_")[0])
+        else:
+            layer_number = int(layer_number)
         detector_layer_name = MuCoSegmentManager.get_detector_layer_name_at_known_xyz_value(z,
                                                                                             file_name,
                                                                                             layer_number)
@@ -143,6 +148,7 @@ class MuCoSegmentManager:
             if "VXD" in file_name:
                 return self.vxd_tracker_endcap_segments[detector_layer_name][segment_position]
             if "ITracker" in file_name:
+                print(self.inner_tracker_endcap_segments).keys()
                 return self.inner_tracker_endcap_segments[detector_layer_name][segment_position]
             if "OTracker" in file_name:
                 return self.outer_tracker_endcap_segments[detector_layer_name][segment_position]
@@ -206,7 +212,6 @@ class MuCoSegmentManager:
                 add_string = 'Endcap_r'
         else:
             add_string = '_'
-
         if "VXD" in file_name:
             return f'{"VXDTracker"}{add_string}{layer_number}'
         if "ITracker" in file_name:
