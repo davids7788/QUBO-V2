@@ -1,9 +1,9 @@
 name,r_start,r_end,z_start,z_end
-VXDTrackerEndcap_0,25.0,115.0,-283.0,-279.0
-VXDTrackerEndcap_1,25.0,115.0,-204.0,-198.0
-VXDTrackerEndcap_2,25.0,115.0,-123.0,-119.0
-VXDTrackerEndcap_3,25.0,115.0,-84.0,-79.0
-VXDTrackerEndcap_4,25.0,115.0,79.0,84.0
-VXDTrackerEndcap_5,25.0,115.0,119.0,123.0
-VXDTrackerEndcap_6,25.0,115.0,198.0,204.0
-VXDTrackerEndcap_7,25.0,115.0,279.0,283.0
+VXDTrackerEndcap_l3,25.0,115.0,-283.0,-279.0
+VXDTrackerEndcap_l2,25.0,115.0,-204.0,-198.0
+VXDTrackerEndcap_l1,25.0,115.0,-123.0,-119.0
+VXDTrackerEndcap_l0,25.0,115.0,-84.0,-79.0
+VXDTrackerEndcap_r0,25.0,115.0,79.0,84.0
+VXDTrackerEndcap_r1,25.0,115.0,119.0,123.0
+VXDTrackerEndcap_r2,25.0,115.0,198.0,204.0
+VXDTrackerEndcap_r3,25.0,115.0,279.0,283.0
