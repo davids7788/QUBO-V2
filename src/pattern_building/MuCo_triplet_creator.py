@@ -5,10 +5,11 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+from math_functions.geometry import w_angle_diff
 from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
-import matplotlib.pyplot as plt
+
 from random import randint
 
 
@@ -30,15 +31,17 @@ class MuCoTripletCreator:
     def load_tracking_data(self,
                            event_folder: str,
                            dlfilter: bool,
-                           s_manager) -> None:
+                           s_manager,
+                           no_endcaps=True) -> None:
         """Loads data from the event stored in various .csv files inside the specified folder.
         Also converts values which are used for calculations to float from string.
         :param event_folder: folder containing a muon collider event
         :param dlfilter: if True, then the double layer filtered hits are used instead of the whole VXDTracker sample
         :param s_manager: segment manager
+        :param no_endcaps: if True no data from endcaps are used
         """
         print(f'Processing folder: {event_folder}')
-        event_files = os.listdir(event_folder)
+        event_files = [f for f in os.listdir(event_folder) if '.csv' in f]
 
         if not dlfilter:
             for f in event_files:
@@ -49,6 +52,9 @@ class MuCoTripletCreator:
                 if "_VXD_" in f:
                     event_files.remove(f)
 
+        if no_endcaps:
+            event_files = [f for f in event_files if 'Endcap' not in f]
+
         arguments_to_convert = [self.fieldnames.index('x'),
                                 self.fieldnames.index('y'),
                                 self.fieldnames.index('z'),
@@ -58,6 +64,8 @@ class MuCoTripletCreator:
                                 self.fieldnames.index('time')]
 
         for e_file in event_files:
+            if '.csv' not in e_file:
+                continue
             print(f'\nLoading data from file: {e_file}')
             with open(f'{event_folder}/{e_file}', 'r') as file:
                 csv_reader = csv.reader(file)
@@ -80,7 +88,7 @@ class MuCoTripletCreator:
                             self.muon_tracks[mc_particle_id].append(hit_converted)
                         else:
                             self.muon_tracks.update({mc_particle_id: [hit_converted]})
-        print(f'{len(list(self.muon_tracks.keys()))} muon(s) caused {self.muon_hits} hits in the detector together')
+        print(f'\n{len(list(self.muon_tracks.keys()))} muon(s) caused {self.muon_hits} hits in the detector together')
 
     def create_doublet(self,
                        first_hit: list[float],
@@ -132,26 +140,26 @@ class MuCoTripletCreator:
         for name, segment in s_manager.segment_mapping_key.items():
             print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
             for target_segment in s_manager.segment_mapping[name]:
-                # print(target_segment.name, f'phi_start:{target_segment.phi_start}',
-                #       f'phi_end:{target_segment.phi_end}',
-                #       f'r_start:{target_segment.r_start}',
-                #       f'r_end:{target_segment.r_end}'
-                #       f'z_start:{target_segment.z_start}',
-                #       f'z_end:{target_segment.z_end}')
+
                 for hit_1 in segment.data:
                     phi_1 = np.arctan2(hit_1[self.fieldnames.index('y')],
                                        hit_1[self.fieldnames.index('x')])
                     for hit_2 in target_segment.data:
                         phi_2 = np.arctan2(hit_2[self.fieldnames.index('y')],
                                            hit_2[self.fieldnames.index('x')])
-                        if abs(phi_2 - phi_1) > 0.2:
+                        if abs(phi_2 - phi_1) > 0.1:
                             continue
-                        r_1 = np.sqrt(hit_1[self.fieldnames.index('x')]**2 + hit_1[self.fieldnames.index('y')]**2)
-                        r_2 = np.sqrt(hit_2[self.fieldnames.index('x')]**2 + hit_2[self.fieldnames.index('y')]**2)
-                        if abs(np.arctan2(hit_1[self.fieldnames.index('z')], r_1) -
-                               np.arctan2(hit_2[self.fieldnames.index('z')], r_2)) > 0.02:
+                        if w_angle_diff(hit_1[self.fieldnames.index('x')],
+                                        hit_2[self.fieldnames.index('x')],
+                                        hit_1[self.fieldnames.index('y')],
+                                        hit_2[self.fieldnames.index('y')],
+                                        hit_1[self.fieldnames.index('z')],
+                                        hit_2[self.fieldnames.index('z')]) > 0.01:
                             continue
                         self.create_doublet(hit_1, hit_2)
+                        if "VXDTracker_7" in segment.name and "ITracker_0" in target_segment.name and \
+                                hit_1[self.fieldnames.index('PDG')] == hit_2[self.fieldnames.index('PDG')] == 13:
+                            print('found')
                         if hit_1[self.fieldnames.index('MC_particle_ID')] == \
                            hit_2[self.fieldnames.index('MC_particle_ID')]:
                             PDG_1 = hit_1[self.fieldnames.index('PDG')]
@@ -159,13 +167,17 @@ class MuCoTripletCreator:
                             if int(PDG_1) == int(PDG_2) == 13:
                                 doublet_hits.append([hit_1, hit_2])
             segment_process_counter += 1
+        plt.figure(dpi=500)
         for item in doublet_hits:
             r_1 = np.sqrt(item[0][self.fieldnames.index('x')]**2 + item[0][self.fieldnames.index('y')]**2)
             r_2 = np.sqrt(item[1][self.fieldnames.index('x')]**2 + item[1][self.fieldnames.index('y')]**2)
             plt.plot([item[0][self.fieldnames.index('z')], item[1][self.fieldnames.index('z')]],
                      [r_1, r_2],
                      marker='o')
+        # plt.xscale('log')
+        # plt.yscale('log')
         plt.show()
+        plt.savefig("tracking.pdf")
 
         for i in range(len(self.vxd_hits_dict.keys()) - 1):
             for hit_1 in self.vxd_hits_dict[f'L-{i}']:
@@ -185,7 +197,6 @@ class MuCoTripletCreator:
                     found_correct_doublets += 1
                     if muon_match:
                         pass
-
 
         plt.figure(figsize=(12,12))
         for d in doublets_plotting:

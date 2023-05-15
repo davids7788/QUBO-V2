@@ -66,3 +66,5 @@ def w_is_valid_triplet(xz_angle_1: float,
     if sqrt((xz_angle_2 - xz_angle_1) ** 2 + (yz_angle_2 - yz_angle_1) ** 2) < max_angle:
         return True
     return False
+
+

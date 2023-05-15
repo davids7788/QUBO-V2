@@ -214,13 +214,27 @@ class MuCoSegmentManager:
         if "OTracker" in file_name:
             return f'{"OTracker"}{add_string}{layer_number}'
 
-    def layer_mapping(self):
-        self.layer_mapping_vxd_tracker_barrel()
-        self.layer_mapping_vxd_tracker_endcap()
-        self.layer_mapping_inner_tracker_barrel()
-        self.layer_mapping_inner_tracker_endcap()
-        self.layer_mapping_outer_tracker_barrel()
-        self.layer_mapping_outer_tracker_endcap()
+    def layer_mapping(self, no_endcaps):
+        if no_endcaps:
+            self.simple_layer_mapping()
+        else:
+            self.layer_mapping_vxd_tracker_barrel()
+            self.layer_mapping_vxd_tracker_endcap()
+            self.layer_mapping_inner_tracker_barrel()
+            self.layer_mapping_inner_tracker_endcap()
+            self.layer_mapping_outer_tracker_barrel()
+            self.layer_mapping_outer_tracker_endcap()
+
+    def simple_layer_mapping(self):
+        for i in range(7):
+            self.possible_layer_mapping.update({f'VXDTracker_{i}': [f'VXDTracker_{i + 1}']})
+        self.possible_layer_mapping.update({f'VXDTracker_7': ['ITracker_0']})
+        for i in range(2):
+            self.possible_layer_mapping.update({f'ITracker_{i}': [f'ITracker_{i + 1}']})
+        self.possible_layer_mapping.update({f'ITracker_2': ['OTracker_0']})
+        for i in range(2):
+            self.possible_layer_mapping.update({f'OTracker_{i}': [f'OTracker_{i + 1}']})
+        self.possible_layer_mapping.update({f'OTracker_2': []})
 
     def layer_mapping_vxd_tracker_barrel(self):
         for i in range(6):
@@ -230,18 +244,18 @@ class MuCoSegmentManager:
                                                                     'VXDTrackerEndcap_r1',
                                                                     'VXDTrackerEndcap_l0',
                                                                     'VXDTrackerEndcap_l1']})
-            self.possible_layer_mapping.update({'VXDTracker_6':['VXDTracker_7',
-                                                                'ITracker_0',
-                                                                'VXDTrackerEndcap_r0',
-                                                                'VXDTrackerEndcap_r1',
-                                                                'VXDTrackerEndcap_l0',
-                                                                'VXDTrackerEndcap_l1']})
-            self.possible_layer_mapping.update({'VXDTracker_7':['ITracker_0',
-                                                                'ITracker_1',
-                                                                'VXDTrackerEndcap_r0',
-                                                                'VXDTrackerEndcap_r1',
-                                                                'VXDTrackerEndcap_l0',
-                                                                'VXDTrackerEndcap_l1']})
+            self.possible_layer_mapping.update({'VXDTracker_6': ['VXDTracker_7',
+                                                                 'ITracker_0',
+                                                                 'VXDTrackerEndcap_r0',
+                                                                 'VXDTrackerEndcap_r1',
+                                                                 'VXDTrackerEndcap_l0',
+                                                                 'VXDTrackerEndcap_l1']})
+            self.possible_layer_mapping.update({'VXDTracker_7': ['ITracker_0',
+                                                                 'ITracker_1',
+                                                                 'VXDTrackerEndcap_r0',
+                                                                 'VXDTrackerEndcap_r1',
+                                                                 'VXDTrackerEndcap_l0',
+                                                                 'VXDTrackerEndcap_l1']})
 
     def layer_mapping_vxd_tracker_endcap(self):
         for side in ['r', 'l']:
@@ -251,8 +265,8 @@ class MuCoSegmentManager:
                                                                                     'ITracker_0',
                                                                                     'ITracker_1']})
             self.possible_layer_mapping.update({f'VXDTrackerEndcap_{side}6': [f'VXDTrackerEndcap_{side}7',
-                                                                               'ITracker_0',
-                                                                               f'ITrackerEndcap_{side}0']})
+                                                                              'ITracker_0',
+                                                                              f'ITrackerEndcap_{side}0']})
             self.possible_layer_mapping.update({f'VXDTrackerEndcap_{side}7': ['ITracker_0',
                                                                               f'ITrackerEndcap_{side}0',
                                                                               f'ITrackerEndcap_{side}1']})
@@ -324,30 +338,38 @@ class MuCoSegmentManager:
             self.possible_layer_mapping.update({f'OTrackerEndcap_{side}2': [f'OTrackerEndcap_{side}3']})
             self.possible_layer_mapping.update({f'OTrackerEndcap_{side}3': []})
 
-    def create_segment_mapping(self):
-        segment_dictionaries = [self.vxd_tracker_barrel_segments,
-                                self.vxd_tracker_endcap_segments,
-                                self.inner_tracker_barrel_segments,
-                                self.inner_tracker_endcap_segments,
-                                self.outer_tracker_barrel_segments,
-                                self.outer_tracker_endcap_segments]
+    def create_segment_mapping(self, no_endcaps=True):
+        if no_endcaps:
+            segment_dictionaries = [self.vxd_tracker_barrel_segments,
+                                    self.inner_tracker_barrel_segments,
+                                    self.outer_tracker_barrel_segments]
+        else:
+            segment_dictionaries = [self.vxd_tracker_barrel_segments,
+                                    self.vxd_tracker_endcap_segments,
+                                    self.inner_tracker_barrel_segments,
+                                    self.inner_tracker_endcap_segments,
+                                    self.outer_tracker_barrel_segments,
+                                    self.outer_tracker_endcap_segments]
 
         for segment_dictionary in segment_dictionaries:
             for detector_layer in segment_dictionary.keys():
                 for segment in segment_dictionary[detector_layer]:
                     self.segment_mapping.update({segment.name: set()})
                     self.segment_mapping_key.update({segment.name: segment})
-                    max_zr = segment.z_end / segment.r_start
-                    min_zr = segment.z_start / segment.r_end
+                    max_zr = np.arctan2(segment.z_end, segment.r_start)
+                    min_zr = np.arctan2(segment.z_start, segment.r_end)
                     for target_detector in self.possible_layer_mapping[detector_layer]:
                         dictionary_storage = self.get_detector_dictionary(target_detector)
                         for target_segment in dictionary_storage[target_detector]:
-                            if segment.phi_start == target_segment.phi_start or \
-                                    segment.phi_start == target_segment.phi_end or \
-                                    segment.phi_end == target_segment.phi_start:
-                                target_max_zr = target_segment.z_end / target_segment.r_start
-                                target_min_zr = target_segment.z_start / target_segment.r_end
-                                if target_min_zr < max_zr < target_max_zr or target_min_zr < min_zr < target_max_zr:
+                            if abs(segment.phi_start) == abs(target_segment.phi_start) or \
+                                    abs(segment.phi_start) == abs(target_segment.phi_end) or \
+                                    abs(segment.phi_end) == abs(target_segment.phi_start):
+                                target_max_zr = np.arctan2(target_segment.z_end, target_segment.r_start)
+                                target_min_zr = np.arctan2(target_segment.z_start, target_segment.r_end)
+                                if target_max_zr >= min_zr and target_min_zr <= max_zr or \
+                                        max_zr >= target_min_zr and min_zr <= target_max_zr or \
+                                    target_max_zr <= max_zr and target_min_zr >= min_zr or \
+                                    max_zr <= target_max_zr and min_zr >= target_min_zr:
                                     self.segment_mapping[segment.name].add(target_segment)
 
     def get_detector_dictionary(self, string):

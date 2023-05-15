@@ -6,10 +6,10 @@ triplet:
 segments:
   barrel:
     z: 10
-    phi: 36
+    phi: 180
   endcap:
     r: 10
-    phi: 36
+    phi: 180
 
 qubo parameters:
   b_ij conflict: 1.0

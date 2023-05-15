@@ -31,6 +31,10 @@ parser.add_argument('--target_folder',
                     default=None,
                     help='Folder in which the triplet list will be stored')
 
+parser.add_argument('--no_endcaps',
+                    action='store_true',
+                    help='Folder in which the triplet list will be stored')
+
 
 args = parser.parse_args()
 event_folder = args.event_folder
@@ -38,15 +42,20 @@ geometry_folder = args.geometry_folder
 with open(args.configuration, 'r') as f:
     configuration = yaml.safe_load(f)
 target_folder = args.target_folder
+no_endcaps = args.no_endcaps
+
 
 s_manager = MuCoSegmentManager(configuration, geometry_folder)
 s_manager.create_MuCo_segments()
-s_manager.layer_mapping()
+s_manager.layer_mapping(no_endcaps=no_endcaps)
 
 mu_co_creator = MuCoTripletCreator()
-mu_co_creator.load_tracking_data(event_folder, dlfilter=False, s_manager=s_manager)
+mu_co_creator.load_tracking_data(event_folder,
+                                 dlfilter=False,
+                                 s_manager=s_manager,
+                                 no_endcaps=no_endcaps)
 
-s_manager.create_segment_mapping()
+s_manager.create_segment_mapping(no_endcaps=no_endcaps)
 
 mu_co_creator.create_xplet_list(s_manager)
 exit()

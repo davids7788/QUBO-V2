@@ -73,3 +73,25 @@ def w_default_angle_based_quality(angle_between_doublets_xz: float,
         two norm of angles in xy and xz between doublets
     """
     return sqrt(angle_between_doublets_xz**2 + angle_between_doublets_yz**2)
+
+
+@jit(nopython=True)
+def w_angle_diff(x_1,
+                 x_2,
+                 y_1,
+                 y_2,
+                 z_1,
+                 z_2) -> float:
+    """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
+    :param x_1: x_value hit 1
+    :param x_2: x_value hit 2
+    :param y_1: y_value hit 1
+    :param y_2: y_value hit 2
+    :param z_1: z_value hit 1
+    :param z_2: z_value hit 2
+    :return:
+        angle in rad of hits in the r-z plane
+    """
+    r_1 = sqrt(x_1**2 + y_1**2)
+    r_2 = sqrt(x_2**2 + y_2**2)
+    return abs(atan2(z_1, r_1) - atan2(z_2, r_2))
