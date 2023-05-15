@@ -20,6 +20,7 @@ class MuCoTripletCreator:
         self.num_signal_events = 0
         self.num_all_doublets = 0
         self.num_all_triplets = 0
+        self.muon_tracks = {}
         self.muon_hits = 0
 
         # fieldnames according to .csv naming
@@ -37,6 +38,7 @@ class MuCoTripletCreator:
         """
         print(f'Processing folder: {event_folder}')
         event_files = os.listdir(event_folder)
+
         if not dlfilter:
             for f in event_files:
                 if "_DLFiltered_" in f:
@@ -46,25 +48,38 @@ class MuCoTripletCreator:
                 if "_VXD_" in f:
                     event_files.remove(f)
 
+        arguments_to_convert = [self.fieldnames.index('x'),
+                                self.fieldnames.index('y'),
+                                self.fieldnames.index('z'),
+                                self.fieldnames.index('px'),
+                                self.fieldnames.index('py'),
+                                self.fieldnames.index('pz'),
+                                self.fieldnames.index('time')]
+
         for e_file in event_files:
-            print(f'\nProcessing file: {e_file}')
+            print(f'\nLoading data from file: {e_file}')
             with open(f'{event_folder}/{e_file}', 'r') as file:
                 csv_reader = csv.reader(file)
                 next(csv_reader)  # skip header
                 for i, row in enumerate(csv_reader):
-                    print(f'Processing hit : {i}', end="\r")
-                    hit_converted = ([float(r) if row.index(r) != self.fieldnames.index('layer') else r for r in row])
+                    print(f'Processing detector hit : {i}', end="\r")
+                    hit_converted = ([float(r) if row.index(r) in arguments_to_convert else r for r in row])
                     target_segment = s_manager.get_segment_at_known_xyz_value(hit_converted[self.fieldnames.index('x')],
                                                                               hit_converted[self.fieldnames.index('y')],
                                                                               hit_converted[self.fieldnames.index('z')],
                                                                               e_file,
                                                                               str(hit_converted[
                                                                                   self.fieldnames.index('layer')]))
-                    target_segment.data.append(row)
+                    target_segment.data.append(hit_converted)
 
                     if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
                         self.muon_hits += 1
-        print(f'\n{self.muon_hits} muon hits found')
+                        mc_particle_id = hit_converted[self.fieldnames.index('MC_particle_ID')]
+                        if mc_particle_id in self.muon_tracks.keys():
+                            self.muon_tracks[mc_particle_id].append(hit_converted)
+                        else:
+                            self.muon_tracks.update({mc_particle_id: [hit_converted]})
+        print(f'{len(list(self.muon_tracks.keys()))} muon(s) caused {self.muon_hits} in the detector together')
 
     def create_doublet(self,
                        first_hit: list[float],
@@ -75,35 +90,31 @@ class MuCoTripletCreator:
         :return
             Doublet object
         """
-        first_hit_particle_key = first_hit[self.pdg_index]
-        if first_hit_particle_key != 13:
+        first_hit_particle_key = first_hit[self.fieldnames.index('PDG')]
+        if int(first_hit_particle_key) != 13:
             first_hit_particle_key = randint(14, 1e16)
-        second_hit_particle_key = second_hit[self.pdg_index]
-        if second_hit_particle_key != 13:
-            second_hit_particle_key  = randint(14, 1e16)
+        second_hit_particle_key = second_hit[self.fieldnames.index('PDG')]
+        if int(second_hit_particle_key) != 13:
+            second_hit_particle_key = randint(14, 1e16)
             
         doublet = Doublet(hit_1_particle_key=first_hit_particle_key,
                           hit_2_particle_key=second_hit_particle_key,
-                          hit_1_position=(first_hit[self.x_index],
-                                          first_hit[self.y_index],
-                                          first_hit[self.z_index]),
-                          hit_2_position=(second_hit[self.x_index],
-                                          second_hit[self.y_index],
-                                          second_hit[self.z_index]),
-                          hit_1_id=first_hit[self.hit_id_index],
-                          hit_2_id=second_hit[self.hit_id_index],
-                          time_1=first_hit[self.time_index],
-                          time_2=second_hit[self.time_index])
+                          hit_1_position=(first_hit[self.fieldnames.index('x')],
+                                          first_hit[self.fieldnames.index('y')],
+                                          first_hit[self.fieldnames.index('z')]),
+                          hit_2_position=(second_hit[self.fieldnames.index('x')],
+                                          second_hit[self.fieldnames.index('y')],
+                                          second_hit[self.fieldnames.index('z')]),
+                          hit_1_id=first_hit[self.fieldnames.index('MC_particle_ID')],
+                          hit_2_id=second_hit[self.fieldnames.index('MC_particle_ID')],
+                          time_1=first_hit[self.fieldnames.index('time')],
+                          time_2=second_hit[self.fieldnames.index('time')])
 
         return doublet
 
-    def radial_distance_to_IP(self,
-                              hit):
-        """"""
-        return np.sqrt(hit[self.x_index]**2 + hit[self.y_index]**2)
-
-    def create_xplet_list(self) -> None:
+    def create_xplet_list(self, s_manager) -> None:
         """Creates the doublets. Only distance to IP check, pure combinatorial.
+        :param s_manager: segment manager object
         """
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
@@ -111,8 +122,31 @@ class MuCoTripletCreator:
         
         rejected_doublet_because_of_time = 0
         found_correct_doublets = 0
-        
-        doublets_plotting = []
+
+        num_segments = len(list(s_manager.segment_mapping_key.keys()))
+        segment_process_counter = 0
+        for name, segment in s_manager.segment_mapping_key.items():
+            # print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+            for target_segment in s_manager.segment_mapping[name]:
+                for hit_1 in segment.data:
+                    phi_1 = np.arctan2(hit_1[self.fieldnames.index('y')],
+                                       hit_1[self.fieldnames.index('x')])
+                    for hit_2 in target_segment.data:
+                        phi_2 = np.arctan2(hit_2[self.fieldnames.index('y')],
+                                           hit_2[self.fieldnames.index('x')])
+                        if abs(phi_2 - phi_1) > 0.1:
+                            continue
+                        r_1 = np.sqrt(hit_1[self.fieldnames.index('x')]**2 + hit_1[self.fieldnames.index('y')]**2)
+                        r_2 = np.sqrt(hit_2[self.fieldnames.index('x')]**2 + hit_2[self.fieldnames.index('y')]**2)
+                        if abs(r_1 / [self.fieldnames.index('z')] - r_2 / hit_2[self.fieldnames.index('z')]) < 0.5:
+                            self.create_doublet(hit_1, hit_2)
+                            if hit_1[self.fieldnames.index('MC_particle_ID')] == \
+                               hit_2[self.fieldnames.index('MC_particle_ID')]:
+                                print("Found a nice pair!!")
+                                print(hit_2[self.fieldnames.index('PDG')])
+            segment_process_counter += 1
+
+
 
         for i in range(len(self.vxd_hits_dict.keys()) - 1):
             for hit_1 in self.vxd_hits_dict[f'L-{i}']:
@@ -181,7 +215,6 @@ class MuCoTripletCreator:
         print(f"Time elapsed for  forming triplets: "
               f"{triplet_creation_time}")
         print(f"Number of triplets found: {len([t for layer in self.triplets_dict.values() for t in layer])}\n")
-        
 
     def set_qubo_coefficients(self,
                               target_folder: str) -> None:

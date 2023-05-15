@@ -5,11 +5,11 @@ triplet:
 
 segments:
   barrel:
-    z: 5
-    phi: 10
+    z: 10
+    phi: 36
   endcap:
-    r: 5
-    phi: 10
+    r: 10
+    phi: 36
 
 qubo parameters:
   b_ij conflict: 1.0

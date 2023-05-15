@@ -7,7 +7,7 @@ from pattern_building.MuCo_segment_manager import MuCoSegmentManager
 parser = argparse.ArgumentParser(description='Muon Collider Pattern Builder',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--tracking_event_folder',
+parser.add_argument('--event_folder',
                     action='store',
                     type=str,
                     default=None,
@@ -33,7 +33,7 @@ parser.add_argument('--target_folder',
 
 
 args = parser.parse_args()
-tracking_event_folder = args.tracking_event_folder
+event_folder = args.event_folder
 geometry_folder = args.geometry_folder
 with open(args.configuration, 'r') as f:
     configuration = yaml.safe_load(f)
@@ -41,12 +41,14 @@ target_folder = args.target_folder
 
 s_manager = MuCoSegmentManager(configuration, geometry_folder)
 s_manager.create_MuCo_segments()
+s_manager.layer_mapping()
 
 mu_co_creator = MuCoTripletCreator()
-mu_co_creator.load_tracking_data(tracking_event_folder, dlfilter=False, s_manager=s_manager)
-exit()
-# s_manager.segment_mapping_MuCo
+mu_co_creator.load_tracking_data(event_folder, dlfilter=False, s_manager=s_manager)
 
-mu_co_creator.create_xplet_list()
+s_manager.create_segment_mapping()
+
+mu_co_creator.create_xplet_list(s_manager)
+exit()
 mu_co_creator.set_qubo_coefficients(target_folder)
 
