@@ -3,6 +3,7 @@ import time
 import os
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
@@ -79,7 +80,7 @@ class MuCoTripletCreator:
                             self.muon_tracks[mc_particle_id].append(hit_converted)
                         else:
                             self.muon_tracks.update({mc_particle_id: [hit_converted]})
-        print(f'{len(list(self.muon_tracks.keys()))} muon(s) caused {self.muon_hits} in the detector together')
+        print(f'{len(list(self.muon_tracks.keys()))} muon(s) caused {self.muon_hits} hits in the detector together')
 
     def create_doublet(self,
                        first_hit: list[float],
@@ -119,34 +120,52 @@ class MuCoTripletCreator:
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
         doublet_list_start = time.process_time()
+
+        doublet_hits = []
         
         rejected_doublet_because_of_time = 0
         found_correct_doublets = 0
 
         num_segments = len(list(s_manager.segment_mapping_key.keys()))
         segment_process_counter = 0
+
         for name, segment in s_manager.segment_mapping_key.items():
-            # print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+            print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
             for target_segment in s_manager.segment_mapping[name]:
+                # print(target_segment.name, f'phi_start:{target_segment.phi_start}',
+                #       f'phi_end:{target_segment.phi_end}',
+                #       f'r_start:{target_segment.r_start}',
+                #       f'r_end:{target_segment.r_end}'
+                #       f'z_start:{target_segment.z_start}',
+                #       f'z_end:{target_segment.z_end}')
                 for hit_1 in segment.data:
                     phi_1 = np.arctan2(hit_1[self.fieldnames.index('y')],
                                        hit_1[self.fieldnames.index('x')])
                     for hit_2 in target_segment.data:
                         phi_2 = np.arctan2(hit_2[self.fieldnames.index('y')],
                                            hit_2[self.fieldnames.index('x')])
-                        if abs(phi_2 - phi_1) > 0.1:
+                        if abs(phi_2 - phi_1) > 0.2:
                             continue
                         r_1 = np.sqrt(hit_1[self.fieldnames.index('x')]**2 + hit_1[self.fieldnames.index('y')]**2)
                         r_2 = np.sqrt(hit_2[self.fieldnames.index('x')]**2 + hit_2[self.fieldnames.index('y')]**2)
-                        if abs(r_1 / [self.fieldnames.index('z')] - r_2 / hit_2[self.fieldnames.index('z')]) < 0.5:
-                            self.create_doublet(hit_1, hit_2)
-                            if hit_1[self.fieldnames.index('MC_particle_ID')] == \
-                               hit_2[self.fieldnames.index('MC_particle_ID')]:
-                                print("Found a nice pair!!")
-                                print(hit_2[self.fieldnames.index('PDG')])
+                        if abs(np.arctan2(hit_1[self.fieldnames.index('z')], r_1) -
+                               np.arctan2(hit_2[self.fieldnames.index('z')], r_2)) > 0.02:
+                            continue
+                        self.create_doublet(hit_1, hit_2)
+                        if hit_1[self.fieldnames.index('MC_particle_ID')] == \
+                           hit_2[self.fieldnames.index('MC_particle_ID')]:
+                            PDG_1 = hit_1[self.fieldnames.index('PDG')]
+                            PDG_2 = hit_2[self.fieldnames.index('PDG')]
+                            if int(PDG_1) == int(PDG_2) == 13:
+                                doublet_hits.append([hit_1, hit_2])
             segment_process_counter += 1
-
-
+        for item in doublet_hits:
+            r_1 = np.sqrt(item[0][self.fieldnames.index('x')]**2 + item[0][self.fieldnames.index('y')]**2)
+            r_2 = np.sqrt(item[1][self.fieldnames.index('x')]**2 + item[1][self.fieldnames.index('y')]**2)
+            plt.plot([item[0][self.fieldnames.index('z')], item[1][self.fieldnames.index('z')]],
+                     [r_1, r_2],
+                     marker='o')
+        plt.show()
 
         for i in range(len(self.vxd_hits_dict.keys()) - 1):
             for hit_1 in self.vxd_hits_dict[f'L-{i}']:
@@ -163,13 +182,11 @@ class MuCoTripletCreator:
                     if abs(float(hit_2[self.time_index]) - float(hit_1[self.time_index])) > 0.09:
                         rejected_doublet_because_of_time += 1
                         continue
+                    found_correct_doublets += 1
                     if muon_match:
-                        found_correct_doublets += 1
+                        pass
 
-                    self.doublets_dict[f'L-{i}{i + 1}'].append(self.create_doublet(hit_1,
-                                                                                   hit_2))
-                    doublets_plotting.append(([hit_1[self.x_index], hit_2[self.x_index]], 
-                                              [hit_1[self.y_index], hit_2[self.y_index]])) 
+
         plt.figure(figsize=(12,12))
         for d in doublets_plotting:
             plt.plot(d[0], d[1], marker="o", c="blue", mfc='red', markersize=12)
