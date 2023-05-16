@@ -11,8 +11,8 @@ class MuCoDetectorSegment:
         :param name: unique identifier for the segment
         :param phi_start: start of segment in phi [rad]
         :param phi_end: end of segment in phi [rad]
-        :param z_start: start of segment in theta[mm]
-        :param t_end: end of segment in z [mm]
+        :param z_start: start of segment in z [mm]
+        :param z_end: end of segment in z [mm]
         :param r_start: start of segment in distance from IP [mm]
         :param r_end: end of segment in distance from IP [mm]
         """

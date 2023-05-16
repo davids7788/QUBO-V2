@@ -1,15 +1,15 @@
 ---
 doublet:
+  phi: 0.01
 
 triplet:
 
 segments:
-  barrel:
-    z: 10
-    phi: 180
-  endcap:
-    r: 10
-    phi: 180
+  phi: 36
+  barrel z: 20
+  endcap r: 20
+
+
 
 qubo parameters:
   b_ij conflict: 1.0

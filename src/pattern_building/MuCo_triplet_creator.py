@@ -43,15 +43,13 @@ class MuCoTripletCreator:
         print(f'Processing folder: {event_folder}')
         event_files = [f for f in os.listdir(event_folder) if '.csv' in f]
 
+        # Check if using Double Layer Filtered hits or all hits from the Vertex detector
         if not dlfilter:
-            for f in event_files:
-                if "_DLFiltered_" in f:
-                    event_files.remove(f)
+            event_files = [f for f in event_files if "_DLFiltered_" not in f]
         else:
-            for f in event_files:
-                if "_VXD_" in f:
-                    event_files.remove(f)
+            event_files = [f for f in event_files if "_VXD_" not in f]
 
+        # Check if endcap region is included
         if no_endcaps:
             event_files = [f for f in event_files if 'Endcap' not in f]
 
@@ -64,8 +62,6 @@ class MuCoTripletCreator:
                                 self.fieldnames.index('time')]
 
         for e_file in event_files:
-            if '.csv' not in e_file:
-                continue
             print(f'\nLoading data from file: {e_file}')
             with open(f'{event_folder}/{e_file}', 'r') as file:
                 csv_reader = csv.reader(file)
@@ -142,13 +138,8 @@ class MuCoTripletCreator:
             for target_segment in s_manager.segment_mapping[name]:
 
                 for hit_1 in segment.data:
-                    phi_1 = np.arctan2(hit_1[self.fieldnames.index('y')],
-                                       hit_1[self.fieldnames.index('x')])
                     for hit_2 in target_segment.data:
-                        phi_2 = np.arctan2(hit_2[self.fieldnames.index('y')],
-                                           hit_2[self.fieldnames.index('x')])
-                        if abs(phi_2 - phi_1) > 0.1:
-                            continue
+
                         if w_angle_diff(hit_1[self.fieldnames.index('x')],
                                         hit_2[self.fieldnames.index('x')],
                                         hit_1[self.fieldnames.index('y')],
@@ -157,23 +148,19 @@ class MuCoTripletCreator:
                                         hit_2[self.fieldnames.index('z')]) > 0.01:
                             continue
                         self.create_doublet(hit_1, hit_2)
-                        if "VXDTracker_7" in segment.name and "ITracker_0" in target_segment.name and \
-                                hit_1[self.fieldnames.index('PDG')] == hit_2[self.fieldnames.index('PDG')] == 13:
-                            print('found')
-                        if hit_1[self.fieldnames.index('MC_particle_ID')] == \
-                           hit_2[self.fieldnames.index('MC_particle_ID')]:
-                            PDG_1 = hit_1[self.fieldnames.index('PDG')]
-                            PDG_2 = hit_2[self.fieldnames.index('PDG')]
-                            if int(PDG_1) == int(PDG_2) == 13:
-                                doublet_hits.append([hit_1, hit_2])
+                        PDG_1 = hit_1[self.fieldnames.index('PDG')]
+                        PDG_2 = hit_2[self.fieldnames.index('PDG')]
+                        if int(PDG_1) == int(PDG_2) == 13:
+                            doublet_hits.append([hit_1, hit_2])
             segment_process_counter += 1
-        plt.figure(dpi=500)
+        plt.figure()
         for item in doublet_hits:
             r_1 = np.sqrt(item[0][self.fieldnames.index('x')]**2 + item[0][self.fieldnames.index('y')]**2)
             r_2 = np.sqrt(item[1][self.fieldnames.index('x')]**2 + item[1][self.fieldnames.index('y')]**2)
             plt.plot([item[0][self.fieldnames.index('z')], item[1][self.fieldnames.index('z')]],
                      [r_1, r_2],
-                     marker='o')
+                     marker='o',
+                     markersize=2)
         # plt.xscale('log')
         # plt.yscale('log')
         plt.show()
