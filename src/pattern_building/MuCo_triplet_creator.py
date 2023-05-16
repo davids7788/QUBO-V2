@@ -5,7 +5,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from math_functions.geometry import w_angle_diff
+from math_functions.geometry import w_rz_angle_diff, w_phi_angle_diff
 from utility.time_tracking import hms_string
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
@@ -21,8 +21,9 @@ class MuCoTripletCreator:
         self.triplet_creation_time = 0
         self.num_signal_events = 0
         self.num_all_doublets = 0
+        self.correct_doublets_tracker = set()
+        self.correct_triplets_tracker = set()
         self.num_all_triplets = 0
-        self.muon_tracks = {}
         self.muon_hits = 0
 
         # fieldnames according to .csv naming
@@ -79,12 +80,8 @@ class MuCoTripletCreator:
 
                     if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
                         self.muon_hits += 1
-                        mc_particle_id = hit_converted[self.fieldnames.index('MC_particle_ID')]
-                        if mc_particle_id in self.muon_tracks.keys():
-                            self.muon_tracks[mc_particle_id].append(hit_converted)
-                        else:
-                            self.muon_tracks.update({mc_particle_id: [hit_converted]})
-        print(f'\n{len(list(self.muon_tracks.keys()))} muon(s) caused {self.muon_hits} hits in the detector together')
+
+        print(f'\n{self.muon_hits} muon hit(s) found in the detector!')
 
     def create_doublet(self,
                        first_hit: list[float],
@@ -95,105 +92,117 @@ class MuCoTripletCreator:
         :return
             Doublet object
         """
-        first_hit_particle_key = first_hit[self.fieldnames.index('PDG')]
-        if int(first_hit_particle_key) != 13:
-            first_hit_particle_key = randint(14, 1e16)
-        second_hit_particle_key = second_hit[self.fieldnames.index('PDG')]
-        if int(second_hit_particle_key) != 13:
-            second_hit_particle_key = randint(14, 1e16)
-            
-        doublet = Doublet(hit_1_particle_key=first_hit_particle_key,
-                          hit_2_particle_key=second_hit_particle_key,
+        hit_1_id = '_'.join([first_hit[self.fieldnames.index('layer')],
+                             first_hit[self.fieldnames.index('hit_ID')]])
+        hit_2_id = '_'.join([second_hit[self.fieldnames.index('layer')],
+                             second_hit[self.fieldnames.index('hit_ID')]])
+
+        doublet = Doublet(hit_1_particle_key=first_hit[self.fieldnames.index('MC_particle_ID')],
+                          hit_2_particle_key=second_hit[self.fieldnames.index('MC_particle_ID')],
                           hit_1_position=(first_hit[self.fieldnames.index('x')],
                                           first_hit[self.fieldnames.index('y')],
                                           first_hit[self.fieldnames.index('z')]),
                           hit_2_position=(second_hit[self.fieldnames.index('x')],
                                           second_hit[self.fieldnames.index('y')],
                                           second_hit[self.fieldnames.index('z')]),
-                          hit_1_id=first_hit[self.fieldnames.index('MC_particle_ID')],
-                          hit_2_id=second_hit[self.fieldnames.index('MC_particle_ID')],
+                          hit_1_id=hit_1_id,
+                          hit_2_id=hit_2_id,
                           time_1=first_hit[self.fieldnames.index('time')],
                           time_2=second_hit[self.fieldnames.index('time')])
 
         return doublet
 
-    def create_xplet_list(self, s_manager) -> None:
+    def create_xplet_list(self,
+                          s_manager,
+                          configuration) -> None:
         """Creates the doublets. Only distance to IP check, pure combinatorial.
         :param s_manager: segment manager object
+        :param configuration: Muon Collider qubo preparation configuration file
         """
+        sigma_time_vxd = configuration['doublet']['sigma time VXD']
+        sigma_time_inner_tracker = configuration['doublet']['sigma time inner tracker']
+        sigma_time_outer_tracker = configuration['doublet']['sigma time outer tracker']
+        rz_doublet = configuration['doublet']['rz']
+        phi_doublet = configuration['doublet']['phi']
+
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
         doublet_list_start = time.process_time()
 
-        doublet_hits = []
-        
         rejected_doublet_because_of_time = 0
-        found_correct_doublets = 0
 
         num_segments = len(list(s_manager.segment_mapping_key.keys()))
         segment_process_counter = 0
 
+        hit_1_time_check = None
+        hit_2_time_check = None
+
         for name, segment in s_manager.segment_mapping_key.items():
             print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+
+            # Set time check information for first hit according to the layer
+            if "VXD" in segment.name:
+                if sigma_time_vxd:
+                    hit_1_time_check = sigma_time_sigma_time_vxd
+            if "ITracker" in segment.name:
+                if sigma_time_inner_tracker:
+                    hit_1_time_check = sigma_time_inner_tracker
+            if "OTracker" in segment.name:
+                if sigma_time_outer_tracker:
+                    hit_1_time_check = sigma_time_outer_tracker
+
             for target_segment in s_manager.segment_mapping[name]:
 
+                # Set time check information for first hit according to the layer
+                if "VXD" in target_segment.name:
+                    if sigma_time_vxd:
+                        hit_2_time_check = sigma_time_vxd
+                if "ITracker" in target_segment.name:
+                    if sigma_time_inner_tracker:
+                        hit_2_time_check = sigma_time_inner_tracker
+                if "OTracker" in target_segment.name:
+                    if sigma_time_outer_tracker:
+                        hit_2_time_check = sigma_time_outer_tracker
+
                 for hit_1 in segment.data:
-                    for hit_2 in target_segment.data:
-
-                        if w_angle_diff(hit_1[self.fieldnames.index('x')],
-                                        hit_2[self.fieldnames.index('x')],
-                                        hit_1[self.fieldnames.index('y')],
-                                        hit_2[self.fieldnames.index('y')],
-                                        hit_1[self.fieldnames.index('z')],
-                                        hit_2[self.fieldnames.index('z')]) > 0.01:
+                    if hit_1_time_check:
+                        if abs(hit_1[self.fieldnames['time']]) > hit_1_time_check:
                             continue
-                        self.create_doublet(hit_1, hit_2)
-                        PDG_1 = hit_1[self.fieldnames.index('PDG')]
-                        PDG_2 = hit_2[self.fieldnames.index('PDG')]
-                        if int(PDG_1) == int(PDG_2) == 13:
-                            doublet_hits.append([hit_1, hit_2])
+                    for hit_2 in target_segment.data:
+                        if hit_2_time_check:
+                            if abs(hit_2[self.fieldnames['time']]) > hit_2_time_check:
+                                continue
+
+                        # check difference in phi
+                        if w_phi_angle_diff(hit_1[self.fieldnames.index('x')],
+                                            hit_2[self.fieldnames.index('x')],
+                                            hit_1[self.fieldnames.index('y')],
+                                            hit_2[self.fieldnames.index('y')]) > phi_doublet:
+                            continue
+
+                        # check difference in rz
+                        if w_rz_angle_diff(hit_1[self.fieldnames.index('x')],
+                                           hit_2[self.fieldnames.index('x')],
+                                           hit_1[self.fieldnames.index('y')],
+                                           hit_2[self.fieldnames.index('y')],
+                                           hit_1[self.fieldnames.index('z')],
+                                           hit_2[self.fieldnames.index('z')]) > rz_doublet:
+                            continue
+                        # create doublet object
+                        doublet = self.create_doublet(hit_1, hit_2)
+                        segment.doublet_data.append(doublet)
+                        self.num_all_doublets += 1
+                        pdg_1 = hit_1[self.fieldnames.index('PDG')]
+                        pdg_2 = hit_2[self.fieldnames.index('PDG')]
+
+                        # correct_doublet = doublet stemming from two muon hits
+                        if int(pdg_1) == int(pdg_2) == 13:
+                            self.correct_doublets_tracker.add('_'.join(segment.name.split('_')[0:2]))
             segment_process_counter += 1
-        plt.figure()
-        for item in doublet_hits:
-            r_1 = np.sqrt(item[0][self.fieldnames.index('x')]**2 + item[0][self.fieldnames.index('y')]**2)
-            r_2 = np.sqrt(item[1][self.fieldnames.index('x')]**2 + item[1][self.fieldnames.index('y')]**2)
-            plt.plot([item[0][self.fieldnames.index('z')], item[1][self.fieldnames.index('z')]],
-                     [r_1, r_2],
-                     marker='o',
-                     markersize=2)
-        # plt.xscale('log')
-        # plt.yscale('log')
-        plt.show()
-        plt.savefig("tracking.pdf")
 
-        for i in range(len(self.vxd_hits_dict.keys()) - 1):
-            for hit_1 in self.vxd_hits_dict[f'L-{i}']:
-                for hit_2 in self.vxd_hits_dict[f'L-{i + 1}']:
-                    muon_match=False
-                    if abs(np.arctan2(hit_1[self.y_index], hit_1[self.x_index]) - \
-                           np.arctan2(hit_2[self.y_index], hit_2[self.x_index])) * 180 / np.pi > 5:
-                        continue
-                    if abs(np.arctan2(hit_1[self.y_index], hit_1[self.z_index]) - \
-                           np.arctan2(hit_2[self.y_index], hit_2[self.z_index])) * 180 / np.pi > 5:
-                        continue
-                    if hit_1[self.pdg_index] == hit_2[self.pdg_index] == 13: 
-                        muon_match = True
-                    if abs(float(hit_2[self.time_index]) - float(hit_1[self.time_index])) > 0.09:
-                        rejected_doublet_because_of_time += 1
-                        continue
-                    found_correct_doublets += 1
-                    if muon_match:
-                        pass
-
-        plt.figure(figsize=(12,12))
-        for d in doublets_plotting:
-            plt.plot(d[0], d[1], marker="o", c="blue", mfc='red', markersize=12)
-                    
-        if self.muon_hits > 0:
-            print(f"Found correct doublets: {found_correct_doublets} --> "
-                  f"{100 * np.around(found_correct_doublets / (self.muon_hits / 8 * 7), 2)} %")
-        else:
-            print(f"Found correct doublets: {found_correct_doublets} --> {0.0} %")
+        # Give estimate if doublet building procedure was effective
+        print(f"Found correct doublets: {len(self.correct_doublets_tracker)} --> "
+              f"{100 * np.around(len(self.correct_doublets_tracker) / 13, 2)} %")
         print(f"Rejected doublets because of time: {rejected_doublet_because_of_time}")
                         
         doublet_list_end = time.process_time()
@@ -201,66 +210,87 @@ class MuCoTripletCreator:
 
         print(f"Time elapsed for forming doublets: "
               f"{doublet_creation_time}")
-        print(f"Number of doublets found: {len([d for layer in self.doublets_dict.values() for d in layer])}")
+        print(f"Number of doublets found: {self.num_all_doublets}")
 
         print("-----------------------------------\n")
         print("Forming triplets ...\n")
         list_triplet_start = time.process_time()
-        
-        found_correct_triplets = 0
-        
-        for i in range(len(self.vxd_hits_dict.keys()) - 2):
-            for d1 in (self.doublets_dict[f'L-{i}{i + 1}']):
-                for d2 in (self.doublets_dict[f'L-{i + 1}{i + 2}']):
-                    if d1.hit_2_id != d2.hit_1_id:
-                        continue
-                    if d1.hit_1_particle_key == d1.hit_2_particle_key == d2.hit_1_particle_key == d2.hit_2_particle_key == 13:
-                        found_correct_triplets += 1
-                    new_triplet = Triplet(d1, d2)
-                    new_triplet.quality = 0.1
-                    self.triplets_dict[f'L-{i}{i + 1}{i + 2}'].append(new_triplet)
-        
+
+        for name, segment in s_manager.segment_mapping_key.items():
+            print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+            for target_segment in s_manager.segment_mapping[name]:
+                if not target_segment.doublet_data:
+                    continue
+                for d1 in segment.doublet_data:
+                    for d2 in target_segment.doublet_data:
+                        if d1.hit_2_id == d2.hit_1_id:
+                            triplet = Triplet(d1, d2)
+                            segment.triplet_data.append(triplet)
+                            self.num_all_triplets += 1
+                            if d1.hit_1_particle_key != '-1000' and \
+                                    d1.hit_2_particle_key != '-1000' and\
+                                    d2.hit_2_particle_key != '-1000':
+                                self.correct_triplets_tracker.add('_'.join(segment.name.split('_')[0:2]))
+
         list_triplet_end = time.process_time()
         triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
-        if self.muon_hits > 0:          
-            print(f"Found correct triplets: {found_correct_triplets} --> "
-                  f"{100 * np.around(found_correct_triplets / (self.muon_hits / 8 * 6), 2)} %")
-        else:
-             print(f"Found correct triplets: {found_correct_triplets} --> {0.0} %")     
+        print(f"Found correct triplets: {len(self.correct_triplets_tracker)} --> "
+              f"{100 * np.around(len(self.correct_triplets_tracker) / 12, 2)} %")
         print(f"Time elapsed for  forming triplets: "
               f"{triplet_creation_time}")
-        print(f"Number of triplets found: {len([t for layer in self.triplets_dict.values() for t in layer])}\n")
+        print(f"Number of triplets found: {self.num_all_triplets}\n")
 
-    def set_qubo_coefficients(self,
+    @staticmethod
+    def set_qubo_coefficients(s_manager,
+                              configuration: dict,
                               target_folder: str) -> None:
+        print("-----------------------------------\n")
+        print("Setting QUBO coefficients...\n")
+        connection = configuration['qubo parameters']['b_ij match']
+        conflict = configuration['qubo parameters']['b_ij conflict']
 
-        connection = -1
-        conflict = 2
-        for i in range(len(self.vxd_hits_dict.keys()) - 3):
-            print(f'Setting coeffciecints for Layer L-{i}{i + 1}{i + 2} --> L-{i + 1}{i + 2}{i + 3}')
-            for t1 in self.triplets_dict[f'L-{i}{i + 1}{i + 2}']:
-                for t2 in self.triplets_dict[f'L-{i}{i + 1}{i + 2}'] + self.triplets_dict[f'L-{i + 1}{i + 2}{i + 3}']:
+        num_segments = len(list(s_manager.segment_mapping_key.keys()))
+        segment_process_counter = 0
 
-                    t1_set = {t1.doublet_1.hit_1_id,
-                              t1.doublet_1.hit_2_id,
-                              t1.doublet_2.hit_2_id}
-                    t2_set = {t2.doublet_1.hit_1_id,
-                              t2.doublet_1.hit_2_id,
-                              t2.doublet_2.hit_2_id}
-                    intersection = len(t1_set.intersection(t2_set))
+        for name, segment in s_manager.segment_mapping_key.items():
+            print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+            for target_segment in s_manager.segment_mapping[name] + [segment]:
+                if not target_segment.triplet_data:
+                    continue
+                for t1 in segment.triplet_data:
+                    for t2 in target_segment.triplet_data:
+                        t1_set = {t1.doublet_1.hit_1_id,
+                                  t1.doublet_1.hit_2_id,
+                                  t1.doublet_2.hit_2_id}
+                        t2_set = {t2.doublet_1.hit_1_id,
+                                  t2.doublet_1.hit_2_id,
+                                  t2.doublet_2.hit_2_id}
+                        intersection = len(t1_set.intersection(t2_set))
 
-                    if intersection in [0, 3]:
-                        continue
+                        if intersection in [0, 3]:
+                            continue
 
-                    elif intersection == 1:
-                        t1.interactions.update({t2.triplet_id: conflict})
-                        t2.interactions.update({t1.triplet_id: conflict})
+                        elif intersection == 1:
+                            t1.interactions.update({t2.triplet_id: conflict})
+                            t2.interactions.update({t1.triplet_id: conflict})
 
-                    elif intersection == 2:
-                        t1.interactions.update({t2.triplet_id: connection})
-                        t2.interactions.update({t1.triplet_id: connection})
+                        elif intersection == 2:
+                            if segment.name == target_segment.name:
+                                t1.interactions.update({t2.triplet_id: conflict})
+                                t2.interactions.update({t1.triplet_id: conflict})
+                            else:
+                                t1.interactions.update({t2.triplet_id: connection})
+                                t2.interactions.update({t1.triplet_id: connection})
 
+        triplets_list = []
+        for segment in s_manager.segment_mapping_key.values():
+            if not segment.triplet_data:
+                continue
+            for triplet in segment.triplet_data:
+                triplets_list.append(triplet)
+
+        print("-----------------------------------\n")
         print(f"Save triplet list...\n")
-        np.save(f"{target_folder}/triplet_list", [t for layer in self.triplets_dict.values() for t in layer])
+        np.save(f"{target_folder}/triplet_list", triplets_list)
 
 

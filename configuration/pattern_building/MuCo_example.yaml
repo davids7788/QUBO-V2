@@ -1,22 +1,26 @@
 ---
 doublet:
-  phi: 0.01
+  phi: 0.005
+  rz: 0.005
+  sigma time VXD: null
+  sigma time inner tracker: null
+  sigma time outer tracker: null
 
 triplet:
+  phi: 0.001
+  rz: 0.001
 
 segments:
-  phi: 36
+  phi: 72
   barrel z: 20
   endcap r: 20
 
-
-
 qubo parameters:
-  b_ij conflict: 1.0
-  b_ij match: "default"
-  a_i: "default"
+  b_ij conflict: 2.0
+  b_ij match: -1.0
+  a_i: 0.0
 
 scale range parameters:
-  z_scores: True
-  quality: [-0.1, 0.1]
-  interaction: [-1.0, -0.5]
+  z_scores: null
+  quality: null
+  interaction: null

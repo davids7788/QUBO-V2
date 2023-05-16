@@ -1,7 +1,7 @@
 import numpy as np
 
 from numba import jit
-from math import atan2, sqrt
+from math import atan2, sqrt, pi
 
 
 @jit(nopython=True)
@@ -76,12 +76,12 @@ def w_default_angle_based_quality(angle_between_doublets_xz: float,
 
 
 @jit(nopython=True)
-def w_angle_diff(x_1,
-                 x_2,
-                 y_1,
-                 y_2,
-                 z_1,
-                 z_2) -> float:
+def w_rz_angle_diff(x_1: float,
+                    x_2: float,
+                    y_1: float,
+                    y_2: float,
+                    z_1: float,
+                    z_2: float) -> float:
     """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
     :param x_1: x_value hit 1
     :param x_2: x_value hit 2
@@ -90,8 +90,34 @@ def w_angle_diff(x_1,
     :param z_1: z_value hit 1
     :param z_2: z_value hit 2
     :return:
-        angle in rad of hits in the r-z plane
+        angle difference of hits in the r-z plane
     """
     r_1 = sqrt(x_1**2 + y_1**2)
     r_2 = sqrt(x_2**2 + y_2**2)
-    return abs(atan2(z_1, r_1) - atan2(z_2, r_2))
+    rz_1 = atan2(z_1, r_1)
+    rz_2 = atan2(z_2, r_2)
+    dist_rz = abs(rz_2 - rz_1)
+    if dist_rz >= pi:
+        return dist_rz - pi
+    return dist_rz
+
+
+@jit(nopython=True)
+def w_phi_angle_diff(x_1: float,
+                     x_2: float,
+                     y_1: float,
+                     y_2: float) -> float:
+    """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
+    :param x_1: x_value hit 1
+    :param x_2: x_value hit 2
+    :param y_1: y_value hit 1
+    :param y_2: y_value hit 2
+    :return:
+        difference in phi [rad]
+    """
+    phi_1 = atan2(y_1, x_1) + pi
+    phi_2 = atan2(y_2, x_2) + pi
+    dist_phi = abs(phi_2 - phi_1)
+    if dist_phi >= pi:
+        return dist_phi - pi
+    return dist_phi

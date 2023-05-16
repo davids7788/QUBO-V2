@@ -57,7 +57,10 @@ mu_co_creator.load_tracking_data(event_folder,
 
 s_manager.create_segment_mapping(no_endcaps=no_endcaps)
 
-mu_co_creator.create_xplet_list(s_manager)
-exit()
-mu_co_creator.set_qubo_coefficients(target_folder)
+mu_co_creator.create_xplet_list(s_manager,
+                                configuration)
+
+mu_co_creator.set_qubo_coefficients(s_manager,
+                                    configuration,
+                                    target_folder)
 

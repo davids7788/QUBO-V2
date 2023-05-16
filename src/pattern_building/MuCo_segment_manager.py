@@ -370,7 +370,8 @@ class MuCoSegmentManager:
             self.possible_layer_mapping.update({f'OTrackerEndcap_{side}2': [f'OTrackerEndcap_{side}3']})
             self.possible_layer_mapping.update({f'OTrackerEndcap_{side}3': []})
 
-    def create_segment_mapping(self, no_endcaps=True):
+    def create_segment_mapping(self,
+                               no_endcaps=True) -> None:
         if no_endcaps:
             segment_dictionaries = [self.vxd_tracker_barrel_segments,
                                     self.inner_tracker_barrel_segments,
@@ -438,7 +439,7 @@ class MuCoSegmentManager:
             return True
 
     @staticmethod
-    def get_zr_cone_for_segment(segment) -> Tuple([float, float]):
+    def get_zr_cone_for_segment(segment) -> tuple[float, float]:
         """Calculates min and max angle with respect to the IP for the given segment
         """
         max_zr = np.arctan2(segment.z_end, segment.r_start)
