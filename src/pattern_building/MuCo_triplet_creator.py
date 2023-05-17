@@ -41,7 +41,7 @@ class MuCoTripletCreator:
         self.triplet_list = []
 
         # fieldnames according to .csv naming
-        self.fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer', 'MC_particle_ID', 'px', 'py', 'pz', 'time', 'PDG', 'event']
+        self.fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer', 'px', 'py', 'pz', 'time', 'PDG', 'event']
 
     def load_tracking_data(self,
                            dlfilter: bool,
@@ -257,13 +257,18 @@ class MuCoTripletCreator:
                             triplet = Triplet(d1, d2)
                             segment.triplet_data.append(triplet)
                             self.num_all_triplets += 1
-                            if d1.is_correct_match() and d2.is_correct_match():
+                            if d1.hit_1_pdg == d1.hit_2_pdg == d2.hit_2_pdg == '13':
+                                if not(d1.is_correct_match() and d2.is_correct_match()):
+                                    print(d1.hit_1_momentum, d1.hit_1_particle_key)
+                                    print(d1.hit_2_momentum, d1.hit_2_particle_key)
+                                    print(d2.hit_2_momentum, d2.hit_2_particle_key)
+                                    print("wot")
                                 self.correct_triplets_tracker.add('_'.join(segment.name.split('_')[0:2]))
 
         list_triplet_end = time.process_time()
         self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
         print(f"Found correct triplets: {len(self.correct_triplets_tracker)} --> "
-              f"{100 * np.around(len(self.correct_triplets_tracker) / git stat12, 2)} %")
+              f"{100 * np.around(len(self.correct_triplets_tracker) / 12, 2)} %")
         print(f"Time elapsed for  forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.num_all_triplets}\n")
