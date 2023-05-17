@@ -1,19 +1,15 @@
 ---
 doublet:
-  phi: 0.005
+  phi: 0.1
   rz: 0.005
   sigma time VXD: null
   sigma time inner tracker: null
   sigma time outer tracker: null
 
-triplet:
-  phi: 0.005
-  rz: 0.005
-
 segments:
   phi: 36
-  barrel z: 20
-  endcap r: 20
+  barrel z: 30
+  endcap r: 30
 
 qubo parameters:
   b_ij conflict: 2.0

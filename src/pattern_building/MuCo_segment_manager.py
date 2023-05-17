@@ -425,7 +425,7 @@ class MuCoSegmentManager:
         target_segment_phi_index = int(target_segment.name.split('_')[-1])
 
         # number of allowed difference in
-        max_distance_to_neighbour_segment = int(self.doublet_phi_max / self.segment_size_phi)
+        max_distance_to_neighbour_segment = int(self.doublet_phi_max / self.segment_size_phi) + 1
 
         # think of minimum distance of segments in a circle
         if abs(start_segment_phi_index - target_segment_phi_index) > self.num_segments_phi / 2:

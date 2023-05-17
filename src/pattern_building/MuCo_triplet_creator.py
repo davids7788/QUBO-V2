@@ -36,7 +36,7 @@ class MuCoTripletCreator:
         self.num_hits_inner_tracker_endcap = 0
         self.num_hits_outer_tracker_endcap = 0
 
-        self.muon_hits = 0
+        self.muon_hits = set()
 
         self.triplet_list = []
 
@@ -94,7 +94,7 @@ class MuCoTripletCreator:
                     target_segment.data.append(hit_converted)
 
                     if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
-                        self.muon_hits += 1
+                        self.muon_hits.add('_'.join(target_segment.name.split('_')[0:2]))
             if 'DLFiltered' or '_VXDTracker_' in e_file:
                 self.num_hits_vxd_barrel += num_detector_hits
             if '_VXDTrackerEndcap_' in e_file:
@@ -108,6 +108,7 @@ class MuCoTripletCreator:
             if '_OTrackerEndcap_' in e_file:
                 self.num_hits_outer_tracker_endcap += num_detector_hits
 
+        self.muon_hits = len(self.muon_hits)
         print(f'\n{self.muon_hits} muon hit(s) found in the detector!')
 
     def create_doublet(self,
@@ -232,7 +233,7 @@ class MuCoTripletCreator:
 
         # Give estimate if doublet building procedure was effective
         print(f"Found correct doublets: {len(self.correct_doublets_tracker)} --> "
-              f"{100 * np.around(len(self.correct_doublets_tracker) / 13, 2)} %")
+              f"{100 * np.around(len(self.correct_doublets_tracker) / (self.muon_hits - 1), 2)} %")
         print(f"Rejected doublets because of time: {rejected_doublet_because_of_time}")
                         
         doublet_list_end = time.process_time()
@@ -257,19 +258,14 @@ class MuCoTripletCreator:
                             triplet = Triplet(d1, d2)
                             segment.triplet_data.append(triplet)
                             self.num_all_triplets += 1
-                            if d1.hit_1_pdg == d1.hit_2_pdg == d2.hit_2_pdg == '13':
-                                if not(d1.is_correct_match() and d2.is_correct_match()):
-                                    print(d1.hit_1_momentum, d1.hit_1_particle_key)
-                                    print(d1.hit_2_momentum, d1.hit_2_particle_key)
-                                    print(d2.hit_2_momentum, d2.hit_2_particle_key)
-                                    print("wot")
+                            if triplet.is_correct_match():
                                 self.correct_triplets_tracker.add('_'.join(segment.name.split('_')[0:2]))
 
         list_triplet_end = time.process_time()
         self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
         print(f"Found correct triplets: {len(self.correct_triplets_tracker)} --> "
-              f"{100 * np.around(len(self.correct_triplets_tracker) / 12, 2)} %")
-        print(f"Time elapsed for  forming triplets: "
+              f"{100 * np.around(len(self.correct_triplets_tracker) / (self.muon_hits - 2), 2)} %")
+        print(f"Time elapsed for forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.num_all_triplets}\n")
 
@@ -320,6 +316,7 @@ class MuCoTripletCreator:
                                 t1.interactions.update({t2.triplet_id: connection})
                                 t2.interactions.update({t1.triplet_id: connection})
 
+            segment_process_counter += 1
         for segment in s_manager.segment_mapping_key.values():
             if not segment.triplet_data:
                 continue
@@ -358,6 +355,7 @@ class MuCoTripletCreator:
             f.write(f"Time elapsed for forming doublets: "
                     f"{self.doublet_creation_time}\n")
             f.write(f"Number of doublets found: {self.num_all_doublets}\n")
+            f.write(f"Number of correct doublets found: {len(self.correct_doublets_tracker)}\n")
             f.write(f"Doublet selection efficiency: "
                     f"{np.around(100 * len(self.correct_doublets_tracker) / 13,  3)} %\n")
             f.write("\n\n")
@@ -365,5 +363,6 @@ class MuCoTripletCreator:
             f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
             f.write(f"Number of triplets found: {self.num_all_triplets}\n")
+            f.write(f"Number of correct triplets found: {len(self.correct_triplets_tracker)}\n")
             f.write(f"Triplet selection efficiency: "
                     f"{np.around(100 * len(self.correct_triplets_tracker) / 12, 3)} %\n")

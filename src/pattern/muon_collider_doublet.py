@@ -38,6 +38,10 @@ class MuCoDoublet:
         :return
             True if created from same particle, else False.
         """
+        if self.hit_1_momentum == (-1000.0, -1000.0, -1000.0) or \
+                self.hit_2_momentum == (-1000.0, -1000.0, -1000.0):
+            return False
+
         if self.hit_1_momentum == self.hit_2_momentum:
             return True
         return False
