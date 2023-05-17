@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 from math_functions.geometry import w_rz_angle_diff, w_phi_angle_diff
 from utility.time_tracking import hms_string
-from pattern.doublet import Doublet
+from pattern.muon_collider_doublet import MuCoDoublet
 from pattern.triplet import Triplet
 
 from random import randint
@@ -112,7 +112,7 @@ class MuCoTripletCreator:
 
     def create_doublet(self,
                        first_hit: list[float],
-                       second_hit: list[float]) -> type(Doublet):
+                       second_hit: list[float]) -> type(MuCoDoublet):
         """Creates a doublet from two hits.
         :param first_hit: first hit of doublet
         :param second_hit: second hit of doublet
@@ -124,18 +124,24 @@ class MuCoTripletCreator:
         hit_2_id = '_'.join([second_hit[self.fieldnames.index('layer')],
                              second_hit[self.fieldnames.index('hit_ID')]])
 
-        doublet = Doublet(hit_1_particle_key=first_hit[self.fieldnames.index('MC_particle_ID')],
-                          hit_2_particle_key=second_hit[self.fieldnames.index('MC_particle_ID')],
-                          hit_1_position=(first_hit[self.fieldnames.index('x')],
-                                          first_hit[self.fieldnames.index('y')],
-                                          first_hit[self.fieldnames.index('z')]),
-                          hit_2_position=(second_hit[self.fieldnames.index('x')],
-                                          second_hit[self.fieldnames.index('y')],
-                                          second_hit[self.fieldnames.index('z')]),
-                          hit_1_id=hit_1_id,
-                          hit_2_id=hit_2_id,
-                          time_1=first_hit[self.fieldnames.index('time')],
-                          time_2=second_hit[self.fieldnames.index('time')])
+        doublet = MuCoDoublet(hit_1_pdg=first_hit[self.fieldnames.index('PDG')],
+                              hit_2_pdg=second_hit[self.fieldnames.index('PDG')],
+                              hit_1_position=(first_hit[self.fieldnames.index('x')],
+                                              first_hit[self.fieldnames.index('y')],
+                                              first_hit[self.fieldnames.index('z')]),
+                              hit_2_position=(second_hit[self.fieldnames.index('x')],
+                                              second_hit[self.fieldnames.index('y')],
+                                              second_hit[self.fieldnames.index('z')]),
+                              hit_1_momentum=(first_hit[self.fieldnames.index('px')],
+                                              first_hit[self.fieldnames.index('py')],
+                                              first_hit[self.fieldnames.index('pz')]),
+                              hit_2_momentum=(second_hit[self.fieldnames.index('px')],
+                                              second_hit[self.fieldnames.index('py')],
+                                              second_hit[self.fieldnames.index('pz')]),
+                              hit_1_id=hit_1_id,
+                              hit_2_id=hit_2_id,
+                              time_1=first_hit[self.fieldnames.index('time')],
+                              time_2=second_hit[self.fieldnames.index('time')])
 
         return doublet
 
@@ -219,11 +225,8 @@ class MuCoTripletCreator:
                         doublet = self.create_doublet(hit_1, hit_2)
                         segment.doublet_data.append(doublet)
                         self.num_all_doublets += 1
-                        pdg_1 = hit_1[self.fieldnames.index('PDG')]
-                        pdg_2 = hit_2[self.fieldnames.index('PDG')]
-
                         # correct_doublet = doublet stemming from two muon hits
-                        if int(pdg_1) == int(pdg_2) == 13:
+                        if doublet.is_correct_match():
                             self.correct_doublets_tracker.add('_'.join(segment.name.split('_')[0:2]))
             segment_process_counter += 1
 
@@ -254,15 +257,13 @@ class MuCoTripletCreator:
                             triplet = Triplet(d1, d2)
                             segment.triplet_data.append(triplet)
                             self.num_all_triplets += 1
-                            if d1.hit_1_particle_key != '-1000' and \
-                                    d1.hit_2_particle_key != '-1000' and\
-                                    d2.hit_2_particle_key != '-1000':
+                            if d1.is_correct_match() and d2.is_correct_match():
                                 self.correct_triplets_tracker.add('_'.join(segment.name.split('_')[0:2]))
 
         list_triplet_end = time.process_time()
         self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
         print(f"Found correct triplets: {len(self.correct_triplets_tracker)} --> "
-              f"{100 * np.around(len(self.correct_triplets_tracker) / 12, 2)} %")
+              f"{100 * np.around(len(self.correct_triplets_tracker) / git stat12, 2)} %")
         print(f"Time elapsed for  forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.num_all_triplets}\n")

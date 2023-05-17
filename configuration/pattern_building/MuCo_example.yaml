@@ -7,11 +7,11 @@ doublet:
   sigma time outer tracker: null
 
 triplet:
-  phi: 0.001
-  rz: 0.001
+  phi: 0.005
+  rz: 0.005
 
 segments:
-  phi: 72
+  phi: 36
   barrel z: 20
   endcap r: 20
 
