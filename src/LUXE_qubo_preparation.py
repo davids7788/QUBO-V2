@@ -74,7 +74,6 @@ triplet_creator.load_tracking_data(tracking_data, s_manager)
 triplet_creator.create_x_plets_LUXE(s_manager)
 triplet_creator.write_info_file()
 
-
 # Create truth Xplets
 gen_xplets_simplified_LUXE(tracking_data, "/".join(new_folder.split("/")[0:-1]))
 

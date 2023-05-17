@@ -14,9 +14,12 @@ from random import randint
 
 
 class MuCoTripletCreator:
-    def __init__(self):
+    def __init__(self, event_folder):
         """Class for creating triplets from Muon Collider detector hits.
-        """
+        :param event_folder folder containing .csv files from a sinlge muon collider event
+                """
+        self.event_folder = event_folder
+
         self.doublet_creation_time = 0
         self.triplet_creation_time = 0
         self.num_signal_events = 0
@@ -24,25 +27,35 @@ class MuCoTripletCreator:
         self.correct_doublets_tracker = set()
         self.correct_triplets_tracker = set()
         self.num_all_triplets = 0
+
+        self.num_hits_vxd_barrel = 0
+        self.num_hits_inner_tracker_barrel = 0
+        self.num_hits_outer_tracker_barrel = 0
+
+        self.num_hits_vxd_endcap = 0
+        self.num_hits_inner_tracker_endcap = 0
+        self.num_hits_outer_tracker_endcap = 0
+
         self.muon_hits = 0
+
+        self.triplet_list = []
 
         # fieldnames according to .csv naming
         self.fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer', 'MC_particle_ID', 'px', 'py', 'pz', 'time', 'PDG', 'event']
 
     def load_tracking_data(self,
-                           event_folder: str,
                            dlfilter: bool,
                            s_manager,
                            no_endcaps=True) -> None:
         """Loads data from the event stored in various .csv files inside the specified folder.
         Also converts values which are used for calculations to float from string.
-        :param event_folder: folder containing a muon collider event
+
         :param dlfilter: if True, then the double layer filtered hits are used instead of the whole VXDTracker sample
         :param s_manager: segment manager
         :param no_endcaps: if True no data from endcaps are used
         """
-        print(f'Processing folder: {event_folder}')
-        event_files = [f for f in os.listdir(event_folder) if '.csv' in f]
+        print(f'Processing folder: {self.event_folder}')
+        event_files = [f for f in os.listdir(self.event_folder) if '.csv' in f]
 
         # Check if using Double Layer Filtered hits or all hits from the Vertex detector
         if not dlfilter:
@@ -64,10 +77,12 @@ class MuCoTripletCreator:
 
         for e_file in event_files:
             print(f'\nLoading data from file: {e_file}')
-            with open(f'{event_folder}/{e_file}', 'r') as file:
+            num_detector_hits = 0
+            with open(f'{self.event_folder}/{e_file}', 'r') as file:
                 csv_reader = csv.reader(file)
                 next(csv_reader)  # skip header
                 for i, row in enumerate(csv_reader):
+                    num_detector_hits += 1
                     print(f'Processing detector hit : {i}', end="\r")
                     hit_converted = ([float(r) if row.index(r) in arguments_to_convert else r for r in row])
                     target_segment = s_manager.get_segment_at_known_xyz_value(hit_converted[self.fieldnames.index('x')],
@@ -80,6 +95,18 @@ class MuCoTripletCreator:
 
                     if int(hit_converted[self.fieldnames.index('PDG')]) == 13:
                         self.muon_hits += 1
+            if 'DLFiltered' or '_VXDTracker_' in e_file:
+                self.num_hits_vxd_barrel += num_detector_hits
+            if '_VXDTrackerEndcap_' in e_file:
+                self.num_hits_vxd_endcap += num_detector_hits
+            if '_ITracker_' in e_file:
+                self.num_hits_inner_tracker_barrel += num_detector_hits
+            if '_ITrackerEndcap_' in e_file:
+                self.num_hits_inner_tracker_endcap += num_detector_hits
+            if '_OTracker_' in e_file:
+                self.num_hits_outer_tracker_barrel += num_detector_hits
+            if '_OTrackerEndcap_' in e_file:
+                self.num_hits_outer_tracker_endcap += num_detector_hits
 
         print(f'\n{self.muon_hits} muon hit(s) found in the detector!')
 
@@ -206,10 +233,10 @@ class MuCoTripletCreator:
         print(f"Rejected doublets because of time: {rejected_doublet_because_of_time}")
                         
         doublet_list_end = time.process_time()
-        doublet_creation_time = hms_string(doublet_list_end - doublet_list_start)
+        self.doublet_creation_time = hms_string(doublet_list_end - doublet_list_start)
 
         print(f"Time elapsed for forming doublets: "
-              f"{doublet_creation_time}")
+              f"{self.doublet_creation_time}")
         print(f"Number of doublets found: {self.num_all_doublets}")
 
         print("-----------------------------------\n")
@@ -233,17 +260,22 @@ class MuCoTripletCreator:
                                 self.correct_triplets_tracker.add('_'.join(segment.name.split('_')[0:2]))
 
         list_triplet_end = time.process_time()
-        triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
+        self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
         print(f"Found correct triplets: {len(self.correct_triplets_tracker)} --> "
               f"{100 * np.around(len(self.correct_triplets_tracker) / 12, 2)} %")
         print(f"Time elapsed for  forming triplets: "
-              f"{triplet_creation_time}")
+              f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.num_all_triplets}\n")
 
-    @staticmethod
-    def set_qubo_coefficients(s_manager,
+    def set_qubo_coefficients(self,
+                              s_manager,
                               configuration: dict,
-                              target_folder: str) -> None:
+                              save_to_folder: str) -> None:
+        """Sets the QUBO coefficients.
+        :param s_manager: segment manager
+        :param configuration: configuration of pattern building
+        :param save_to_folder: folder to save triplet list
+        """
         print("-----------------------------------\n")
         print("Setting QUBO coefficients...\n")
         connection = configuration['qubo parameters']['b_ij match']
@@ -282,15 +314,50 @@ class MuCoTripletCreator:
                                 t1.interactions.update({t2.triplet_id: connection})
                                 t2.interactions.update({t1.triplet_id: connection})
 
-        triplets_list = []
         for segment in s_manager.segment_mapping_key.values():
             if not segment.triplet_data:
                 continue
             for triplet in segment.triplet_data:
-                triplets_list.append(triplet)
+                self.triplet_list.append(triplet)
 
         print("-----------------------------------\n")
         print(f"Save triplet list...\n")
-        np.save(f"{target_folder}/triplet_list", triplets_list)
+        np.save(f"{save_to_folder}/triplet_list", self.triplet_list)
 
+    def write_info_file(self,
+                        save_to_folder: str,
+                        configuration: dict) -> None:
+        """Writes information about the Preselection parameters and some statistics into
+        'preselection_info.txt' which is stored inside the output folder.
+        :param save_to_folder: folder to write the information into
+        :param configuration: configuration of the pattern building procedure
+        """
+        with open(save_to_folder + "/preselection_info.txt", "w") as f:
+            f.write("Preselection performed with the following configuration: \n")
+            for outer_key in configuration.keys():
+                for inner_key, value in configuration[outer_key].items():
+                    f.write(f"\n{inner_key}: {value}")
+                f.write("\n")
+            f.write("\n\n")
+            f.write("---\n")
+            f.write(f"Number of hits in VXDTrackerBarrel: {self.num_hits_vxd_barrel}\n")
+            f.write(f"Number of hits in VXDEndcap: {self.num_hits_vxd_endcap}\n")
+            f.write(f"Number of hits InnerTrackerBarrel: {self.num_hits_inner_tracker_barrel}\n")
+            f.write(f"Number of hits InnerTrackerEndcap: {self.num_hits_inner_tracker_endcap}\n")
+            f.write(f"Number of hits OuterTrackerBarrel: {self.num_hits_outer_tracker_barrel}\n")
+            f.write(f"Number of hits OuterTrackerEndcap: {self.num_hits_outer_tracker_endcap}\n")
 
+            f.write("\n\n")
+
+            f.write(f"Time elapsed for forming doublets: "
+                    f"{self.doublet_creation_time}\n")
+            f.write(f"Number of doublets found: {self.num_all_doublets}\n")
+            f.write(f"Doublet selection efficiency: "
+                    f"{np.around(100 * len(self.correct_doublets_tracker) / 13,  3)} %\n")
+            f.write("\n\n")
+
+            f.write(f"Time elapsed for creating triplets: "
+                    f"{self.triplet_creation_time}\n")
+            f.write(f"Number of triplets found: {self.num_all_triplets}\n")
+            f.write(f"Triplet selection efficiency: "
+                    f"{np.around(100 * len(self.correct_triplets_tracker) / 12, 3)} %\n")
