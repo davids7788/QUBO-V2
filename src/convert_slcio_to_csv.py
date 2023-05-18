@@ -136,10 +136,10 @@ def get_hit_and_relation_information(event,
     return tracker_hits, relation, decoder
 
 for i, event in enumerate(reader):
-    if Path(f'event_{i}').is_dir():
+    if Path(f'event_{event.getEventNumber()}').is_dir():
         pass
     else:
-        os.mkdir(f'event_{i}')
+        os.mkdir(f'event_{event.getEventNumber()}')
     if i == events:
         break
     
@@ -151,7 +151,7 @@ for i, event in enumerate(reader):
                                                                            "VXDTrackerHits_DLFiltered",      
                                                                            "VXDTrackerHitRelations")
         write_to_array(tracker_hits, relation, decoder, i, False, dl_filtered)
-        with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_DLFiltered_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+        with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_DLFiltered_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for line in dl_filtered:
@@ -164,7 +164,7 @@ for i, event in enumerate(reader):
                                                                            "VXDTrackerHits",      
                                                                            "VXDTrackerHitRelations")
         write_to_array(tracker_hits, relation, decoder, i, False, vxd_tracker_barrel)
-        with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_VXDTracker_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+        with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_VXDTracker_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for line in vxd_tracker_barrel:
@@ -176,7 +176,7 @@ for i, event in enumerate(reader):
                                                                                "VXDEndcapTrackerHits",      
                                                                                "VXDEndcapTrackerHitRelations")
             write_to_array(tracker_hits, relation, decoder, i, True, vxd_tracker_endcap)
-            with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_VXDTrackerEndcap_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+            with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_VXDTrackerEndcap_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for line in vxd_tracker_endcap:
@@ -189,7 +189,7 @@ for i, event in enumerate(reader):
                                                                            "ITrackerHits", 
                                                                            "InnerTrackerBarrelHitsRelations")
         write_to_array(tracker_hits, relation, decoder, i, False, inner_tracker_barrel)
-        with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_ITracker_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+        with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_ITracker_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for line in inner_tracker_barrel:
@@ -201,7 +201,7 @@ for i, event in enumerate(reader):
                                                                                "ITrackerEndcapHits", 
                                                                                "InnerTrackerEndcapHitsRelations")
             write_to_array(tracker_hits, relation, decoder, i, True, inner_tracker_endcap)
-            with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_ITrackerEndcap_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+            with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_ITrackerEndcap_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for line in inner_tracker_endcap:
@@ -214,7 +214,7 @@ for i, event in enumerate(reader):
                                                                            "OTrackerHits", 
                                                                            "OuterTrackerBarrelHitsRelations")
         write_to_array(tracker_hits, relation, decoder, i, False, outer_tracker_barrel)
-        with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_OTracker_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+        with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_OTracker_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             for line in outer_tracker_barrel:
@@ -226,7 +226,7 @@ for i, event in enumerate(reader):
                                                                                "OTrackerEndcapHits", 
                                                                                "OuterTrackerEndcapHitsRelations")
             write_to_array(tracker_hits, relation, decoder, i, True, outer_tracker_endcap)  
-            with open(f"event_{i}/{'.'.join(slcio_file.split('.')[0:-1])}_OTrackerEndcap_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
+            with open(f"event_{event.getEventNumber()}/{'.'.join(slcio_file.split('.')[0:-1])}_OTrackerEndcap_{event.getEventNumber()}.csv", 'w', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for line in outer_tracker_endcap:
