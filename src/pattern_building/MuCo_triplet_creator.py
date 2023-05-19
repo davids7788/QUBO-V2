@@ -177,7 +177,7 @@ class MuCoTripletCreator:
             # Set time check information for first hit according to the layer
             if "VXD" in segment.name:
                 if sigma_time_vxd:
-                    hit_1_time_check = sigma_time_sigma_time_vxd
+                    hit_1_time_check = sigma_time_vxd
             if "ITracker" in segment.name:
                 if sigma_time_inner_tracker:
                     hit_1_time_check = sigma_time_inner_tracker
@@ -200,11 +200,11 @@ class MuCoTripletCreator:
 
                 for hit_1 in segment.data:
                     if hit_1_time_check:
-                        if abs(hit_1[self.fieldnames['time']]) > hit_1_time_check:
+                        if abs(hit_1[self.fieldnames.index('time')]) > hit_1_time_check:
                             continue
                     for hit_2 in target_segment.data:
                         if hit_2_time_check:
-                            if abs(hit_2[self.fieldnames['time']]) > hit_2_time_check:
+                            if abs(hit_2[self.fieldnames.index('time')]) > hit_2_time_check:
                                 continue
 
                         # check difference in phi
