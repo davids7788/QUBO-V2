@@ -364,6 +364,8 @@ class MuCoTripletCreator:
                         muon_hits_theta.append(np.arctan2(float(row[self.fieldnames.index('z')]), r))
                         muon_hits_phi.append(np.arctan2(float(row[self.fieldnames.index('y')]),
                                                         float(row[self.fieldnames.index('x')])))
+        if not muon_hits_phi or not muon_hits_theta:
+            return [0, 0], [0, 0]
         if max(muon_hits_phi) - min(muon_hits_phi) < np.pi:
             if max(muon_hits_phi) + 0.1 < 2 * np.pi:
                 phi_range[1] = max(muon_hits_phi) + 0.1
