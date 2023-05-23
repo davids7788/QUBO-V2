@@ -83,6 +83,7 @@ qubo_processor = QuboProcessing(qubo_folder + "/triplet_list.npy",
                                 verbose=1)
 qubo_processor.qubo_processing()
 
+
 # reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
 #                             new_folder)
 

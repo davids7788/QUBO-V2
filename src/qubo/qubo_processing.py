@@ -224,6 +224,7 @@ class QuboProcessing:
                 minimum_energy_state.append(1)
             else:
                 minimum_energy_state.append(0)
+
         return minimum_energy_state, self.hamiltonian_energy(minimum_energy_state)
 
     def hamiltonian_energy(self, binary_vector, triplet_subset=None):
