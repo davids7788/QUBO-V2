@@ -227,8 +227,13 @@ class MuCoTripletCreator:
             segment_process_counter += 1
 
         # Give estimate if doublet building procedure was effective
+        if len(self.correct_doublets_tracker) == 0:
+            correct_doublet_fraction = 0.0
+        else:
+            correct_doublet_fraction = 100 * np.around(len(self.correct_doublets_tracker) / (self.muon_hits - 1), 2)
+
         print(f"Found correct doublets: {len(self.correct_doublets_tracker)} --> "
-              f"{100 * np.around(len(self.correct_doublets_tracker) / (self.muon_hits - 1), 2)} %")
+              f"{correct_doublet_fraction} %")
         print(f"Rejected doublets because of time: {rejected_doublet_because_of_time}")
                         
         doublet_list_end = time.process_time()
@@ -261,8 +266,12 @@ class MuCoTripletCreator:
 
         list_triplet_end = time.process_time()
         self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
+        if len(self.correct_triplets_tracker) == 0:
+            correct_triplet_fraction = 0.0
+        else:
+            correct_triplet_fraction = 100 * np.around(len(self.correct_triplets_tracker) / (self.muon_hits - 2), 2)
         print(f"Found correct triplets: {len(self.correct_triplets_tracker)} --> "
-              f"{100 * np.around(len(self.correct_triplets_tracker) / (self.muon_hits - 2), 2)} %")
+              f"{correct_triplet_fraction} %")
         print(f"Time elapsed for forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.num_all_triplets}\n")
@@ -402,13 +411,22 @@ class MuCoTripletCreator:
                     f"{self.doublet_creation_time}\n")
             f.write(f"Number of doublets found: {self.num_all_doublets}\n")
             f.write(f"Number of correct doublets found: {len(self.correct_doublets_tracker)}\n")
+
+            if len(self.correct_doublets_tracker) == 0:
+                correct_doublet_fraction = 0.0
+            else:
+                correct_doublet_fraction = 100 * np.around(len(self.correct_doublets_tracker) / (self.muon_hits - 1), 2)
             f.write(f"Doublet selection efficiency: "
-                    f"{np.around(100 * len(self.correct_doublets_tracker) / 13,  3)} %\n")
+                    f"{correct_doublet_fraction} %\n")
             f.write("\n\n")
 
+            if len(self.correct_triplets_tracker) == 0:
+                correct_triplet_fraction = 0.0
+            else:
+                correct_triplet_fraction = 100 * np.around(len(self.correct_triplets_tracker) / (self.muon_hits - 2), 2)
             f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
             f.write(f"Number of triplets found: {self.num_all_triplets}\n")
             f.write(f"Number of correct triplets found: {len(self.correct_triplets_tracker)}\n")
             f.write(f"Triplet selection efficiency: "
-                    f"{np.around(100 * len(self.correct_triplets_tracker) / 12, 3)} %\n")
+                    f"{correct_triplet_fraction} %\n")
