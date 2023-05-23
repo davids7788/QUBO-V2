@@ -1,7 +1,7 @@
 ---
 doublet:
   phi: 0.1
-  rz: 0.005
+  rz: 0.0025
   sigma time VXD: null
   sigma time inner tracker: null
   sigma time outer tracker: null
