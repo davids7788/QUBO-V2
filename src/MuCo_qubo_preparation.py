@@ -29,7 +29,7 @@ parser.add_argument('--configuration',
 
 parser.add_argument('--no_endcaps',
                     action='store_true',
-                    help='Folder in which the triplet list will be stored')
+                    help='Only barrel region used for tracking')
 
 
 args = parser.parse_args()

@@ -16,7 +16,7 @@ from random import randint
 class MuCoTripletCreator:
     def __init__(self, event_folder):
         """Class for creating triplets from Muon Collider detector hits.
-        :param event_folder folder containing .csv files from a sinlge muon collider event
+        :param event_folder folder containing .csv files from a single muon collider event
                 """
         self.event_folder = event_folder
 
@@ -46,13 +46,15 @@ class MuCoTripletCreator:
     def load_tracking_data(self,
                            dlfilter: bool,
                            s_manager,
-                           no_endcaps=True) -> None:
+                           no_endcaps=True,
+                           cone_around_muon=True) -> None:
         """Loads data from the event stored in various .csv files inside the specified folder.
         Also converts values which are used for calculations to float from string.
 
         :param dlfilter: if True, then the double layer filtered hits are used instead of the whole VXDTracker sample
         :param s_manager: segment manager
         :param no_endcaps: if True no data from endcaps are used
+        :param cone_around_muon: if True, then only data in a cone around the muon hits are taken into account
         """
         print(f'Processing folder: {self.event_folder}')
         event_files = [f for f in os.listdir(self.event_folder) if '.csv' in f]
@@ -75,6 +77,9 @@ class MuCoTripletCreator:
                                 self.fieldnames.index('pz'),
                                 self.fieldnames.index('time')]
 
+        if cone_around_muon:
+            phi_range, theta_range = self.get_cone_around_muon(event_files)
+
         for e_file in event_files:
             print(f'\nLoading data from file: {e_file}')
             num_detector_hits = 0
@@ -85,6 +90,13 @@ class MuCoTripletCreator:
                     num_detector_hits += 1
                     print(f'Processing detector hit : {i}', end="\r")
                     hit_converted = ([float(r) if row.index(r) in arguments_to_convert else r for r in row])
+                    r = np.sqrt(float(row[self.fieldnames.index('x')]) ** 2 +
+                                float(row[self.fieldnames.index('y')]) ** 2)
+                    theta = np.arctan2(float(row[self.fieldnames.index('z')]), r)
+                    if not theta_range[0] <= theta <= theta_range[1]:
+                        continue
+                    if not self.is_in_phi_cone(row, phi_range):
+                        continue
                     target_segment = s_manager.get_segment_at_known_xyz_value(hit_converted[self.fieldnames.index('x')],
                                                                               hit_converted[self.fieldnames.index('y')],
                                                                               hit_converted[self.fieldnames.index('z')],
@@ -153,11 +165,14 @@ class MuCoTripletCreator:
         :param s_manager: segment manager object
         :param configuration: Muon Collider qubo preparation configuration file
         """
-        sigma_time_vxd = configuration['doublet']['sigma time VXD']
-        sigma_time_inner_tracker = configuration['doublet']['sigma time inner tracker']
-        sigma_time_outer_tracker = configuration['doublet']['sigma time outer tracker']
-        rz_doublet = configuration['doublet']['rz']
-        phi_doublet = configuration['doublet']['phi']
+        # max allowed difference in phi for doublets [rad]
+        phi_max_vxd = configuration['doublet']['phi']['VXDTrackerBarrel']
+        phi_max_inner = configuration['doublet']['phi']['InnerTrackerBarrel']
+        phi_max_outer = configuration['doublet']['phi']['OuterTrackerBarrel']
+
+        rz_max_vxd = configuration['doublet']['theta']['VXDTrackerBarrel']
+        rz_max_inner = configuration['doublet']['theta']['InnerTrackerBarrel']
+        rz_max_outer = configuration['doublet']['theta']['OuterTrackerBarrel']
 
         print("-----------------------------------\n")
         print("Forming doublets ...\n")
@@ -168,44 +183,24 @@ class MuCoTripletCreator:
         num_segments = len(list(s_manager.segment_mapping_key.keys()))
         segment_process_counter = 0
 
-        hit_1_time_check = None
-        hit_2_time_check = None
-
         for name, segment in s_manager.segment_mapping_key.items():
             print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
-
-            # Set time check information for first hit according to the layer
-            if "VXD" in segment.name:
-                if sigma_time_vxd:
-                    hit_1_time_check = sigma_time_vxd
-            if "ITracker" in segment.name:
-                if sigma_time_inner_tracker:
-                    hit_1_time_check = sigma_time_inner_tracker
-            if "OTracker" in segment.name:
-                if sigma_time_outer_tracker:
-                    hit_1_time_check = sigma_time_outer_tracker
 
             for target_segment in s_manager.segment_mapping[name]:
 
                 # Set time check information for first hit according to the layer
                 if "VXD" in target_segment.name:
-                    if sigma_time_vxd:
-                        hit_2_time_check = sigma_time_vxd
+                    rz_doublet = rz_max_vxd
+                    phi_doublet = phi_max_vxd
                 if "ITracker" in target_segment.name:
-                    if sigma_time_inner_tracker:
-                        hit_2_time_check = sigma_time_inner_tracker
+                    rz_doublet = rz_max_inner
+                    phi_doublet = phi_max_inner
                 if "OTracker" in target_segment.name:
-                    if sigma_time_outer_tracker:
-                        hit_2_time_check = sigma_time_outer_tracker
+                    rz_doublet = rz_max_outer
+                    phi_doublet = phi_max_outer
 
                 for hit_1 in segment.data:
-                    if hit_1_time_check:
-                        if abs(hit_1[self.fieldnames.index('time')]) > hit_1_time_check:
-                            continue
                     for hit_2 in target_segment.data:
-                        if hit_2_time_check:
-                            if abs(hit_2[self.fieldnames.index('time')]) > hit_2_time_check:
-                                continue
 
                         # check difference in phi
                         if w_phi_angle_diff(hit_1[self.fieldnames.index('x')],
@@ -247,6 +242,8 @@ class MuCoTripletCreator:
         print("Forming triplets ...\n")
         list_triplet_start = time.process_time()
 
+        segment_process_counter = 0
+
         for name, segment in s_manager.segment_mapping_key.items():
             print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
             for target_segment in s_manager.segment_mapping[name]:
@@ -260,6 +257,7 @@ class MuCoTripletCreator:
                             self.num_all_triplets += 1
                             if triplet.is_correct_match():
                                 self.correct_triplets_tracker.add('_'.join(segment.name.split('_')[0:2]))
+            segment_process_counter += 1
 
         list_triplet_end = time.process_time()
         self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
@@ -326,6 +324,54 @@ class MuCoTripletCreator:
         print("-----------------------------------\n")
         print(f"Save triplet list...\n")
         np.save(f"{save_to_folder}/triplet_list", self.triplet_list)
+
+    def is_in_phi_cone(self, hit, phi_range):
+        if phi_range[0] < phi_range[1]:
+            if phi_range[0] <= np.arctan2(float(hit[self.fieldnames.index('y')]),
+                                          float(hit[self.fieldnames.index('x')])) <= phi_range[1]:
+                return True
+            return False
+        else:
+            if np.arctan2(float(hit[self.fieldnames.index('y')]),
+                          float(hit[self.fieldnames.index('x')])) > phi_range[0] or \
+                    np.arctan2(float(hit[self.fieldnames.index('y')]),
+                               float(hit[self.fieldnames.index('x')])) < phi_range[1]:
+                return True
+            return False
+
+    def get_cone_around_muon(self, event_files):
+        muon_hits_phi = []
+        muon_hits_theta = []
+        phi_range = [0, 0]
+        theta_range = [0, 0]
+        for e_file in event_files:
+            with open(f'{self.event_folder}/{e_file}', 'r') as file:
+                csv_reader = csv.reader(file)
+                next(csv_reader)  # skip header
+                for i, row in enumerate(csv_reader):
+                    if int(row[self.fieldnames.index('PDG')]) == 13:
+                        r = np.sqrt(float(row[self.fieldnames.index('x')])**2 +
+                                    float(row[self.fieldnames.index('y')])**2)
+                        muon_hits_theta.append(np.arctan2(float(row[self.fieldnames.index('z')]), r))
+                        muon_hits_phi.append(np.arctan2(float(row[self.fieldnames.index('y')]),
+                                                        float(row[self.fieldnames.index('x')])))
+        if max(muon_hits_phi) - min(muon_hits_phi) < np.pi:
+            if max(muon_hits_phi) + 0.1 < 2 * np.pi:
+                phi_range[1] = max(muon_hits_phi) + 0.1
+            else:
+                phi_range[1] = max(muon_hits_phi) + 0.1 - 2 * np.pi
+            if min(muon_hits_phi) > 0.1:
+                phi_range[0] = min(muon_hits_phi) - 0.1
+            else:
+                phi_range[0] = min(muon_hits_phi) - 0.1 + 2 * np.pi
+        else:
+            phi_range[0] = max(muon_hits_phi) - 0.1
+            phi_range[1] = min(muon_hits_phi) + 0.1
+
+        theta_range[0] = min(muon_hits_theta) - 0.05
+        theta_range[1] = max(muon_hits_theta) + 0.05
+
+        return phi_range, theta_range
 
     def write_info_file(self,
                         save_to_folder: str,

@@ -20,7 +20,9 @@ class MuCoSegmentManager:
         self.num_segments_phi = configuration['segments']['phi']
 
         # max allowed difference in phi for doublets [rad]
-        self.doublet_phi_max = configuration['doublet']['phi']
+        self.doublet_phi_max_vxd = configuration['doublet']['phi']['VXDTrackerBarrel']
+        self.doublet_phi_max_inner = configuration['doublet']['phi']['InnerTrackerBarrel']
+        self.doublet_phi_max_outer = configuration['doublet']['phi']['OuterTrackerBarrel']
 
         # angle in phi [rad]
         self.segment_size_phi = 2 * np.pi / self.num_segments_phi
@@ -425,7 +427,16 @@ class MuCoSegmentManager:
         target_segment_phi_index = int(target_segment.name.split('_')[-1])
 
         # number of allowed difference in
-        max_distance_to_neighbour_segment = int(self.doublet_phi_max / self.segment_size_phi) + 1
+        if 'VXD' in target_segment.name:
+            doublet_phi_max = self.doublet_phi_max_vxd
+        elif 'ITracker' in target_segment.name:
+            doublet_phi_max = self.doublet_phi_max_inner
+        elif 'OTracker' in target_segment.name:
+            doublet_phi_max = self.doublet_phi_max_outer
+        else:
+            print('Problem occurred while setting max_phi difference for segments!')
+            exit()
+        max_distance_to_neighbour_segment = int(doublet_phi_max / self.segment_size_phi) + 1
 
         # think of minimum distance of segments in a circle
         if abs(start_segment_phi_index - target_segment_phi_index) > self.num_segments_phi / 2:

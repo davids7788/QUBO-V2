@@ -1,10 +1,16 @@
 ---
 doublet:
-  phi: 0.1
-  rz: 0.0025
-  sigma time VXD: null
-  sigma time inner tracker: null
-  sigma time outer tracker: null
+  phi:
+    VXDTrackerBarrel: 0.04
+    InnerTrackerBarrel: 0.06
+    OuterTrackerBarrel: 0.08
+  theta:
+    VXDTrackerBarrel: 0.05
+    InnerTrackerBarrel: 0.03
+    OuterTrackerBarrel: 0.01
+
+dataset:
+  cone around muon: True
 
 segments:
   phi: 36
