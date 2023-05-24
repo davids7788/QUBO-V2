@@ -5,16 +5,17 @@ import sys
 import circle_fit as cf
 from math import ceil
 
+
+track_length_requirement = 7
+
 directory = '../../muon_collider_files'
 preselection = 'MuCo_example.yaml'
 
 folders = os.listdir(directory)
 
-reconstructed_muon = []
-pt = []
-reconstructed_correct_doublets = []
-reconstructed_correct_triplets = []
-
+pt_truth = {}
+pt_reconstructed = {}
+signal_or_background = {}
 
 layer_info = {0: [30.1, 31.5],
               1: [32.1, 33.5],
@@ -78,15 +79,17 @@ def build_tracks(t_sorted):
 
 for folder in folders:
     if os.path.isdir(f'{directory}/{folder}'):
+        print(f'\nProcessing event: {folder.split("-")[-1]}')
         triplets = np.load(f'{directory}/{folder}/{preselection}/triplet_list.npy', allow_pickle=True)
-        correct = []
+        pT_from_truth_triplets = []
         for t in triplets:
             if t.is_correct_match():
-                correct.append((t.doublet_1.hit_1_position[0], t.doublet_1.hit_1_position[1]))
+                pT_from_truth_triplets.append(t)
 
-        xc, yc, r, _ = cf.least_squares_circle(correct)
-        print(r * )
-        exit()
+        pT_true = pT(pT_from_truth_triplets)
+        print(f'Signal track truth p_T = {np.around(pT_true, 2)} GeV')
+        pt_truth.update({folder: pT_true})
+
         result_folder = os.listdir(f'{directory}/{folder}/{preselection}')[0]
         qubo_log = np.load(f'{directory}/{folder}/{preselection}/{result_folder}/qubo_log.npy', allow_pickle=True)[()]
 
@@ -114,7 +117,7 @@ for folder in folders:
 
         tr = build_tracks(kept_triplets)
         if tr is not None:
-            if len(tr) > ceil(len(list(layer_info.keys())) / 2):
+            if len(tr) >= track_length_requirement:
                 num_correct = 0
 
                 if tr[0].doublet_1.hit_1_pdg == '13':
@@ -126,14 +129,22 @@ for folder in folders:
                 for element in tr[1:]:
                     if element.doublet_2.hit_2_pdg == '13':
                         num_correct += 1
+                # check if purely combinatorial or stemming from signal
                 if num_correct >= ceil(len(tr) / 2):
-                    p_t = pT(tr)
-                    if p_t:
-                        print(f'Reconstructed track with {np.around(p_t, 2)} GeV')
+                    signal_or_background.update({folder: True})
                 else:
-                    print(f'Track candidate mostly/purely combinatorial: length of track = {len(tr)} hits, '
-                          f'num_correct_hits = {num_correct}')
+                    signal_or_background.update({folder: False})
+                pt_reconstruction = []
+                for t in tr:
+                    pt_reconstruction.append((t.doublet_1.hit_1_position[0], t.doublet_1.hit_1_position[1]))
+                xc, yc, r, _ = cf.least_squares_circle(pt_reconstruction)
+
+                p_t = (1 / 1000 * 0.3 * 3.57 * r)
+                pt_reconstructed.update({folder: p_t})
+
+                print(f'Reconstructed track with p_T = {np.around(p_t, 2)} GeV')
+                print(f'Length of track = {len(tr)} hits, num_correct_hits = {num_correct}')
             else:
-                print('No track candidate with at least 7 hits found')
+                print(f'No reconstructed track candidate with at least {track_length_requirement} hits found')
 
 

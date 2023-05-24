@@ -122,7 +122,7 @@ class MuCoTripletCreator:
                 self.num_hits_outer_tracker_endcap += num_detector_hits
 
         self.muon_hits = len(self.muon_hits)
-        print(f'\n{self.muon_hits} muon hit(s) found in the detector!')
+        print(f'\n{self.muon_hits} detector(s) were hit by a muon!')
 
     def create_doublet(self,
                        first_hit: list[float],
