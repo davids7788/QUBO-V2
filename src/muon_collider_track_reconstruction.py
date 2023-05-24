@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+import circle_fit as cf
 from math import ceil
 
 directory = '../../muon_collider_files'
@@ -78,6 +79,14 @@ def build_tracks(t_sorted):
 for folder in folders:
     if os.path.isdir(f'{directory}/{folder}'):
         triplets = np.load(f'{directory}/{folder}/{preselection}/triplet_list.npy', allow_pickle=True)
+        correct = []
+        for t in triplets:
+            if t.is_correct_match():
+                correct.append((t.doublet_1.hit_1_position[0], t.doublet_1.hit_1_position[1]))
+
+        xc, yc, r, _ = cf.least_squares_circle(correct)
+        print(r * )
+        exit()
         result_folder = os.listdir(f'{directory}/{folder}/{preselection}')[0]
         qubo_log = np.load(f'{directory}/{folder}/{preselection}/{result_folder}/qubo_log.npy', allow_pickle=True)[()]
 
@@ -126,4 +135,5 @@ for folder in folders:
                           f'num_correct_hits = {num_correct}')
             else:
                 print('No track candidate with at least 7 hits found')
+
 

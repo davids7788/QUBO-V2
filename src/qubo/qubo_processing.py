@@ -37,6 +37,7 @@ class QuboProcessing:
         self.triplets = np.load(triplet_list_file, allow_pickle=True)
         self.t_mapping = {key: value for key, value in zip([t.triplet_id for t in self.triplets],
                                                            np.arange(len(self.triplets)))}
+
         self.config = config
         self.solver = solver
         self.ansatz = ansatz
@@ -224,7 +225,6 @@ class QuboProcessing:
                 minimum_energy_state.append(1)
             else:
                 minimum_energy_state.append(0)
-
         return minimum_energy_state, self.hamiltonian_energy(minimum_energy_state)
 
     def hamiltonian_energy(self, binary_vector, triplet_subset=None):
