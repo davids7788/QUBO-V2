@@ -53,7 +53,6 @@ def build_tracks(t_sorted):
     for tr in tracks:
         if len(tr) > max_length_tracks:
             max_length_tracks = len(tr)
-    print(max_length_tracks)
     reduced_tracks = []
     for tr in tracks:
         if len(tr) == max_length_tracks:
@@ -61,12 +60,17 @@ def build_tracks(t_sorted):
     return reduced_tracks
 
 
-for folder in folders[0:1]:
+for folder in folders[3:4]:
     if os.path.isdir(f'{directory}/{folder}'):
         triplets = np.load(f'{directory}/{folder}/{preselection}/triplet_list.npy', allow_pickle=True)
+        phi = []
+        for triplet in triplets:
+            phi.append(np.arctan2(triplet.doublet_1.hit_1_position[1], triplet.doublet_1.hit_1_position[0]))
         result_folder = os.listdir(f'{directory}/{folder}/{preselection}')[0]
         qubo_log = np.load(f'{directory}/{folder}/{preselection}/{result_folder}/qubo_log.npy', allow_pickle=True)[()]
 
+        plt.hist(phi, bins=50)
+        plt.show()
         kept_triplets = {0: [],
                          1: [],
                          2: [],
@@ -89,9 +93,9 @@ for folder in folders[0:1]:
                     if value[0] <= r <= value[1]:
                         kept_triplets[key].append(t)
 
-        tr = build_tracks(kept_triplets)
-        print(tr)
-        for build_track in tr:
+        tracks_finalists = build_tracks(kept_triplets)
+        for build_track in track_finalists:
+            print(len(build_track))
             num_correct = 0
             for element in build_track:
                 if element.is_correct_match():
@@ -99,16 +103,3 @@ for folder in folders[0:1]:
             print(num_correct)
 
 
-kept_triplets = []
-for t, result in zip(triplets, qubo_log['computed solution vector']):
-    if result == 1:
-        kept_triplets.append(t)
-plt.figure(figsize=(12,12))
-for triplet in kept_triplets:
-    plt.plot([triplet.doublet_1.hit_1_position[0],
-              triplet.doublet_2.hit_1_position[0],
-              triplet.doublet_2.hit_2_position[0]],
-             [triplet.doublet_1.hit_1_position[0],
-              triplet.doublet_2.hit_1_position[0],
-              triplet.doublet_2.hit_2_position[0]], linestyle='-')
-plt.show()

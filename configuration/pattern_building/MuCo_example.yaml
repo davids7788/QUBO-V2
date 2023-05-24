@@ -9,7 +9,7 @@ doublet:
     InnerTrackerBarrel: 0.03
     OuterTrackerBarrel: 0.01
 
-dataset:
+data set:
   cone around muon: True
 
 segments:

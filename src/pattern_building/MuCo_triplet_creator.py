@@ -93,10 +93,11 @@ class MuCoTripletCreator:
                     r = np.sqrt(float(row[self.fieldnames.index('x')]) ** 2 +
                                 float(row[self.fieldnames.index('y')]) ** 2)
                     theta = np.arctan2(float(row[self.fieldnames.index('z')]), r)
-                    if not theta_range[0] <= theta <= theta_range[1]:
-                        continue
-                    if not self.is_in_phi_cone(row, phi_range):
-                        continue
+                    if cone_around_muon:
+                        if not theta_range[0] <= theta <= theta_range[1]:
+                            continue
+                        if not self.is_in_phi_cone(row, phi_range):
+                            continue
                     target_segment = s_manager.get_segment_at_known_xyz_value(hit_converted[self.fieldnames.index('x')],
                                                                               hit_converted[self.fieldnames.index('y')],
                                                                               hit_converted[self.fieldnames.index('z')],
@@ -366,12 +367,12 @@ class MuCoTripletCreator:
                                                         float(row[self.fieldnames.index('x')])))
         if not muon_hits_phi or not muon_hits_theta:
             return [0, 0], [0, 0]
-        if max(muon_hits_phi) - min(muon_hits_phi) < np.pi:
-            if max(muon_hits_phi) + 0.1 < 2 * np.pi:
+        if max(muon_hits_phi) - min(muon_hits_phi) < 2 * np.pi:
+            if max(muon_hits_phi) + 0.1 < np.pi:
                 phi_range[1] = max(muon_hits_phi) + 0.1
             else:
                 phi_range[1] = max(muon_hits_phi) + 0.1 - 2 * np.pi
-            if min(muon_hits_phi) > 0.1:
+            if min(muon_hits_phi) > - np.pi + 0.1:
                 phi_range[0] = min(muon_hits_phi) - 0.1
             else:
                 phi_range[0] = min(muon_hits_phi) - 0.1 + 2 * np.pi

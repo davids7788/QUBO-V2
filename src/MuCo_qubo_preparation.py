@@ -54,7 +54,8 @@ s_manager.layer_mapping(no_endcaps=no_endcaps)
 mu_co_creator = MuCoTripletCreator(event_folder)
 mu_co_creator.load_tracking_data(dlfilter=False,
                                  s_manager=s_manager,
-                                 no_endcaps=no_endcaps)
+                                 no_endcaps=no_endcaps,
+                                 cone_around_muon=configuration['data set']['cone around muon'])
 
 s_manager.create_segment_mapping(no_endcaps=no_endcaps)
 
