@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+from math import ceil
 
 directory = '../../muon_collider_files'
 preselection = 'MuCo_example.yaml'
@@ -30,8 +31,23 @@ layer_info = {0: [30.1, 31.5],
               13: [1486.0, 1490]}
 
 
-def radius(t):
-    return np.sqrt(t.doublet_1.hit_1_position[0]**2 + t.doublet_1.hit_1_position[1]**2)
+def radius(t_object):
+    return np.sqrt(t_object.doublet_1.hit_1_position[0]**2 + t_object.doublet_1.hit_1_position[1]**2)
+
+
+def pT(t_obj):
+    pt_values = []
+    if t_obj[0].doublet_1.hit_1_pdg == '13':
+        pt_values.append(np.sqrt(t_obj[0].doublet_1.hit_1_momentum[0]**2 + t_obj[0].doublet_1.hit_1_momentum[1]**2))
+    if t_obj[0].doublet_1.hit_2_pdg == '13':
+        pt_values.append(np.sqrt(t_obj[0].doublet_1.hit_2_momentum[0]**2 + t_obj[0].doublet_1.hit_2_momentum[1]**2))
+    if t_obj[0].doublet_2.hit_2_pdg == '13':
+        pt_values.append(np.sqrt(t_obj[0].doublet_2.hit_2_momentum[0]**2 + t_obj[0].doublet_2.hit_2_momentum[1]**2))
+    for t in t_obj[1:]:
+        if t.doublet_2.hit_2_pdg == '13':
+            pt_values.append(np.sqrt(t.doublet_2.hit_2_momentum[0] ** 2 + t.doublet_2.hit_2_momentum[1] ** 2))
+
+    return sum(pt_values) / len(pt_values)
 
 
 def build_tracks(t_sorted):
@@ -53,24 +69,18 @@ def build_tracks(t_sorted):
     for tr in tracks:
         if len(tr) > max_length_tracks:
             max_length_tracks = len(tr)
-    reduced_tracks = []
+
     for tr in tracks:
         if len(tr) == max_length_tracks:
-            reduced_tracks.append(tr)
-    return reduced_tracks
+            return tr    # rework if ambiguity solving is enabled!!!!!!!
 
 
-for folder in folders[3:4]:
+for folder in folders:
     if os.path.isdir(f'{directory}/{folder}'):
         triplets = np.load(f'{directory}/{folder}/{preselection}/triplet_list.npy', allow_pickle=True)
-        phi = []
-        for triplet in triplets:
-            phi.append(np.arctan2(triplet.doublet_1.hit_1_position[1], triplet.doublet_1.hit_1_position[0]))
         result_folder = os.listdir(f'{directory}/{folder}/{preselection}')[0]
         qubo_log = np.load(f'{directory}/{folder}/{preselection}/{result_folder}/qubo_log.npy', allow_pickle=True)[()]
 
-        plt.hist(phi, bins=50)
-        plt.show()
         kept_triplets = {0: [],
                          1: [],
                          2: [],
@@ -93,13 +103,27 @@ for folder in folders[3:4]:
                     if value[0] <= r <= value[1]:
                         kept_triplets[key].append(t)
 
-        tracks_finalists = build_tracks(kept_triplets)
-        for build_track in track_finalists:
-            print(len(build_track))
-            num_correct = 0
-            for element in build_track:
-                if element.is_correct_match():
-                    num_correct += 1
-            print(num_correct)
+        tr = build_tracks(kept_triplets)
+        if tr is not None:
+            if len(tr) > ceil(len(list(layer_info.keys())) / 2):
+                num_correct = 0
 
+                if tr[0].doublet_1.hit_1_pdg == '13':
+                    num_correct += 1
+                if tr[0].doublet_1.hit_2_pdg == '13':
+                    num_correct += 1
+                if tr[0].doublet_2.hit_2_pdg == '13':
+                    num_correct += 1
+                for element in tr[1:]:
+                    if element.doublet_2.hit_2_pdg == '13':
+                        num_correct += 1
+                if num_correct >= ceil(len(tr) / 2):
+                    p_t = pT(tr)
+                    if p_t:
+                        print(f'Reconstructed track with {np.around(p_t, 2)} GeV')
+                else:
+                    print(f'Track candidate mostly/purely combinatorial: length of track = {len(tr)} hits, '
+                          f'num_correct_hits = {num_correct}')
+            else:
+                print('No track candidate with at least 7 hits found')
 
