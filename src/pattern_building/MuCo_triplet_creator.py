@@ -154,8 +154,8 @@ class MuCoTripletCreator:
                                               second_hit[self.fieldnames.index('pz')]),
                               hit_1_id=hit_1_id,
                               hit_2_id=hit_2_id,
-                              time_1=first_hit[self.fieldnames.index('time')],
-                              time_2=second_hit[self.fieldnames.index('time')])
+                              hit_1_time=first_hit[self.fieldnames.index('time')],
+                              hit_2_time=second_hit[self.fieldnames.index('time')])
 
         return doublet
 

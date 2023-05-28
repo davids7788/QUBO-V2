@@ -6,7 +6,7 @@ import circle_fit as cf
 from math import ceil
 
 
-track_length_requirement = 7
+track_length_requirement = 8
 
 directory = '../../muon_collider_files'
 preselection = 'MuCo_example.yaml'
@@ -135,6 +135,7 @@ for folder in folders:
                 else:
                     signal_or_background.update({folder: False})
                 pt_reconstruction = []
+
                 for t in tr:
                     pt_reconstruction.append((t.doublet_1.hit_1_position[0], t.doublet_1.hit_1_position[1]))
                 xc, yc, r, _ = cf.least_squares_circle(pt_reconstruction)

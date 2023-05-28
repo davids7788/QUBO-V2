@@ -43,9 +43,9 @@ class Xplet:
             self.energy.update({1: triplet.doublet_1.energy_2})
             self.energy.update({2: triplet.doublet_2.energy_2})
 
-            self.time.update({0: triplet.doublet_1.time_1})
-            self.time.update({1: triplet.doublet_1.time_2})
-            self.time.update({2: triplet.doublet_2.time_2})
+            self.time.update({0: triplet.doublet_1.hit_1_time})
+            self.time.update({1: triplet.doublet_1.hit_2_time})
+            self.time.update({2: triplet.doublet_2.hit_2_time})
             self.is_empty = False
 
         else:
@@ -58,7 +58,7 @@ class Xplet:
             self.particle_ids.update({insert_position: triplet.doublet_2.hit_2_particle_key})
             self.coordinates.update({insert_position: triplet.doublet_2.hit_2_position})
             self.energy.update({insert_position: triplet.doublet_2.energy_2})
-            self.time.update({insert_position: triplet.doublet_2.time_2})
+            self.time.update({insert_position: triplet.doublet_2.hit_2_time})
 
         self.triplet_ids.append(triplet.triplet_id)
 
