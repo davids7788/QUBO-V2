@@ -291,6 +291,15 @@ class MuCoTripletCreator:
         connection = configuration['qubo parameters']['b_ij match']
         conflict = configuration['qubo parameters']['b_ij conflict']
 
+        def bij_pure_time(t1, t2):
+            t_0 = t1.doublet_1.hit_1_time
+            t_1 = t1.doublet_1.hit_2_time
+            t_2 = t2.doublet_1.hit_2_time
+            t_3 = t2.doublet_2.hit_2_time
+            max_t = max([t_0, t_1, t_2, t_3])
+            min_t = min([t_0, t_1, t_2, t_3])
+            return -1 + (max_t - min_t)
+
         num_segments = len(list(s_manager.segment_mapping_key.keys()))
         segment_process_counter = 0
 
@@ -301,12 +310,12 @@ class MuCoTripletCreator:
                     continue
                 for t1 in segment.triplet_data:
                     for t2 in target_segment.triplet_data:
-                        t1_set = {t1.doublet_1.hit_1_id,
-                                  t1.doublet_1.hit_2_id,
-                                  t1.doublet_2.hit_2_id}
-                        t2_set = {t2.doublet_1.hit_1_id,
-                                  t2.doublet_1.hit_2_id,
-                                  t2.doublet_2.hit_2_id}
+                        t1_set = {t1.doublet_1.hit_1_position,
+                                  t1.doublet_2.hit_1_position,
+                                  t1.doublet_2.hit_2_position}
+                        t2_set = {t2.doublet_1.hit_1_position,
+                                  t2.doublet_2.hit_1_position,
+                                  t2.doublet_2.hit_2_position}
                         intersection = len(t1_set.intersection(t2_set))
 
                         if intersection in [0, 3]:
@@ -317,12 +326,18 @@ class MuCoTripletCreator:
                             t2.interactions.update({t1.triplet_id: conflict})
 
                         elif intersection == 2:
-                            if segment.name == target_segment.name:
+                            if t1.doublet_1.hit_2_position != t2.doublet_1.hit_1_position or \
+                                    t1.doublet_2.hit_2_position != t2.doublet_1.hit_2_position:
                                 t1.interactions.update({t2.triplet_id: conflict})
                                 t2.interactions.update({t1.triplet_id: conflict})
                             else:
-                                t1.interactions.update({t2.triplet_id: connection})
-                                t2.interactions.update({t1.triplet_id: connection})
+                                if type(connection) == float:
+                                    t1.interactions.update({t2.triplet_id: connection})
+                                    t2.interactions.update({t1.triplet_id: connection})
+                                if connection == 'pure time':
+                                    connection_value = bij_pure_time(t1, t2)
+                                    t1.interactions.update({t2.triplet_id: connection_value})
+                                    t2.interactions.update({t1.triplet_id: connection_value})
 
             segment_process_counter += 1
         for segment in s_manager.segment_mapping_key.values():

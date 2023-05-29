@@ -39,9 +39,9 @@ print("\nStarting to solve the QUBO...\n")
 with open(config_file, 'r') as f:
     configuration = yaml.safe_load(f)
 
-file_extension = "_" + config_file.split("/")[-1].split(".")[0]
+file_extension = config_file.split("/")[-1].split(".")[0]
 
-new_folder = qubo_folder + "/" + str(np.random.randint(1e8, 1e9)) + file_extension
+new_folder = qubo_folder + "/" + file_extension
 if Path(new_folder).is_dir():
     pass
 else:

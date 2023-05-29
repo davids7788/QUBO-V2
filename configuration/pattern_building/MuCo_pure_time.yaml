@@ -1,0 +1,28 @@
+---
+doublet:
+  phi:
+    VXDTrackerBarrel: 0.04
+    InnerTrackerBarrel: 0.06
+    OuterTrackerBarrel: 0.08
+  theta:
+    VXDTrackerBarrel: 0.05
+    InnerTrackerBarrel: 0.03
+    OuterTrackerBarrel: 0.01
+
+data set:
+  cone around muon: True
+
+segments:
+  phi: 36
+  barrel z: 30
+  endcap r: 30
+
+qubo parameters:
+  b_ij conflict: 2.0
+  b_ij match: 'pure time'
+  a_i: 0.0
+
+scale range parameters:
+  z_scores: null
+  quality: null
+  interaction: null

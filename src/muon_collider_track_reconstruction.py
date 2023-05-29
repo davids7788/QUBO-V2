@@ -9,7 +9,7 @@ from math import ceil
 track_length_requirement = 8
 
 directory = '../../muon_collider_files'
-preselection = 'MuCo_example.yaml'
+preselection = 'MuCo_pure_time.yaml'
 
 folders = os.listdir(directory)
 
@@ -69,12 +69,18 @@ def build_tracks(t_sorted):
 
     max_length_tracks = 0
     for tr in tracks:
-        if len(tr) > max_length_tracks:
-            max_length_tracks = len(tr)
+        if len(tr) + 2 >= max_length_tracks:
+            max_length_tracks = len(tr) + 2
 
+    best_choice = [None, 0]
     for tr in tracks:
-        if len(tr) == max_length_tracks:
-            return tr    # rework if ambiguity solving is enabled!!!!!!!
+        if len(tr) + 2 == max_length_tracks:
+            connection_sum = 0
+            for t1, t2 in zip(tr[0:-1], tr[1:]):
+                connection_sum += t2.interactions[t1.triplet_id]
+            if connection_sum < best_choice[1]:
+                best_choice = [tr, connection_sum]
+    return best_choice[0]
 
 
 for folder in folders:
@@ -144,7 +150,7 @@ for folder in folders:
                 pt_reconstructed.update({folder: p_t})
 
                 print(f'Reconstructed track with p_T = {np.around(p_t, 2)} GeV')
-                print(f'Length of track = {len(tr)} hits, num_correct_hits = {num_correct}')
+                print(f'Length of track = {len(tr) + 2} hits, num_correct_hits = {num_correct}')
             else:
                 print(f'No reconstructed track candidate with at least {track_length_requirement} hits found')
 
