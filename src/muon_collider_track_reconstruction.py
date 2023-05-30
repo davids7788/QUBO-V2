@@ -6,16 +6,21 @@ import circle_fit as cf
 from math import ceil
 
 
+energy = 50
 track_length_requirement = 8
 
-directory = '../../muon_collider_files'
-preselection = 'MuCo_pure_time.yaml'
+qubo = 'eigensolver_10q_impact_list_reverse'
+
+directory = f'/nfs/dust/luxe/user/spatarod/Muon-Collider/MuonColliderCompleteStudy/signal_plus_full_background_test_set/{energy}GeV'
+preselection = 'MuCo_example.yaml'
 
 folders = os.listdir(directory)
 
 pt_truth = {}
 pt_reconstructed = {}
 signal_or_background = {}
+
+reconstruction_status = []
 
 layer_info = {0: [30.1, 31.5],
               1: [32.1, 33.5],
@@ -39,6 +44,8 @@ def radius(t_object):
 
 def pT(t_obj):
     pt_values = []
+    if not t_obj:
+        return -10
     if t_obj[0].doublet_1.hit_1_pdg == '13':
         pt_values.append(np.sqrt(t_obj[0].doublet_1.hit_1_momentum[0]**2 + t_obj[0].doublet_1.hit_1_momentum[1]**2))
     if t_obj[0].doublet_1.hit_2_pdg == '13':
@@ -86,7 +93,10 @@ def build_tracks(t_sorted):
 for folder in folders:
     if os.path.isdir(f'{directory}/{folder}'):
         print(f'\nProcessing event: {folder.split("-")[-1]}')
-        triplets = np.load(f'{directory}/{folder}/{preselection}/triplet_list.npy', allow_pickle=True)
+        try:
+            triplets = np.load(f'{directory}/{folder}/{preselection}/triplet_list.npy', allow_pickle=True)
+        except FileNotFoundError:
+            continue
         pT_from_truth_triplets = []
         for t in triplets:
             if t.is_correct_match():
@@ -96,9 +106,10 @@ for folder in folders:
         print(f'Signal track truth p_T = {np.around(pT_true, 2)} GeV')
         pt_truth.update({folder: pT_true})
 
-        result_folder = os.listdir(f'{directory}/{folder}/{preselection}')[0]
-        qubo_log = np.load(f'{directory}/{folder}/{preselection}/{result_folder}/qubo_log.npy', allow_pickle=True)[()]
-
+        try:
+            qubo_log = np.load(f'{directory}/{folder}/{preselection}/{qubo}/qubo_log.npy', allow_pickle=True)[()]
+        except FileNotFoundError:
+            continue
         kept_triplets = {0: [],
                          1: [],
                          2: [],
@@ -142,16 +153,50 @@ for folder in folders:
                     signal_or_background.update({folder: False})
                 pt_reconstruction = []
 
-                for t in tr:
-                    pt_reconstruction.append((t.doublet_1.hit_1_position[0], t.doublet_1.hit_1_position[1]))
-                xc, yc, r, _ = cf.least_squares_circle(pt_reconstruction)
+                # for t in tr:
+                #     pt_reconstruction.append((t.doublet_1.hit_1_position[0], t.doublet_1.hit_1_position[1]))
+                # xc, yc, r, _ = cf.least_squares_circle(pt_reconstruction)
 
-                p_t = (1 / 1000 * 0.3 * 3.57 * r)
-                pt_reconstructed.update({folder: p_t})
+                # p_t = (1 / 1000 * 0.3 * 3.57 * r)
+                # pt_reconstructed.update({folder: p_t})
 
-                print(f'Reconstructed track with p_T = {np.around(p_t, 2)} GeV')
+                # print(f'Reconstructed track with p_T = {np.around(p_t, 2)} GeV')
                 print(f'Length of track = {len(tr) + 2} hits, num_correct_hits = {num_correct}')
+                reconstruction_status.append((pT_true, 1))
             else:
+                reconstruction_status.append((pT_true, 0))
                 print(f'No reconstructed track candidate with at least {track_length_requirement} hits found')
+
+
+
+pt_failed = []
+pt_succeeded = []
+
+for result in reconstruction_status:
+    if result[0] != -10:
+        if result[1] == 1:
+            pt_succeeded.append(result[0])
+        else:
+            pt_failed.append(result[0])
+                
+plt.figure(figsize=(9,6), dpi=400)
+plt.hist(pt_succeeded, label='succeeded', linewidth=2.5, bins=20, histtype='step')
+plt.hist(pt_failed, label='failed', linewidth=2.5, bins=20, histtype='step')
+plt.title(f'Reconstruction Efficiency = {np.around(100 * len(pt_succeeded) / (len(pt_succeeded) + len(pt_failed)), 1)} %', fontsize=18)
+plt.xlabel('Energy [GeV]', fontsize=18)
+plt.ylabel('# Reconstrcuted tracks', fontsize=18)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.legend(loc='best', fontsize=18)
+plt.savefig(f'Reconstrcution_effciciency_{preselection}_{energy}.pdf')
+
+
+
+
+
+
+
+
+
 
 

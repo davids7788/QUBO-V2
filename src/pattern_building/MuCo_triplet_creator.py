@@ -88,7 +88,7 @@ class MuCoTripletCreator:
                 next(csv_reader)  # skip header
                 for i, row in enumerate(csv_reader):
                     num_detector_hits += 1
-                    print(f'Processing detector hit : {i}', end="\r")
+                    # print(f'Processing detector hit : {i}', end="\r")
                     hit_converted = ([float(r) if row.index(r) in arguments_to_convert else r for r in row])
                     r = np.sqrt(float(row[self.fieldnames.index('x')]) ** 2 +
                                 float(row[self.fieldnames.index('y')]) ** 2)
@@ -185,7 +185,7 @@ class MuCoTripletCreator:
         segment_process_counter = 0
 
         for name, segment in s_manager.segment_mapping_key.items():
-            print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+            # print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
 
             for target_segment in s_manager.segment_mapping[name]:
 
@@ -251,7 +251,7 @@ class MuCoTripletCreator:
         segment_process_counter = 0
 
         for name, segment in s_manager.segment_mapping_key.items():
-            print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
+            # print(f'Processing segment {segment_process_counter} of {num_segments}', end='\r')
             for target_segment in s_manager.segment_mapping[name]:
                 if not target_segment.doublet_data:
                     continue

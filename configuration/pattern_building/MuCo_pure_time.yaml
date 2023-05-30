@@ -18,7 +18,7 @@ segments:
   endcap r: 30
 
 qubo parameters:
-  b_ij conflict: 2.0
+  b_ij conflict: 1.0
   b_ij match: 'pure time'
   a_i: 0.0
 
