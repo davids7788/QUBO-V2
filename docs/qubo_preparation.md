@@ -1,5 +1,5 @@
-# Configuration file for `make_triplets.py`
-The `qubo_preparation_LUXE.py` script takes a YAML configuration file as first input argument. 
+# Configuration file for `qubo_preparation.py`
+The `qubo_preparation.py` script takes a YAML configuration file as first input argument. 
 It consists of the sections [doublet](#doublet), [triplet](#triplet), [binning](#binning), [qubo](#qubo) and [scaling](#scaling).
 
 # doublet
