@@ -34,9 +34,10 @@ At the end of the preselection, plots can be created with truth information to c
 make sense.
 
 ## QUBO solve
-The qubo is solved and results are to a on-the-fly created subdirectory of the folder containing a .npy file with 
-triplet objects. The result is saved as .npy file  with various information about the solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
-an integrated track reconstruction efficiency and fake rate is calculated and displayed in the terminal. The following arguments are needed:
+Results of the optimisation process are saved to a on-the-fly created subdirectory of the specified qubo folder.
+The result is saved as .npy file  with various information about the solving process. From these results, multiplets are 
+reconstructed and checked if there are ambiguities. The integrated track reconstruction efficiency and fake are calculated 
+and displayed in the terminal. The following arguments are needed:
    * `configuration:` configuration of the qubo, see [here](docs/qubo_solve_input.md) 
    * `qubo folder:` folder with a prepared triplet list
 
