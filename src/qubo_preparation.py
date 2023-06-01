@@ -4,9 +4,9 @@ import argparse
 from pathlib import Path
 from track_reconstruction.create_gen_xplets import *
 
-from pattern_building.LUXE_triplet_creator import LUXETripletCreator
-from pattern_building.LUXE_segment_manager import LUXESegmentManager
-from pattern_building.LUXE_qubo_coefficients import QuboCoefficients
+from pattern_building.pattern_builder import PatternBuilder
+from pattern_building.segment_manager import SegmentManager
+from pattern_building.qubo_coefficients import QuboCoefficients
 from pattern_building.plot_statistics import plot_coefficients_statistics
 
 parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
@@ -63,16 +63,16 @@ print("\n-----------------------------------")
 print("\nStarting QUBO creation...\n")
 
 # Segmentation algorithm --> reduce combinatorial tasks
-s_manager = LUXESegmentManager(configuration,
+s_manager = SegmentManager(configuration,
                                geometry_file)
 s_manager.create_LUXE_segments()
 s_manager.segment_mapping_LUXE()
 
 # Triplet creation
-triplet_creator = LUXETripletCreator(configuration, new_folder)
-triplet_creator.load_tracking_data(tracking_data, s_manager)
-triplet_creator.create_x_plets_LUXE(s_manager)
-triplet_creator.write_info_file()
+pattern_builder = PatternBuilder(configuration, new_folder)
+pattern_builder.load_tracking_data(tracking_data, s_manager)
+pattern_builder.create_x_plets_LUXE(s_manager)
+pattern_builder.write_info_file()
 
 # Create truth Xplets
 gen_xplets_simplified_LUXE(tracking_data, "/".join(new_folder.split("/")[0:-1]))
@@ -83,7 +83,7 @@ qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.coefficient_rescaling()
 
 # Just for visualising coefficients
-plot_coefficients_statistics(triplet_creator.num_particles,
+plot_coefficients_statistics(pattern_builder.num_particles,
                              qubo_coefficients)
 
 print("-----------------------------------\n")

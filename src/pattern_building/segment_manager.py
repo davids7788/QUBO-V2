@@ -1,10 +1,10 @@
 import csv
 
 from math_functions.geometry import x0_at_z_ref
-from pattern_building.LUXE_segment import LUXEDetectorSegment
+from pattern_building.segment import DetectorSegment
 
 
-class LUXESegmentManager:
+class SegmentManager:
     def __init__(self,
                  configuration,
                  detector_geometry: str):
@@ -65,18 +65,18 @@ class LUXESegmentManager:
             for j in range(int(self.binning[0])):
                 for k in range(int(self.binning[1])):
                     # name of the segment consists of layer number, segment numbering in x and in y
-                    new_segment = LUXEDetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
-                                                      layer_number,
-                                                      x_min + j * segment_size_x,
-                                                      x_min + (j + 1) * segment_size_x,
-                                                      y_min + k * segment_size_y,
-                                                      y_min + (k + 1) * segment_size_y,
-                                                      self.detector_chips[layer_number][-1])
+                    new_segment = DetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
+                                                  layer_number,
+                                                  x_min + j * segment_size_x,
+                                                  x_min + (j + 1) * segment_size_x,
+                                                  y_min + k * segment_size_y,
+                                                  y_min + (k + 1) * segment_size_y,
+                                                  self.detector_chips[layer_number][-1])
                     self.segment_storage[layer_number].append(new_segment)
 
     def check_if_full_overlap(self,
-                              source_segment: LUXEDetectorSegment,
-                              target_segment: LUXEDetectorSegment) -> bool:
+                              source_segment: DetectorSegment,
+                              target_segment: DetectorSegment) -> bool:
         """Checks if segments come from not consecutive layers e.g. 1 and 3, 4, and 6 if there is a segment in the
         in between layer, which covers the path completely.
         :param source_segment: source segment
@@ -153,8 +153,8 @@ class LUXESegmentManager:
             return target_y[0] - source_y[1]
 
     def is_compatible_with_target_LUXE_segment(self,
-                                               source_segment: LUXEDetectorSegment,
-                                               target_segment: LUXEDetectorSegment) -> bool:
+                                               source_segment: DetectorSegment,
+                                               target_segment: DetectorSegment) -> bool:
         """Takes two segments and checks if they are compatible with the pattern_building criteria.
         :param source_segment: segment from which the mapping starts
         :param target_segment: segment considered as a target
@@ -166,8 +166,8 @@ class LUXESegmentManager:
         if target_segment.x_end < source_segment.x_start:
             return False
 
-        min_dy = LUXESegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
-                                                               [target_segment.y_start, target_segment.y_end])
+        min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
+                                                           [target_segment.y_start, target_segment.y_end])
 
         detector_range_x_at_z_ref = [self.segment_storage[0][0].x_start,
                                      self.segment_storage[0][-1].x_end]
@@ -212,7 +212,7 @@ class LUXESegmentManager:
             return True
 
     def target_segments(self,
-                        name: str) -> list[LUXEDetectorSegment]:
+                        name: str) -> list[DetectorSegment]:
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
         :return:
@@ -223,7 +223,7 @@ class LUXESegmentManager:
     def get_segment_at_known_xyz_value(self,
                                        x: float,
                                        y: float,
-                                       z: float) -> LUXEDetectorSegment:
+                                       z: float) -> DetectorSegment:
         """Finds the correct segment of a hit, given via x,y,z value.
         :param x: x value of hit
         :param y: y value of hit

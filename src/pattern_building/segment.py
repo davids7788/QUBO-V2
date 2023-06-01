@@ -1,7 +1,7 @@
 from math_functions.checks import w_is_in_segment
 
 
-class LUXEDetectorSegment:
+class DetectorSegment:
     def __init__(self,
                  name: str,
                  layer: int,

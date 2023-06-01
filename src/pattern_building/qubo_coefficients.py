@@ -4,8 +4,8 @@ import time
 from pattern.triplet import Triplet
 from pattern.doublet import Doublet
 from utility.time_tracking import hms_string
-from math_functions.geometry import w_default_angle_based_quality, w_default_angle_based_interaction
-from pattern_building.LUXE_segment_manager import SegmentManager
+from math_functions.geometry import angle_based_measure
+from pattern_building.segment_manager import SegmentManager
 
 
 class QuboCoefficients:
@@ -15,21 +15,6 @@ class QuboCoefficients:
                  save_to_folder: str):
         """Class for handling and setting QUBO coefficients
         :param configuration: information needed for the segments, delivered by loading yaml file as a nested
-               python dictionary:
-                {
-                doublet: {dx/x0: float,
-                          eps:   float>,
-                          dy/y0: float},
-                triplet: {max scattering: float}
-                binning: {num bins x: int,
-                          num bins y: int}
-                qubo parameters: {b_ij conflict: float
-                                  b_ij match: <name of an implemented function> or float,
-                                  a_i: <name of an implemented function> or float}
-                scale range parameters: {z_scores: True or False,
-                                         quality: null (= None) or [float, float],
-                                         interaction: null (= None) or [float, float]}
-                }
         :param save_to_folder: folder to store results
         """
         self.configuration = configuration
@@ -56,32 +41,25 @@ class QuboCoefficients:
         a_i_quality = self.configuration["qubo parameters"]["a_i"]
 
         if b_ij_match == 'default':
-            self.match = self.default_angle_based_interaction
+            self.match = angle_based_measure
             self.match_mode = 'default'
         else:
             self.match = b_ij_match
             self.match_mode = 'constant'
 
         if b_ij_conflict == "default":
-            self.conflict = self.default_angle_based_interaction
+            self.conflict = angle_based_measure
             self.conflict_mode = 'default'
         else:
             self.conflict = b_ij_conflict
             self.conflict_mode = 'constant'
 
         if a_i_quality == 'default':
-            self.quality = self.default_angle_based_quality
+            self.quality = angle_based_measure
             self.quality_mode = 'default'
         else:
             self.quality = a_i_quality
             self.quality_mode = 'constant'
-
-    @staticmethod
-    def default_angle_based_quality(triplet) -> float:
-        """Returns a quality value based on the angles between the two doublets of a triplet.
-        """
-        angle_xz, angle_yz = triplet.angles_between_doublets()
-        return w_default_angle_based_quality(angle_xz, angle_yz)
 
     def set_triplet_coefficients(self,
                                  segment_manager: SegmentManager) -> None:
@@ -104,7 +82,9 @@ class QuboCoefficients:
                     if self.quality_mode == 'constant':
                         t1.quality = self.quality
                     elif self.quality_mode == "default":
-                        t1.quality = QuboCoefficients.default_angle_based_quality(t1)
+                        t1.quality = angle_based_measure([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x],
+                                                          [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y],
+                                                          [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z]])
 
                     for target_segment in next_segments + [segment]:   # checking all combinations with other triplets
                         for t2 in target_segment.triplet_data:
@@ -126,24 +106,6 @@ class QuboCoefficients:
         self.triplet_list = list(self.triplet_list)
         print(f"Time elapsed for setting triplet coefficients: "
               f"{apply_coefficients_time}\n")
-
-    @staticmethod
-    def default_angle_based_interaction(doublet_1: Doublet,
-                                        doublet_2: Doublet,
-                                        doublet_3: Doublet) -> float:
-        """Returns value for default angle metric.
-        :param doublet_1 : doublet from hit 1 + 2
-        :param doublet_2 : doublet from hit 2 + 3
-        :param doublet_3 : doublet from hit 3 + 4
-        :return
-            value for default angle metric
-        """
-        return w_default_angle_based_interaction(doublet_1.xz_angle(),
-                                                 doublet_2.xz_angle(),
-                                                 doublet_3.xz_angle(),
-                                                 doublet_1.yz_angle(),
-                                                 doublet_2.yz_angle(),
-                                                 doublet_3.yz_angle())
 
     def coefficient_rescaling(self) -> None:
         """Rescaling parameters according to the config file.
@@ -203,21 +165,22 @@ class QuboCoefficients:
         np.save(f"{self.save_to_folder}/triplet_list", self.triplet_list)
 
     def triplet_interaction(self,
-                            triplet: Triplet,
-                            other_triplet: Triplet) -> float:
+                            t1: Triplet,
+                            t2: Triplet) -> float:
         """Compares two triplets and  how they match.
-        :param triplet: first triplet
-        :param other_triplet: second triplet which is to compare with the first one
+        :param t1: first triplet
+        :param t2: second triplet
         :return
             value based on connectivity/conflict and chosen set of parameters
         """
         # checking number of shared hits
-        t1_set = {triplet.doublet_1.hit_1_id,
-                  triplet.doublet_1.hit_2_id,
-                  triplet.doublet_2.hit_2_id}
-        t2_set = {other_triplet.doublet_1.hit_1_id,
-                  other_triplet.doublet_1.hit_2_id,
-                  other_triplet.doublet_2.hit_2_id}
+
+        t1_set = {t1.hit_1.hit_id,
+                  t1.hit_2.hit_id,
+                  t1.hit_3.hit_id}
+        t2_set = {t2.hit_1.hit_id,
+                  t2.hit_2.hit_id,
+                  t2.hit_3.hit_id}
         intersection = len(t1_set.intersection(t2_set))
 
         # same and not interacting triplets get a zero as a coefficient
@@ -225,22 +188,31 @@ class QuboCoefficients:
             return 0
 
         if intersection == 1:
-            if triplet.doublet_2.hit_2_id == other_triplet.doublet_1.hit_1_id:
-                return - 1 + self.match(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+            if t1.hit_3 == t2.hit_1:
+                return - 1 + self.match([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_2.x, t2.hit_3.x],
+                                         [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_2.y, t2.hit_3.y],
+                                         [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_2.z, t2.hit_3.z]])
             if self.conflict_mode == 'constant':
                 return self.conflict
             else:
-                return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+                return 1 + self.conflict([[t1.hit_1.x, t1.hit_2.x, t2.hit_2.x, t2.hit_3.x],
+                                          [t1.hit_1.y, t1.hit_2.y, t2.hit_2.y, t2.hit_3.y],
+                                          [t1.hit_1.z, t1.hit_2.z, t2.hit_2.z, t2.hit_3.z]])
 
         if intersection == 2:
             # triplets on same layer always have a conflict
-            if triplet.doublet_1.hit_1_position[2] == other_triplet.doublet_1.hit_1_position[2]:
+            if t1.hit_2 == t2.hit_1 and t1.hit_3 == t2.hit_2:
+                if self.match_mode == 'constant':
+                    return self.match
+                else:
+                    return - 1 + self.match([[t1.hit_1.x, t1.hit_2.x, t2.hit_2.x, t2.hit_3.x],
+                                             [t1.hit_1.y, t1.hit_2.y, t2.hit_2.y, t2.hit_3.y],
+                                             [t1.hit_1.z, t1.hit_2.z, t2.hit_2.z, t2.hit_3.z]])
+
+            else:
                 if self.conflict_mode == 'constant':
                     return self.conflict
                 else:
-                    return 1 + self.conflict(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
-
-            if self.match_mode == 'constant':
-                return self.match
-            else:
-                return - 1 + self.match(triplet.doublet_1, triplet.doublet_2, other_triplet.doublet_2)
+                    return 1 + self.conflict([[t1.hit_1.x, t1.hit_2.x, t2.hit_2.x, t2.hit_3.x],
+                                              [t1.hit_1.y, t1.hit_2.y, t2.hit_2.y, t2.hit_3.y],
+                                              [t1.hit_1.z, t1.hit_2.z, t2.hit_2.z, t2.hit_3.z]])

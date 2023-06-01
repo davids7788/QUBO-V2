@@ -41,83 +41,16 @@ def xyz_angle(xy_1: float,
     return atan2((xy_2 - xy_1), (z_2 - z_1))
 
 
-@jit(nopython=True)
-def w_default_angle_based_interaction(angle_xz_1,
-                                      angle_xz_2,
-                                      angle_xz_3,
-                                      angle_yz_1,
-                                      angle_yz_2,
-                                      angle_yz_3) -> float:
-    """Returns angle based in xz and yz.
-    :param angle_xz_1 : xz angle of first doublet
-    :param angle_xz_2 : xz angle of second doublet
-    :param angle_xz_3 : xz angle of third doublet
-    :param angle_yz_1 : yz angle of first doublet
-    :param angle_yz_2 : yz angle of second doublet
-    :param angle_yz_3 : yz angle of third doublet
+def angle_based_measure(detector_hits: list[list[float, float, float]]) -> float:
+    """Returns a measure of how well the triplets match using angle information, assuming a linear track
     :return
-        2-norm of the standard deviation of the angle difference in xz and yz.
+        max_diff_xz angle * max_diff_yz_angle
     """
-    return sqrt(np.std(np.array([angle_xz_1, angle_xz_2, angle_xz_3]))**2
-                + np.std(np.array([angle_yz_1, angle_yz_2, angle_yz_3]))**2)
+    x = detector_hits[0]
+    y = detector_hits[1]
+    z = detector_hits[2]
 
+    xz = [xyz_angle(x[i], x[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits) - 1)]
+    yz = [xyz_angle(y[i], y[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits) - 1)]
 
-@jit(nopython=True)
-def w_default_angle_based_quality(angle_between_doublets_xz: float,
-                                  angle_between_doublets_yz: float) -> float:
-    """Returns angle based in xz and yz.
-    :param angle_between_doublets_xz : xz angle between doublets
-    :param angle_between_doublets_yz : xz angle between doublets
-
-    :return
-        two norm of angles in xy and xz between doublets
-    """
-    return sqrt(angle_between_doublets_xz**2 + angle_between_doublets_yz**2)
-
-
-@jit(nopython=True)
-def w_rz_angle_diff(x_1: float,
-                    x_2: float,
-                    y_1: float,
-                    y_2: float,
-                    z_1: float,
-                    z_2: float) -> float:
-    """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
-    :param x_1: x_value hit 1
-    :param x_2: x_value hit 2
-    :param y_1: y_value hit 1
-    :param y_2: y_value hit 2
-    :param z_1: z_value hit 1
-    :param z_2: z_value hit 2
-    :return:
-        angle difference of hits in the r-z plane
-    """
-    r_1 = sqrt(x_1**2 + y_1**2)
-    r_2 = sqrt(x_2**2 + y_2**2)
-    rz_1 = atan2(z_1, r_1)
-    rz_2 = atan2(z_2, r_2)
-    dist_rz = abs(rz_2 - rz_1)
-    if dist_rz >= pi:
-        return dist_rz - pi
-    return dist_rz
-
-
-@jit(nopython=True)
-def w_phi_angle_diff(x_1: float,
-                     x_2: float,
-                     y_1: float,
-                     y_2: float) -> float:
-    """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
-    :param x_1: x_value hit 1
-    :param x_2: x_value hit 2
-    :param y_1: y_value hit 1
-    :param y_2: y_value hit 2
-    :return:
-        difference in phi [rad]
-    """
-    phi_1 = atan2(y_1, x_1) + pi
-    phi_2 = atan2(y_2, x_2) + pi
-    dist_phi = abs(phi_2 - phi_1)
-    if dist_phi >= pi:
-        return dist_phi - pi
-    return dist_phi
+    return (max(xz) - min(xz)) * (max(yz) - min(yz))

@@ -9,8 +9,8 @@ from qubo.qubo_processing import QuboProcessing
 from qubo.qubo_logging import QuboLogging
 from qubo.ansatz import Ansatz
 from qubo.solver import Solver
-from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
-from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
+# from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
+# from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
 parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -83,13 +83,13 @@ qubo_processor = QuboProcessing(qubo_folder + "/triplet_list.npy",
                                 verbose=1)
 qubo_processor.qubo_processing()
 
-reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
-                            new_folder)
+# reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
+#                             new_folder)
 
 gen_prefix = f"{new_folder}/reco_xplet_list.npy".split("/")[-3].split("-")[0]
 gen_xplet = "/".join(f"{new_folder}/reco_xplet_list.npy".split("/")[0:-3]) + "/" + gen_prefix + "_gen_xplet_list"
-track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list_ambiguity_solved.npy",
-                                                f"{gen_xplet}.npy")
+# track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list_ambiguity_solved.npy",
+#                                                 f"{gen_xplet}.npy")
 
 print("-----------------------------------\n")
 print("QUBO solved successfully!\n")
