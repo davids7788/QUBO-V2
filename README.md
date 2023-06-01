@@ -14,12 +14,13 @@ a tracking detector. To run the simulation the following arguments are needed:
 python simplified_simulation.py [-h] [--config_file CONFIG_FILE] [--ptarmigan_file PTARMIGAN_FILE] [--geometry_file GEOMETRY_FILE] [--target_folder TARGET_FOLDER]
 ```
 
-## Preselection and QUBO-building
-In the preselection, possible parts of track candidates, doublets and triplets, are created. To reduce the computational
-costs of this combinatorial task, constraints on the creation of these Xplets are set. Additionally, coefficients for the
-pattern recognition task in the form of a Quadratic Unconstrained Binary Optimisation (QUBO) are set.
-Additionally, generator level Xplets from truth information are computed and saved into a single .npy file.
-To run the preselection the following arguments are needed:
+## Preselection and QUBO-preparation
+In the preselection, doublet and triplets are created. To reduce the computational costs of this 
+combinatorial task, constraints on the creation of multiplets are set. Additionally, coefficients for the
+pattern recognition task in the form of a Quadratic Unconstrained Binary Optimisation (QUBO) are applied.
+Generator level multiplets from truth information are computed and saved into a single .npy file as a reference
+to enable the possibility of calculating efficiency and fake rate.
+To run the preselection and QUBO preparation the following arguments are needed:
    * `configuration:` configuration of the preselection, see [here](docs/qubo_preparation.md)
    * `tracking data:` detector hit information in .csv similar [TrackML challenge](https://www.kaggle.com/c/trackml-particle-identification)
    * `geometry:` file of the detector configuration in .csv format
@@ -33,9 +34,9 @@ At the end of the preselection, plots can be created with truth information to c
 make sense.
 
 ## QUBO solve
-The qubo is solved and results are saved into a .npy file with a dictionary with various information about the 
-solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
-an integrated track reconstruction efficiency and fake rate is calculated on the fly The following arguments are needed:
+The qubo is solved and results are to a on-the-fly created subdirectory of the folder containing a .npy file with 
+triplet objects. The result is saved as .npy file  with various information about the solving process. From these results, xplets are reconstructed and checked if there are ambiguities, this is solved and 
+an integrated track reconstruction efficiency and fake rate is calculated and displayed in the terminal. The following arguments are needed:
    * `configuration:` configuration of the qubo, see [here](docs/qubo_solve_input.md) 
    * `qubo folder:` folder with a prepared triplet list
 
