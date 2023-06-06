@@ -189,15 +189,15 @@ class QuboCoefficients:
 
         if intersection == 1:
             if t1.hit_3 == t2.hit_1:
-                return - 1 + self.match([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_3.x],
-                                         [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_3.y],
-                                         [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_3.z]])
+                return - 1 + self.match([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_2.x, t2.hit_3.x],
+                                         [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_2.y, t2.hit_3.x],
+                                         [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_2.z, t2.hit_3.x]])
             if self.conflict_mode == 'constant':
                 return self.conflict
             else:
-                return 1 + self.conflict([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_3.x],
-                                          [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_3.y],
-                                          [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_3.z]])
+                return 1 + self.conflict([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_1.x, t2.hit_2.x, t2.hit_3.x],
+                                          [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_1.y, t2.hit_2.y, t2.hit_3.y],
+                                          [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_1.z, t2.hit_2.z, t2.hit_3.z]])
 
         if intersection == 2:
             # triplets on same layer always have a conflict

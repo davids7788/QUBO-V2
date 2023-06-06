@@ -50,7 +50,7 @@ def angle_based_measure(detector_hits: list[list[float, float, float]]) -> float
     y = detector_hits[1]
     z = detector_hits[2]
 
-    xz = [xyz_angle(x[i], x[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits) - 1)]
-    yz = [xyz_angle(y[i], y[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits) - 1)]
+    xz = [xyz_angle(x[i], x[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits[0]) - 1)]
+    yz = [xyz_angle(y[i], y[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits[1]) - 1)]
 
     return np.sqrt(np.std(xz)**2 + np.std(yz)**2)
