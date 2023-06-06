@@ -25,10 +25,10 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
     for track in reco_xplets:
         matched = False
         p_id = None
-        ids = list(track.particle_ids.values())   # ids  corresponds to the particle id's of each hit
-        for test_id in ids:
+        # ids  corresponds to the particle id's of each hit
+        for test_id in track.particle_ids:
             # more than half of the hits from same particle
-            if ids.count(test_id) > len(list(track.particle_ids.values())) / 2:
+            if track.particle_ids.count(test_id) > len(track.particle_ids) / 2:
                 p_id = test_id
                 matched = True
         if matched:
@@ -42,5 +42,5 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
 
     print("\n-----------------------------------\n")
     print(f"Track reconstruction statistics:\n"
-          f"Efficiency: {100 * np.round(matched_tracks / len(gen_xplet), 3)} %\n"
-          f"Fake Rate: {100 * np.round(fake_tracks / len(reco_xplets), 3)} %")
+          f"Efficiency: {np.round(100 * matched_tracks / len(gen_xplet), 3)} %\n"
+          f"Fake Rate: {np.round(100 * fake_tracks / len(reco_xplets), 3)} %")

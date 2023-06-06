@@ -1,7 +1,7 @@
 import numpy as np
 
 from numba import jit
-from math import atan2, sqrt, pi
+from math import atan2
 
 
 @jit(nopython=True)
@@ -53,4 +53,4 @@ def angle_based_measure(detector_hits: list[list[float, float, float]]) -> float
     xz = [xyz_angle(x[i], x[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits) - 1)]
     yz = [xyz_angle(y[i], y[i + 1], z[i], z[i + 1]) for i in range(len(detector_hits) - 1)]
 
-    return (max(xz) - min(xz)) * (max(yz) - min(yz))
+    return np.sqrt(np.std(xz)**2 + np.std(yz)**2)

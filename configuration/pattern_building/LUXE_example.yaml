@@ -9,15 +9,15 @@ triplet:
   max scattering: 0.001
 
 binning:
-  num bins x: 1024
-  num bins y: 8
+  num bins x: 256
+  num bins y: 4
 
 qubo parameters:
-  b_ij conflict: 1.0
+  b_ij conflict: 2.0
   b_ij match: "default"
   a_i: "default"
 
 scale range parameters:
   z_scores: True
-  quality: [-0.1, 0.1]
-  interaction: [-1.0, -0.5]
+  quality: [-0.5, 0.5]
+  interaction: [-1.0, -0.9]

@@ -98,35 +98,46 @@ def make_connection_list(triplet_list,
     :param triplet_list: list of triplet objects
     :param t_mapping: triplet mapping
     :return:
-        list of indices ordered from  highest connection values to lowest connection values
+        list of indices ordered from the highest connection value to the lowest connection value
     """
+    # function to pass to .sorted()
     def sort_by_connection(connections_map_entry):
         return connections_map_entry[0]
 
     connections_map = []   # connection_value, triplet_1, triplet_2
-
+                           # -0.998          , t1       , t2
+                           # -0.993          , t2       , t234
+                           # ...
+    # To not run into value errors and making sure the whole list is filled, one has to take care of certain cases
     for triplet in triplet_list:
+        # there are connections -> easy
         for connection, value in zip(triplet.interactions.keys(), triplet.interactions.values()):
             if value < 0:
                 connections_map.append([value, triplet.triplet_id, connection])
+        # no connection, no conflict, "single triplet"
         if len(list(triplet.interactions.values())) == 0:
             connections_map.append([0, triplet.triplet_id, None])
+        # no connection, but conflicts (maybe remove them before!?)
         if len(list(triplet.interactions.values())) > 0:
             if min(list(triplet.interactions.values())) > 0:
                 connections_map.append([1, triplet.triplet_id, None])
 
     connections_map.sort(key=sort_by_connection)
 
+    # check if something is in a set is faster, also jsut using a string instead of an object
     triplet_used = set()
     triplet_ordering = []
 
     for entry in connections_map:
+        # check if there are connections, otherwise skip
         for i in [1, 2]:
             if entry[i] is None:
                 continue
+            # don"t put the same connection two times in the list
             if entry[i] not in triplet_used:
                 triplet_ordering.append(t_mapping[entry[i]])
                 triplet_used.add(entry[i])
+                # add connection, triplet 1 and triplet 2
                 for connection, value in zip(triplet_list[t_mapping[entry[i]]].interactions.keys(),
                                              triplet_list[t_mapping[entry[i]]].interactions.values()):
                     if value < 0:
