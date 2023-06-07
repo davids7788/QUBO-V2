@@ -71,8 +71,20 @@ class SegmentManager:
                                                   x_min + (j + 1) * segment_size_x,
                                                   y_min + k * segment_size_y,
                                                   y_min + (k + 1) * segment_size_y,
-                                                  self.detector_chips[layer_number][-1])
+                                                  self.z_position_to_layer[layer_number])
                     self.segment_storage[layer_number].append(new_segment)
+            # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
+
+            if layer_number not in self.layer_ranges.keys():
+                self.layer_ranges.update({layer_number: [[x_min,
+                                                          x_max,
+                                                          x_min,
+                                                          x_max]]})
+            else:
+                self.layer_ranges[layer_number].append([x_min,
+                                                        x_max,
+                                                        x_min,
+                                                        x_max])
 
     def check_if_full_overlap(self,
                               source_segment: DetectorSegment,
@@ -104,6 +116,7 @@ class SegmentManager:
         the area, defined by the segment, that should be considered for creating doublets, a connection to the target
         segment is stored inside the segment mapping attribute.
         """
+
         for index, z_position in enumerate(self.z_position_to_layer):
             if self.setup == "full":
                 if index > len(self.z_position_to_layer) - 3:
@@ -118,10 +131,10 @@ class SegmentManager:
                 if self.setup == "simplified":
                     target_list = self.segment_storage[index + 1]
                 for target_segment in target_list:
-                    if self.z_position_to_layer.index(target_segment.z_position) - index == 2:
-                        check_if_overlapping_in_between_layer = self.check_if_full_overlap(segment, target_segment)
-                        if check_if_overlapping_in_between_layer:
-                            continue
+                    # if self.z_position_to_layer.index(target_segment.z_position) - index == 2:
+                    #     check_if_overlapping_in_between_layer = self.check_if_full_overlap(segment, target_segment)
+                    #     if check_if_overlapping_in_between_layer:
+                    #         continue
                     check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
                     if check_compatibility:
                         if segment.name in self.segment_mapping.keys():
@@ -129,12 +142,6 @@ class SegmentManager:
                         else:
                             self.segment_mapping.update({segment.name: [target_segment]})
 
-        # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
-        for i in range(len(self.z_position_to_layer)):
-            self.layer_ranges.update({i: [self.segment_storage[i][0].x_start,
-                                          self.segment_storage[i][-1].x_end,
-                                          self.segment_storage[i][0].y_start,
-                                          self.segment_storage[i][-1].y_end]})
 
     @staticmethod
     def get_min_dy_of_two_segments(source_y: list[float],
@@ -232,11 +239,17 @@ class SegmentManager:
             index of corresponding segment in segment list
         """
         subdict = self.z_position_to_layer.index(z)
+        print(self.layer_ranges[subdict])
+        print(x, y, z)
+
+        if self.setup == 'full':
+           next
 
         x_index = int((x - self.layer_ranges[subdict][0]) /
                       ((self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0]))
 
         y_index = int((y - self.layer_ranges[subdict][2]) /
                       ((self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1]))
+        print(x_index, y_index)
 
         return self.segment_storage[subdict][self.binning[1] * x_index + y_index]
