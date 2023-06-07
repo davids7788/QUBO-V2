@@ -78,13 +78,13 @@ class SegmentManager:
             if layer_number not in self.layer_ranges.keys():
                 self.layer_ranges.update({layer_number: [[x_min,
                                                           x_max,
-                                                          x_min,
-                                                          x_max]]})
+                                                          y_min,
+                                                          y_max]]})
             else:
                 self.layer_ranges[layer_number].append([x_min,
                                                         x_max,
-                                                        x_min,
-                                                        x_max])
+                                                        y_min,
+                                                        y_max])
 
     def check_if_full_overlap(self,
                               source_segment: DetectorSegment,
@@ -238,18 +238,27 @@ class SegmentManager:
         :return:
             index of corresponding segment in segment list
         """
-        subdict = self.z_position_to_layer.index(z)
-        print(self.layer_ranges[subdict])
+
         print(x, y, z)
+        subdict_key = self.z_position_to_layer.index(z)
+        print(subdict_key)
 
         if self.setup == 'full':
-           next
+            subdict = self.layer_ranges[subdict_key]
+            count = 0
+            for s_dict in subdict:
+                print(s_dict)
+                if s_dict[0] <= x <= s_dict[1] and s_dict[2] <= y <= s_dict[3]:
+                    print(count)
 
-        x_index = int((x - self.layer_ranges[subdict][0]) /
-                      ((self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0]))
+        exit()
 
-        y_index = int((y - self.layer_ranges[subdict][2]) /
-                      ((self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1]))
-        print(x_index, y_index)
+        if self.setup == 'simplified':
+            x_index = int((x - self.layer_ranges[subdict][0]) /
+                          ((self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0]))
+
+            y_index = int((y - self.layer_ranges[subdict][2]) /
+                          ((self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1]))
+            print(x_index, y_index)
 
         return self.segment_storage[subdict][self.binning[1] * x_index + y_index]
