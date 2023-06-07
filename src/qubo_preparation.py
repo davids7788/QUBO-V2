@@ -64,7 +64,7 @@ print("\nStarting QUBO creation...\n")
 
 # Segmentation algorithm --> reduce combinatorial tasks
 s_manager = SegmentManager(configuration,
-                               geometry_file)
+                           geometry_file)
 s_manager.create_LUXE_segments()
 s_manager.segment_mapping_LUXE()
 
@@ -83,8 +83,8 @@ qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.coefficient_rescaling()
 
 # Just for visualising coefficients
-plot_coefficients_statistics(pattern_builder.num_particles,
-                             qubo_coefficients)
+# plot_coefficients_statistics(pattern_builder.num_particles,
+#                              qubo_coefficients)
 
 print("-----------------------------------\n")
 print("QUBO preparation finished successfully!\n")

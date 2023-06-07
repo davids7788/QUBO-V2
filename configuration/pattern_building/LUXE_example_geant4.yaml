@@ -1,0 +1,23 @@
+---
+doublet:
+  dx/x0: 0.05
+  dx/x0 eps: 0.2
+  dy/x0: 0
+  dy/x0 eps: 0.002
+
+triplet:
+  max scattering: 0.005
+
+binning:
+  num bins x: 32
+  num bins y: 4
+
+qubo parameters:
+  b_ij conflict: 2.0
+  b_ij match: "default"
+  a_i: "default"
+
+scale range parameters:
+  z_scores: True
+  quality: [-0.5, 0.5]
+  interaction: [-1.0, -0.9]

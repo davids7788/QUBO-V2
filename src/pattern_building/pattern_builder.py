@@ -62,9 +62,12 @@ class PatternBuilder:
                     self.particle_dict.update({hit.particle_id: [hit]})
 
                 # adding particle to a segment, used to reduce combinatorial candidates
-                segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
-                                                                         hit.y,
-                                                                         hit.z)
+                try:
+                    segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
+                                                                             hit.y,
+                                                                             hit.z)
+                except IndexError:
+                    continue
                 if segment:
                     segment.data.append(hit)
 

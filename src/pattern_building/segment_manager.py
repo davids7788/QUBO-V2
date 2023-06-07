@@ -1,4 +1,5 @@
 import csv
+import numpy as np
 
 from math_functions.geometry import x0_at_z_ref
 from pattern_building.segment import DetectorSegment
@@ -33,10 +34,13 @@ class SegmentManager:
 
         if len(self.z_position_to_layer) == 4:
             self.setup = "simplified"
+            print(f'Simplified geometry setup was chosen...\n')
         elif len(self.z_position_to_layer) == 8:
             self.setup = "full"
+            print(f'Full geometry setup was chosen...\n')
         else:
             print("No valid LUXE setup was chosen!")
+            exit()
 
         self.segment_mapping = {}   # <segment> (key): [<target_segment_0>, <target_segment_1>, ...] (value)
         self.segment_storage = {}   # organising segment objects, subdicts ordered by construction in the following way:
@@ -76,15 +80,21 @@ class SegmentManager:
             # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
 
             if layer_number not in self.layer_ranges.keys():
-                self.layer_ranges.update({layer_number: [[x_min,
-                                                          x_max,
-                                                          y_min,
-                                                          y_max]]})
+                self.layer_ranges.update({layer_number: [x_min,
+                                                         x_max,
+                                                         y_min,
+                                                         y_max]})
             else:
-                self.layer_ranges[layer_number].append([x_min,
-                                                        x_max,
-                                                        y_min,
-                                                        y_max])
+                temp_layer_range = self.layer_ranges[layer_number]
+                if x_min < temp_layer_range[0]:
+                    temp_layer_range[0] = x_min
+                if x_max > temp_layer_range[1]:
+                    temp_layer_range[1] = x_max
+                if y_min < temp_layer_range[2]:
+                    temp_layer_range[2] = y_min
+                if x_min > temp_layer_range[0]:
+                    temp_layer_range[3] = y_max
+                self.layer_ranges.update({layer_number: temp_layer_range})
 
     def check_if_full_overlap(self,
                               source_segment: DetectorSegment,
@@ -238,27 +248,8 @@ class SegmentManager:
         :return:
             index of corresponding segment in segment list
         """
+        subdict = self.layer_ranges[self.z_position_to_layer.index(z)]
+        x_index = int((x - subdict[0]) / ((subdict[1] - subdict[0]) / self.binning[0]))
+        y_index = int((y - subdict[2]) / ((subdict[3] - subdict[2]) / self.binning[1]))
 
-        print(x, y, z)
-        subdict_key = self.z_position_to_layer.index(z)
-        print(subdict_key)
-
-        if self.setup == 'full':
-            subdict = self.layer_ranges[subdict_key]
-            count = 0
-            for s_dict in subdict:
-                print(s_dict)
-                if s_dict[0] <= x <= s_dict[1] and s_dict[2] <= y <= s_dict[3]:
-                    print(count)
-
-        exit()
-
-        if self.setup == 'simplified':
-            x_index = int((x - self.layer_ranges[subdict][0]) /
-                          ((self.layer_ranges[subdict][1] - self.layer_ranges[subdict][0]) / self.binning[0]))
-
-            y_index = int((y - self.layer_ranges[subdict][2]) /
-                          ((self.layer_ranges[subdict][3] - self.layer_ranges[subdict][2]) / self.binning[1]))
-            print(x_index, y_index)
-
-        return self.segment_storage[subdict][self.binning[1] * x_index + y_index]
+        return self.segment_storage[self.z_position_to_layer.index(z)][self.binning[1] * x_index + y_index]
