@@ -8,6 +8,7 @@ from pattern_building.pattern_builder import PatternBuilder
 from pattern_building.segment_manager import SegmentManager
 from pattern_building.qubo_coefficients import QuboCoefficients
 from pattern_building.plot_statistics import plot_coefficients_statistics
+from utility.preselection_statistics import plot_dx_x0
 
 parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -76,6 +77,10 @@ pattern_builder.write_info_file()
 
 # Create truth Xplets
 gen_xplets_simplified_LUXE(tracking_data, "/".join(new_folder.split("/")[0:-1]))
+plot_dx_x0(s_manager.z_position_to_layer[0], f'{"/".join(new_folder.split("/")[0:-1])}/'
+                                             f'{".".join(tracking_data.split("/")[-1].split(".")[0:-1])}'
+                                             f'_gen_xplet_list.npy')
+
 
 # Set and rescale parameters plot statistics
 qubo_coefficients = QuboCoefficients(configuration, new_folder)

@@ -16,4 +16,4 @@ submit/
 /simplified_simulation_files
 /qubo_files
 /LCIO/
-/geant4_full/*
+/geant4_*/*

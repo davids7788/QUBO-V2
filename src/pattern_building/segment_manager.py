@@ -152,7 +152,6 @@ class SegmentManager:
                         else:
                             self.segment_mapping.update({segment.name: [target_segment]})
 
-
     @staticmethod
     def get_min_dy_of_two_segments(source_y: list[float],
                                    target_y: list[float]) -> float:
@@ -180,6 +179,8 @@ class SegmentManager:
         """
 
         # exclude heavy scattering in x-direction
+        if target_segment.z_position == source_segment.z_position:
+            print("ups")
         if target_segment.x_end < source_segment.x_start:
             return False
 
