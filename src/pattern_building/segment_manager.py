@@ -128,23 +128,18 @@ class SegmentManager:
         """
 
         for index, z_position in enumerate(self.z_position_to_layer):
-            if self.setup == "full":
-                if index > len(self.z_position_to_layer) - 3:
-                    continue
-            if self.setup == "simplified":
-                if index > len(self.z_position_to_layer) - 2:
-                    continue
+            if index > len(self.z_position_to_layer) - 2:
+                continue
             for segment in self.segment_storage[index]:
                 target_list = []
                 if self.setup == "full":
-                    target_list = self.segment_storage[index + 1] + self.segment_storage[index + 2]
+                    if index == len(self.z_position_to_layer) - 2:
+                        target_list = self.segment_storage[index + 1]
+                    else:
+                        target_list = self.segment_storage[index + 1] + self.segment_storage[index + 2]
                 if self.setup == "simplified":
                     target_list = self.segment_storage[index + 1]
                 for target_segment in target_list:
-                    # if self.z_position_to_layer.index(target_segment.z_position) - index == 2:
-                    #     check_if_overlapping_in_between_layer = self.check_if_full_overlap(segment, target_segment)
-                    #     if check_if_overlapping_in_between_layer:
-                    #         continue
                     check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
                     if check_compatibility:
                         if segment.name in self.segment_mapping.keys():
