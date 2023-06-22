@@ -47,5 +47,5 @@ def gen_xplets_simplified_LUXE(tracking_data_file: str,
 
         np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", gen_multiplets)
         print(f"Number of generated multiplets: {len(gen_multiplets)}")
-        print(f"Number of complete tracks: {len([g for g in gen_multiplets if len(g.hit_ids) >= 4])}\n")
+        print(f"Number of tracks with more at least hits: {len([g for g in gen_multiplets if len(g.hit_ids) >= 4])}\n")
         print("-----------------------------------\n")

@@ -14,7 +14,16 @@ class SegmentManager:
         :param detector_geometry: .csv detector layer file geometry file
         """
         self.mapping_criteria = configuration['doublet']
+        print(f'Segment mapping based on doublet preselection criteria:\n'
+              f'dx/x0: {self.mapping_criteria["dx/x0"]}\n'
+              f'dx/x0 eps: {self.mapping_criteria["dx/x0 eps"]}\n'
+              f'dy/x0: {self.mapping_criteria["dy/x0"]}\n'
+              f'dy/x0 eps : {self.mapping_criteria["dy/x0 eps"]}\n')
+
         self.binning = [configuration['binning']['num bins x'], configuration['binning']['num bins y']]
+        print(f'Segmentation binning:\n'
+              f'num bins x: {configuration["binning"]["num bins x"]}\n'
+              f'num bins y: {configuration["binning"]["num bins y"]}\n')
         self.detector_chips = []   # list containing coordinate information about detector layers
         self.setup = None
 
@@ -30,8 +39,8 @@ class SegmentManager:
         # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
         self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
         self.z_position_to_layer.sort()
-        # check setup, corresponds to LUXE_sl.csv = simplified, LUXE_fl.csv = full
 
+        # check setup
         if len(self.z_position_to_layer) == 4:
             self.setup = "simplified"
             print(f'Simplified geometry setup was chosen...\n')
@@ -41,6 +50,12 @@ class SegmentManager:
         else:
             print("No valid LUXE setup was chosen!")
             exit()
+
+        # Segmentation is done on the chips level
+        if self.setup == 'full':
+            self.chips_per_layer = 9
+        if self.setup == 'simplified':
+            self.chips_per_layer = 1
 
         self.segment_mapping = {}   # <segment> (key): [<target_segment_0>, <target_segment_1>, ...] (value)
         self.segment_storage = {}   # organising segment objects, subdicts ordered by construction in the following way:
@@ -54,57 +69,40 @@ class SegmentManager:
         """Segments are created according to their x, y and z coordinates. The name of the segments gives
         information about their position and layer.
         """
-        for chip in self.detector_chips:   # ordered in z value from lowest to highest
-            x_min = chip[0]
-            x_max = chip[1]
-            y_min = chip[2]
-            y_max = chip[3]
+        for layer_number, stave in enumerate(self.z_position_to_layer):
+            x_vals = [chip[0] for chip in self.detector_chips if chip[4] == stave] + \
+                     [chip[1] for chip in self.detector_chips if chip[4] == stave]
+            y_vals = [chip[2] for chip in self.detector_chips if chip[4] == stave] + \
+                     [chip[3] for chip in self.detector_chips if chip[4] == stave]
 
-            layer_number = self.z_position_to_layer.index(chip[4])
+            min_x, max_x, min_y, max_y = min(x_vals), max(x_vals), min(y_vals), max(y_vals)
+            self.layer_ranges.update({layer_number: [min_x, max_x, min_y, max_y]})
 
             # creating dictionary key for each layer, value is a list
             if layer_number not in self.segment_storage.keys():
                 self.segment_storage.update({layer_number: []})
-            segment_size_x = (x_max - x_min) / int(self.binning[0])
-            segment_size_y = (y_max - y_min) / int(self.binning[1])
+            segment_size_x = (max_x - min_x) / int(self.binning[0])
+            segment_size_y = (max_y - min_y) / int(self.binning[1])
             for j in range(int(self.binning[0])):
                 for k in range(int(self.binning[1])):
                     # name of the segment consists of layer number, segment numbering in x and in y
                     new_segment = DetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
                                                   layer_number,
-                                                  x_min + j * segment_size_x,
-                                                  x_min + (j + 1) * segment_size_x,
-                                                  y_min + k * segment_size_y,
-                                                  y_min + (k + 1) * segment_size_y,
+                                                  min_x + j * segment_size_x,
+                                                  min_x + (j + 1) * segment_size_x,
+                                                  min_y + k * segment_size_y,
+                                                  min_y + (k + 1) * segment_size_y,
                                                   self.z_position_to_layer[layer_number])
 
                     self.segment_storage[layer_number].append(new_segment)
-            # fortunately x and y are arranged in a way that the min and max x and y values can be accessed easily
-            if layer_number not in self.layer_ranges.keys():
-                self.layer_ranges.update({layer_number: [x_min,
-                                                         x_max,
-                                                         y_min,
-                                                         y_max]})
-            else:
-                temp_layer_range = self.layer_ranges[layer_number]
-                if x_min < temp_layer_range[0]:
-                    temp_layer_range[0] = x_min
-                if x_max > temp_layer_range[1]:
-                    temp_layer_range[1] = x_max
-                if y_min < temp_layer_range[2]:
-                    temp_layer_range[2] = y_min
-                if x_min > temp_layer_range[0]:
-                    temp_layer_range[3] = y_max
-
-                self.layer_ranges.update({layer_number: temp_layer_range})
 
     def segment_mapping_LUXE(self) -> None:
-        """Maps the segments according to the doublet pattern_building criteria. That means, that if there are hits inside
-        the area, defined by the segment, that should be considered for creating doublets, a connection to the target
-        segment is stored inside the segment mapping attribute.
+        """Maps the segments according to the doublet pattern_building criteria. That means, that if there are hits
+        inside the area, defined by the segment, that should be considered for creating doublets, a connection to the
+        target  segment is stored inside the segment mapping attribute.
         """
         for index, z_position in enumerate(self.z_position_to_layer):
-            print(f'Building segments of layer: {index}')
+            print(f'Mapping segments of layer: {index} to target segments')
             if index > len(self.z_position_to_layer) - 2:
                 continue
             for segment in self.segment_storage[index]:
@@ -114,8 +112,10 @@ class SegmentManager:
                         target_list = self.segment_storage[index + 1]
                     else:
                         target_list = self.segment_storage[index + 1] + self.segment_storage[index + 2]
+
                 if self.setup == "simplified":
                     target_list = self.segment_storage[index + 1]
+
                 for target_segment in target_list:
                     check_compatibility = self.is_compatible_with_target_LUXE_segment(segment, target_segment)
                     if check_compatibility:
@@ -157,20 +157,12 @@ class SegmentManager:
         min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
                                                            [target_segment.y_start, target_segment.y_end])
 
-        detector_range_x_at_z_ref = [self.segment_storage[0][0].x_start,
-                                     self.segment_storage[0][-1].x_end]
-
         # max x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
         x0_max = x0_at_z_ref(target_segment.x_start,
                              source_segment.x_end,
                              target_segment.z_position,
                              source_segment.z_position,
                              self.z_position_to_layer[0])
-
-        if x0_max < detector_range_x_at_z_ref[0]:
-            x0_max = detector_range_x_at_z_ref[0]
-        if x0_max > detector_range_x_at_z_ref[1]:
-            x0_max = detector_range_x_at_z_ref[1]
 
         #  exclude heavy scattering in y-direction
         if min_dy / x0_max > self.mapping_criteria["dy/x0 eps"]:
@@ -182,11 +174,6 @@ class SegmentManager:
                              target_segment.z_position,
                              source_segment.z_position,
                              self.z_position_to_layer[0])
-
-        if x0_min < detector_range_x_at_z_ref[0]:
-            x0_min = detector_range_x_at_z_ref[0]
-        if x0_min > detector_range_x_at_z_ref[1]:
-            x0_min = detector_range_x_at_z_ref[1]
 
         max_dx = target_segment.x_end - source_segment.x_start
         min_dx = max([target_segment.x_start - source_segment.x_end, 0])
@@ -219,8 +206,9 @@ class SegmentManager:
         :return:
             index of corresponding segment in segment list
         """
-        subdict = self.layer_ranges[self.z_position_to_layer.index(z)]
-        x_index = int((x - subdict[0]) / ((subdict[1] - subdict[0]) / self.binning[0]))
-        y_index = int((y - subdict[2]) / ((subdict[3] - subdict[2]) / self.binning[1]))
+        for segment in self.segment_storage[self.z_position_to_layer.index(z)]:
+            if segment.x_start <= x <= segment.x_end and segment.y_start <= y <= segment.y_end:
+                return segment
 
-        return self.segment_storage[self.z_position_to_layer.index(z)][self.binning[1] * x_index + y_index]
+        # print("Did not find segment!!!")
+        return None
