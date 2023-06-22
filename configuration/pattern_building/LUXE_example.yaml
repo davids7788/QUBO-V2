@@ -19,5 +19,5 @@ qubo parameters:
 
 scale range parameters:
   z_scores: True
-  quality: [-0.5, 0.5]
+  quality: [-0.1, 0.1]
   interaction: [-1.0, -0.9]

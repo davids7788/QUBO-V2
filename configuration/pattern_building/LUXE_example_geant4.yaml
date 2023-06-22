@@ -1,15 +1,15 @@
 ---
 doublet:
-  dx/x0: 0.0522
-  dx/x0 eps: 0.15
+  dx/x0: 0.0529
+  dx/x0 eps: 0.01
   dy/x0: 0
   dy/x0 eps: 0.002
 
 triplet:
-  max scattering: 0.005
+  max scattering: 0.01
 
 binning:
-  num bins x: 256
+  num bins x: 10
   num bins y: 4
 
 qubo parameters:
@@ -19,5 +19,5 @@ qubo parameters:
 
 scale range parameters:
   z_scores: True
-  quality: [-0.5, 0.5]
+  quality: [-0.1, 0.1]
   interaction: [-1.0, -0.9]

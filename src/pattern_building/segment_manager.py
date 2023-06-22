@@ -63,7 +63,8 @@ class SegmentManager:
             layer_number = self.z_position_to_layer.index(chip[4])
 
             # creating dictionary key for each layer, value is a list
-            self.segment_storage.update({layer_number: []})
+            if layer_number not in self.segment_storage.keys():
+                self.segment_storage.update({layer_number: []})
             segment_size_x = (x_max - x_min) / int(self.binning[0])
             segment_size_y = (y_max - y_min) / int(self.binning[1])
             for j in range(int(self.binning[0])):
@@ -76,9 +77,9 @@ class SegmentManager:
                                                   y_min + k * segment_size_y,
                                                   y_min + (k + 1) * segment_size_y,
                                                   self.z_position_to_layer[layer_number])
-                    self.segment_storage[layer_number].append(new_segment)
-            # fortunately x and y are arranged in a way that the min and max x a nd y values can be accessed easily
 
+                    self.segment_storage[layer_number].append(new_segment)
+            # fortunately x and y are arranged in a way that the min and max x and y values can be accessed easily
             if layer_number not in self.layer_ranges.keys():
                 self.layer_ranges.update({layer_number: [x_min,
                                                          x_max,
@@ -94,40 +95,16 @@ class SegmentManager:
                     temp_layer_range[2] = y_min
                 if x_min > temp_layer_range[0]:
                     temp_layer_range[3] = y_max
-                self.layer_ranges.update({layer_number: temp_layer_range})
 
-    def check_if_full_overlap(self,
-                              source_segment: DetectorSegment,
-                              target_segment: DetectorSegment) -> bool:
-        """Checks if segments come from not consecutive layers e.g. 1 and 3, 4, and 6 if there is a segment in the
-        in between layer, which covers the path completely.
-        :param source_segment: source segment
-        :param target_segment: target segment
-        :return
-            True if there is an in-between segment covering path of two segments, else False
-        """
-        dz_segments = target_segment.z_position - source_segment.z_position
-        # since segments are the same size, this applies for the end as well
-        dx_segments = target_segment.x_start - source_segment.x_start
-        source_layer_index = self.z_position_to_layer.index(source_segment.z_position)
-        target_layer_index = self.z_position_to_layer.index(target_segment.z_position)
-        if target_layer_index == source_layer_index + 2:
-            in_between_index = int((target_layer_index + source_layer_index) / 2)
-            dz_ratio = (target_segment.z_position - self.z_position_to_layer[in_between_index]) / dz_segments
-            x_start_in_between = target_segment.x_start - (dx_segments * dz_ratio)
-            x_end_in_between = target_segment.x_end - (dx_segments * dz_ratio)
-            for chip in self.layer_ranges[in_between_index]:
-                if chip.x_start < x_start_in_between and chip.x_end > x_end_in_between:
-                    return True
-        return False
+                self.layer_ranges.update({layer_number: temp_layer_range})
 
     def segment_mapping_LUXE(self) -> None:
         """Maps the segments according to the doublet pattern_building criteria. That means, that if there are hits inside
         the area, defined by the segment, that should be considered for creating doublets, a connection to the target
         segment is stored inside the segment mapping attribute.
         """
-
         for index, z_position in enumerate(self.z_position_to_layer):
+            print(f'Building segments of layer: {index}')
             if index > len(self.z_position_to_layer) - 2:
                 continue
             for segment in self.segment_storage[index]:
@@ -174,8 +151,6 @@ class SegmentManager:
         """
 
         # exclude heavy scattering in x-direction
-        if target_segment.z_position == source_segment.z_position:
-            print("ups")
         if target_segment.x_end < source_segment.x_start:
             return False
 

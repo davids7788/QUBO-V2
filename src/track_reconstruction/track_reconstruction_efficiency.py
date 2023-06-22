@@ -15,7 +15,7 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
     :param gen_xplet_file: string
     """
     reco_xplets = np.load(reco_xplet_file, allow_pickle=True)
-    gen_xplet = np.load(gen_xplet_file, allow_pickle=True)
+    gen_xplet = [g for g in np.load(gen_xplet_file, allow_pickle=True) if len(g.hit_ids) >=4]
 
     matched_tracks = 0
     fake_tracks = 0
@@ -42,5 +42,5 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
 
     print("\n-----------------------------------\n")
     print(f"Track reconstruction statistics:\n"
-          f"Efficiency: {np.round(100 * matched_tracks / len(gen_xplet), 3)} %\n"
-          f"Fake Rate: {np.round(100 * fake_tracks / len(reco_xplets), 3)} %")
+          f"Efficiency: {np.round(100 * matched_tracks / len(gen_xplet), 2)} %\n"
+          f"Fake Rate: {np.round(100 * fake_tracks / len(reco_xplets), 2)} %")

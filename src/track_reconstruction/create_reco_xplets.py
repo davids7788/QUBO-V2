@@ -29,7 +29,6 @@ def reco_xplets_simplified_LUXE(triplets,
 
     # check for simple or full LUXE setup, len==2 --> simple,  else full setup
     sorted_z = sorted(triplet_start_value)
-    print(sorted_z)
     if len(triplet_start_value) == 2:
         t_possible_start = [sorted_z[0]]
     else:

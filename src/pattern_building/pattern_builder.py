@@ -71,36 +71,43 @@ class PatternBuilder:
                 if segment:
                     segment.data.append(hit)
 
-        if segment_manager.setup == 'full':
-            self.information_about_particle_tracks(first_layer=[segment_manager.z_position_to_layer[0],
-                                                                segment_manager.z_position_to_layer[1]],
-                                                   last_layer=[segment_manager.z_position_to_layer[-2],
-                                                               segment_manager.z_position_to_layer[-1]])
-        elif segment_manager.setup == 'simplified':
-            self.information_about_particle_tracks(first_layer=[segment_manager.z_position_to_layer[0]],
-                                                   last_layer=[segment_manager.z_position_to_layer[-1]])
+        self.information_about_particle_tracks(first_layer=segment_manager.z_position_to_layer[0],
+                                               last_layer=segment_manager.z_position_to_layer[-1],
+                                               z_position_layers=segment_manager.z_position_to_layer,
+                                               setup=segment_manager.setup)
 
     def information_about_particle_tracks(self,
-                                          first_layer: list[float],
-                                          last_layer: list[float]) -> None:
+                                          first_layer: float,
+                                          last_layer: float,
+                                          z_position_layers: list[float],
+                                          setup: str) -> None:
         """Prints information about how many particles interact at least once with a detector chip
         and how many complete tracks can be reconstructed.
         :param first_layer: depending on the setup the first layer consists of two overlapping chips  or one
         :param last_layer: depending on the setup the last layer consists of two overlapping chips or one
+        :param setup 'full' or simplified
+        :param z_position_layers: z position of detector layers
         """
-        for key, value in self.particle_dict.items():
-            last = False
-            first = False
-            for entry in value:
-                if entry.z in last_layer:
-                    last = True
-                if entry.z in first_layer:
-                    first = True
+        len_z = len(z_position_layers)
+        for key, values in self.particle_dict.items():
             self.num_particles += 1
-            if last and first:
+            if len(values) >= 4:
                 self.num_complete_tracks += 1
-            self.num_all_doublets += len(value) - 1
-            self.num_all_triplets += len(value) - 2
+            if setup == 'simplified':
+                max_layer_dist = 1
+            if setup == 'full':
+                max_layer_dist = 2
+
+            for i in range(len(values)):
+                if i < len(values) - 1:
+                    if z_position_layers.index(values[i + 1].z) - z_position_layers.index(values[i].z) \
+                            <= max_layer_dist:
+                        self.num_all_doublets += 1
+
+                        if i < len(values) - 2:
+                            if z_position_layers.index(values[i + 1].z) - z_position_layers.index(values[i].z) \
+                                    <= max_layer_dist:
+                                self.num_all_triplets += 1
 
         print(f"Number of particles with at least one hit: {self.num_particles}")
         print(f"Number of complete tracks: {self.num_complete_tracks}\n")
@@ -118,10 +125,10 @@ class PatternBuilder:
         """
 
         # calculate x0
-        x0 = x0_at_z_ref(first_hit.x,
-                         second_hit.x,
-                         first_hit.z,
+        x0 = x0_at_z_ref(second_hit.x,
+                         first_hit.x,
                          second_hit.z,
+                         first_hit.z,
                          z_ref)
 
         # check dx / x0 criteria

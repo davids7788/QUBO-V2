@@ -13,7 +13,7 @@ def gen_xplets_simplified_LUXE(tracking_data_file: str,
         :param save_to_folder: location to save the gen_xplet list
     """
 
-    print("Create X-plets on generator level with truth information...")
+    print("Create multiplet on generator level with truth information...")
     output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
     if os.path.isfile(output_name):
         return
@@ -46,5 +46,6 @@ def gen_xplets_simplified_LUXE(tracking_data_file: str,
             gen_multiplets.append(truth_multiplet)
 
         np.save(f"{save_to_folder}/{output_name}_gen_xplet_list", gen_multiplets)
-        print(f"Number of generated Xplets: {len(gen_multiplets)}\n")
+        print(f"Number of generated multiplets: {len(gen_multiplets)}")
+        print(f"Number of complete tracks: {len([g for g in gen_multiplets if len(g.hit_ids) >= 4])}\n")
         print("-----------------------------------\n")

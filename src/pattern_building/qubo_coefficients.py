@@ -25,7 +25,6 @@ class QuboCoefficients:
 
         # Dictionary of quality and conflict functions
         self.match_mode = None
-        self.conflict_mode = None
         self.quality_mode = None
 
         self.match = None
@@ -36,7 +35,7 @@ class QuboCoefficients:
     def parameter_setting(self) -> None:
         """Reads in the parameter setting and sets the fields accordingly.
         """
-        b_ij_conflict = self.configuration["qubo parameters"]["b_ij conflict"]
+        self.conflict = b_ij_conflict = self.configuration["qubo parameters"]["b_ij conflict"]
         b_ij_match = self.configuration["qubo parameters"]["b_ij match"]
         a_i_quality = self.configuration["qubo parameters"]["a_i"]
 
@@ -46,13 +45,6 @@ class QuboCoefficients:
         else:
             self.match = b_ij_match
             self.match_mode = 'constant'
-
-        if b_ij_conflict == "default":
-            self.conflict = angle_based_measure
-            self.conflict_mode = 'default'
-        else:
-            self.conflict = b_ij_conflict
-            self.conflict_mode = 'constant'
 
         if a_i_quality == 'default':
             self.quality = angle_based_measure
@@ -104,6 +96,7 @@ class QuboCoefficients:
         set_triplet_coefficients_end = time.process_time()
         apply_coefficients_time = hms_string(set_triplet_coefficients_end - set_triplet_coefficients_start)
         self.triplet_list = list(self.triplet_list)
+
         print(f"Time elapsed for setting triplet coefficients: "
               f"{apply_coefficients_time}\n")
 
@@ -137,8 +130,7 @@ class QuboCoefficients:
             # excluding conflict terms
             connectivity_values = [interaction
                                    for t in self.triplet_list
-                                   for interaction in t.interactions.values() if interaction <= 0]
-
+                                   for interaction in t.interactions.values() if interaction != conflict_term]
             min_connectivity = min(connectivity_values)
             max_connectivity = max(connectivity_values)
             range_connectivity = max_connectivity - min_connectivity
@@ -188,20 +180,15 @@ class QuboCoefficients:
             return 0
 
         if intersection == 1:
-            if t1.hit_3 == t2.hit_1:
+            if t1.hit_3.hit_id == t2.hit_1.hit_id:
                 return - 1 + self.match([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_2.x, t2.hit_3.x],
                                          [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_2.y, t2.hit_3.x],
                                          [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_2.z, t2.hit_3.x]])
-            if self.conflict_mode == 'constant':
-                return self.conflict
-            else:
-                return 1 + self.conflict([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_1.x, t2.hit_2.x, t2.hit_3.x],
-                                          [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_1.y, t2.hit_2.y, t2.hit_3.y],
-                                          [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_1.z, t2.hit_2.z, t2.hit_3.z]])
+            return self.conflict
 
         if intersection == 2:
             # triplets on same layer always have a conflict
-            if t1.hit_2 == t2.hit_1 and t1.hit_3 == t2.hit_2:
+            if t1.hit_2.hit_id == t2.hit_1.hit_id and t1.hit_3.hit_id == t2.hit_2.hit_id:
                 if self.match_mode == 'constant':
                     return self.match
                 else:
@@ -210,9 +197,4 @@ class QuboCoefficients:
                                              [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_3.z]])
 
             else:
-                if self.conflict_mode == 'constant':
-                    return self.conflict
-                else:
-                    return 1 + self.conflict([[t1.hit_1.x, t1.hit_2.x, t1.hit_3.x, t2.hit_3.x],
-                                              [t1.hit_1.y, t1.hit_2.y, t1.hit_3.y, t2.hit_3.y],
-                                              [t1.hit_1.z, t1.hit_2.z, t1.hit_3.z, t2.hit_3.z]])
+                return self.conflict

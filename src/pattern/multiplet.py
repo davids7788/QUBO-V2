@@ -25,8 +25,6 @@ class Multiplet:
         """Adds a triplet to the X-plet structure
         :param hit: detector hit
         """
-        insert_position = len(list(self.hit_ids))
-
         self.hit_ids.append(hit.hit_id)
         self.particle_ids.append(hit.particle_id)
         self.x.append(hit.x)
