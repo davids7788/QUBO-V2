@@ -6,14 +6,10 @@ venv
 virtualenv
 submit/
 
-/MuonCollider/*.jpg
-/MuonCollider/*.pdf
-/MuonCollider/*.C
-/analysis/*.pdf
-/analysis/*.png
+/analysis/
 
 /ptarmigan_files
 /simplified_simulation_files
 /qubo_files
-/LCIO/
 /geant4_*/*
+
