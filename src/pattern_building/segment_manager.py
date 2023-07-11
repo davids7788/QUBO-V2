@@ -102,7 +102,7 @@ class SegmentManager:
         target  segment is stored inside the segment mapping attribute.
         """
         for index, z_position in enumerate(self.z_position_to_layer):
-            print(f'Mapping segments of layer: {index} to target segments')
+            print(f'Mapping segments of layer {index} to target segments')
             if index > len(self.z_position_to_layer) - 2:
                 continue
             for segment in self.segment_storage[index]:
@@ -209,6 +209,4 @@ class SegmentManager:
         for segment in self.segment_storage[self.z_position_to_layer.index(z)]:
             if segment.x_start <= x <= segment.x_end and segment.y_start <= y <= segment.y_end:
                 return segment
-
-        # print("Did not find segment!!!")
         return None

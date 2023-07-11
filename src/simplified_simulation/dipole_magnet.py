@@ -3,10 +3,9 @@ import numpy as np
 
 class DipoleMagnet:
     """Specifies a dipole magnet and provides function for calculating particle trajectories through it.
-    :param:
-        dipole start    : start of dipole location [m]
-        dipole end      : end of dipole location [m]
-        dipole_strength : B-Field [T]
+    :param  dipole start    : start of dipole location [m]
+    :param  dipole end      : end of dipole location [m]
+    :param  dipole_strength : B-Field [T]
     """
 
     def __init__(self,
@@ -21,8 +20,8 @@ class DipoleMagnet:
     @staticmethod
     def xz_rotation_matrix(angle):
         """Returns a rotational matrix for the xz_plane
-        Parameters:
-            angle   : angle in rad to rotate
+        :param angle : angle in rad to rotate
+        :return rotation matrix for specified angle
         """
         return np.array([[np.cos(angle), 0, - np.sin(angle)],
                          [0, 1, 0],
@@ -32,18 +31,18 @@ class DipoleMagnet:
     def compute_bending_radius(particle_momentum,
                                dipole_field_strength):
         """Returns the bending radius for a particle with given momentum.
-        :param
-            particle_momentum: momentum of a particle"""
+        :param particle_momentum: momentum of a particle
+        :param dipole_field_strength strength of dipole in Tesla
+        :return bending radius
+        """
         return 10 / 2.99792458 * 1e-3 * particle_momentum / dipole_field_strength
 
     def traversing_through_dipole_magnet(self,
                                          particle):
         """Computes the particles momenta and positions after traversing through the magnetic dipole.
-           Therefore a transfer matrix is used. Since the magnetic field conserves the energy,
-           pz (beam is in z-direction) is adjusted to account for that.
-        :param
-            particle_momentum: [px, py, pz]
-            particle_position: [x, y, z]
+        Therefore a transfer matrix is used. Since the magnetic field conserves the energy,
+        pz (beam is in z-direction) is adjusted to account for that.
+        :param particle: particle to move through dipole
         """
         theta_i = np.arctan2(particle.momentum[0], particle.momentum[2])
         for dipole_strength_value in self.dipole_strength:

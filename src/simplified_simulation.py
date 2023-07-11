@@ -105,7 +105,7 @@ Experiment_1 = MCToyExperiment(source,
                                result,
                                scattering=input_file["settings"]["scattering"])
 
-time_simulation_start= time.time()
+time_simulation_start = time.time()
 Experiment_1.start_experiment()
 time_simulation_end = time.time()
 print(f"Time to run simulation: {hms_string(time_simulation_end - time_simulation_start)}")
@@ -121,8 +121,8 @@ convert_to_csv_true(target_folder + "/" + outfile_name + outfile_appendix)
 print("Smearing hits...")
 convert_to_csv_smeared(target_folder + "/" + outfile_name + outfile_appendix)
 
-print("Calculating mid of fired pixels...\n")
-convert_to_csv_pixel(target_folder + "/" + outfile_name + outfile_appendix)
+# print("Calculating mid of fired pixels...\n")
+# convert_to_csv_pixel(target_folder + "/" + outfile_name + outfile_appendix)
 
 print("Converting finished successfully!")
 time_converting_end = time.time()

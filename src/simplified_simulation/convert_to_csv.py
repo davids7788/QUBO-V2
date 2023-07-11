@@ -7,6 +7,9 @@ from numpy.linalg import norm
 
 
 def convert_to_csv_true(path_to_file):
+    """Converts the .npy file into a .csv tracking file containing truth information
+    :param path_to_file: path to .npy file
+    """
     folder = "/".join(path_to_file.split("/")[0:-1])
     file = path_to_file.split("/")[-1]
     if not os.path.isdir(f"{folder}/true"):
@@ -38,6 +41,9 @@ def convert_to_csv_true(path_to_file):
 
 
 def convert_to_csv_smeared(path_to_file):
+    """Converts the .npy file into a .csv tracking file containing smeared hits
+    :param path_to_file: path to .npy file
+    """
     folder = "/".join(path_to_file.split("/")[0:-1])
     file = path_to_file.split("/")[-1]
     if not os.path.isdir(f"{folder}/smeared"):
@@ -75,6 +81,9 @@ def convert_to_csv_smeared(path_to_file):
 
 
 def convert_to_csv_pixel(path_to_file):
+    """Converts the .npy file into a .csv tracking file containing pixelated hits, the mid of a pixel is provided
+    :param path_to_file: path to .npy file
+    """
     folder = "/".join(path_to_file.split("/")[0:-1])
     file = path_to_file.split("/")[-1]
 

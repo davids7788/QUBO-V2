@@ -190,7 +190,7 @@ class Visualisation:
                             [start[2],
                              end[2]],
                             zdir='x',
-                            color='green',
+                            color='blue',
                             linewidth=1)
         plt.savefig('tracks_example/plotted_example_tracks.pdf')
         plt.close()

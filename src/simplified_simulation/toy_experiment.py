@@ -4,13 +4,12 @@ import numpy as np
 
 class MCToyExperiment:
     """Class for accumulating infos about the experiment and executing it. Results are stored inside the result object.
-    :param
-        particle_source            : particle source object : hdf5 file in a Ptarmigan class wrapper
-        species                    : 'photon, 'electron' or 'positron
-        detector_plane_list        : list of detectors, list has to be ordered by z-coordinate of the detectors
-        dipole_magnet              : dipole magnet object
-        result                     : object for storing results
-        scattering                 : True or False
+    :param particle_source            : particle source object : hdf5 file in a Ptarmigan class wrapper
+    :param species                    : 'photon, 'electron' or 'positron
+    :param detector_plane_list        : list of detectors, list has to be ordered by z-coordinate of the detectors
+    :param dipole_magnet              : dipole magnet object
+    :param result                     : object for storing results
+    :param scattering                 : True or False
     """
     def __init__(self,
                  particle_source,
@@ -104,10 +103,8 @@ class MCToyExperiment:
     @staticmethod
     def get_distance(p1, p0):
         """Returns the distance from a point p1 (x1, y1, z1) to a point p0 (x0, y0, z0)
-        :param
-            p1: [x1, y1, z1]
-            p0: [x0, y0, z0]
-        :return
-            distance of p1 and po
+        :param p1: [x1, y1, z1]
+        :param p0: [x0, y0, z0]
+        :return distance of p1 and po
         """
         return np.sqrt((p1[0] - p0[0])**2 + (p1[1] - p0[1])**2 + (p1[2] - p0[2])**2)

@@ -13,11 +13,9 @@ class PtargmiganSimData:
 
     def get_particle_info(self, species, info, particle_number=None):
         """Returns the position/momentum of the particles as a 4-vector.
-        :param
-            species          : 'photon','electron' or 'positron'
-            info             : 'position', 'momentum'
-            particle_number  : number of particle in order of the dataset
-
+        :param species          : 'photon','electron' or 'positron'
+        :param info             : 'position', 'momentum'
+        :param particle_number  : number of particle in order of the dataset
         :return 4-vector is returned:
             position: ct, x, y, z || original [mm] --> converted to [m]
             momentum: E/c, px, py, pz || original [GeV] -> [MeV]

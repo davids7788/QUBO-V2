@@ -3,15 +3,14 @@ import numpy as np
 
 class DetectorPlane:
     """Class for simulating a detector plane for a Toy MC experiment.
-    :param
-        limits_x                   : (x_start, x_end) [m]
-        limits_y                   : (y_start, y_end) [m]
-        z_position:                : z_position [m]
-        num_bins                   : (bins_x, bins_y) -> 2D-histogram
-        effective_thickness        : the detector consists of more than one material, to simplify it is assumed a
-                                     combined length (= interaction length), where the particles are passing through [m]
-        effective_radiation_length : length on which particles are interacting with the detector in [kg / m^2]
-        detector_rho               : effective density of the detector material [kg / m³]
+    :param limits_x                   : (x_start, x_end) [m]
+    :param limits_y                   : (y_start, y_end) [m]
+    :param z_position:                : z_position [m]
+    :param num_bins                   : (bins_x, bins_y) -> 2D-histogram
+    :param effective_thickness        : the detector consists of more than one material, to simplify it is assumed a
+                                        combined length (=interaction length), where particles are passing through [m]
+    :param effective_radiation_length : length on which particles are interacting with the detector in [kg / m^2]
+    :param detector_rho               : effective density of the detector material [kg / m³]
     """
     def __init__(self,
                  limits_x,
@@ -33,22 +32,19 @@ class DetectorPlane:
 
     def bin_width_in_x(self):
         """Returns bin width in x calculated from number of bins and length of detector
-        :return
-            bin width in x [m]
+        :return bin width in x [m]
         """
         return (self.limits_x[1] - self.limits_x[0]) / self.num_bins[0]
     
     def bin_width_in_y(self):
         """Returns bin width in y calculated from number of bins and length of detector
-        :return
-            bin width in y [m]
+        :return bin width in y [m]
         """
         return (self.limits_y[1] - self.limits_y[0]) / self.num_bins[1]
     
     def bin_edges_for_hit(self, hit):
         """Returns bin edges in x and y for a particle position (hit) on the detector
-        :return
-            (x_low, x_up), (y_low, y_up) [m]
+        :return (x_low, x_up), (y_low, y_up) [m]
         """
         x_steps_upper_limit = int((self.limits_x[1] - hit[0]) / self.bin_width_in_x())
         y_steps_upper_limit = int((self.limits_y[1] - hit[1]) / self.bin_width_in_y())
@@ -59,8 +55,7 @@ class DetectorPlane:
 
     def gaussian_scattering(self, particle_momentum):
         """Returns a gaussian distributed value from a sample with mu and sigma as parameters
-        :param:
-            particle_momentum : vector of momenta
+        :param: particle_momentum : vector of momenta
         """
         # angle in rad
         angle_xz = np.arctan2(particle_momentum[0], particle_momentum[2])
@@ -72,11 +67,11 @@ class DetectorPlane:
         # using rossi formula
         def calculate_rossi_theta(d_rho, thickness, x_0, momentum):
             """Auxiliary function for the calculation of the scattering angle
-            :param
-                d_rho           : rho of detector in [kg / m³]
-                thickness       : thickness of the detector layer
-                x_0             : effective radiation length
-                momentum        : momentum of the particle
+            :param d_rho           : rho of detector in [kg / m³]
+            :param thickness       : thickness of the detector layer
+            :param x_0             : effective radiation length
+            :param momentum        : momentum of the particle
+            :return rossi theta
             """
             beta = 1  # very fast particles
             c = 1  # set c = 1

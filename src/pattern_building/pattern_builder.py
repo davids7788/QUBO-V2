@@ -82,6 +82,7 @@ class PatternBuilder:
         :param setup 'full' or simplified
         :param z_position_layers: z position of detector layers
         """
+
         for key, values in self.particle_dict.items():
             self.num_particles += 1
             if len(values) >= 4:
@@ -94,18 +95,15 @@ class PatternBuilder:
             doublet_list = []
             for i, hit_1 in enumerate(values[0:-1]):
                 for hit_2 in values[i + 1:]:
-                    if hit_2.z != hit_1.z:
-                        if z_position_layers.index(values[i + 1].z) - z_position_layers.index(values[i].z) \
-                                <= max_layer_dist:
-                            doublet_list.append(Doublet(hit_1, hit_2))
+                    if 1 <= z_position_layers.index(hit_2.z) - z_position_layers.index(hit_1.z) <= max_layer_dist:
+                        doublet_list.append(Doublet(hit_1, hit_2))
             for d in doublet_list:
                 self.all_truth_doublets.add(d)
 
             for m, d1 in enumerate(doublet_list):
                 for d2 in doublet_list[m + 1:]:
                     if d1.hit_2.hit_id == d2.hit_1.hit_id:
-                        t = Triplet(d1.hit_1, d2.hit_1, d2.hit_2)
-                        self.all_truth_triplets.add(t)
+                        self.all_truth_triplets.add(Triplet(d1.hit_1, d2.hit_1, d2.hit_2))
 
         print(f"Number of particles with at least one hit: {self.num_particles}")
         print(f"Number of complete tracks: {self.num_complete_tracks}\n")
@@ -225,7 +223,7 @@ class PatternBuilder:
         list_triplet_end = time.process_time()
         self.triplet_creation_time = hms_string(list_triplet_end - list_triplet_start)
 
-        print(f"Time elapsed for  forming triplets: "
+        print(f"Time elapsed for forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.found_triplets}")
         print(f"Triplet selection efficiency: "
