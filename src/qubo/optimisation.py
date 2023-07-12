@@ -98,6 +98,60 @@ def make_connection_list(triplet_list,
     :param triplet_list: list of triplet objects
     :param t_mapping: triplet mapping
     :return:
+        list of indices ordered from  highest connection values to lowest connection values
+    """
+
+    layer_map = {}
+    triplet_ordering_complete = []
+    triplet_used = set()
+
+    for t in triplet_list:
+        if t.hit_1.z in layer_map.keys():
+            layer_map[t.hit_1.z].append(t)
+        else:
+            layer_map.update({t.hit_1.z: [t]})
+
+    key_list = list(layer_map.keys())
+    key_list.sort()
+
+    for key in key_list:
+        sub_t_list = layer_map[key]
+        connections_map = []  # connection_value, triplet_1, triplet_2
+
+        for triplet in sub_t_list:
+            for connection, value in zip(triplet.interactions.keys(), triplet.interactions.values()):
+                if value < 0:
+                    connections_map.append([value, triplet.triplet_id, connection])
+            if len(list(triplet.interactions.values())) == 0:
+                connections_map.append([0, triplet.triplet_id, None])
+            if len(list(triplet.interactions.values())) > 0:
+                if min(list(triplet.interactions.values())) > 0:
+                    connections_map.append([1, triplet.triplet_id, None])
+
+        connections_map.sort(key=lambda x: x[0])
+
+        for entry in connections_map:
+            for i in [1, 2]:
+                if entry[i] is None:
+                    continue
+                if entry[i] not in triplet_used:
+                    triplet_ordering_complete.append(t_mapping[entry[i]])
+                    triplet_used.add(entry[i])
+                    for connection, value in zip(triplet_list[t_mapping[entry[i]]].interactions.keys(),
+                                                 triplet_list[t_mapping[entry[i]]].interactions.values()):
+                        if value < 0:
+                            if connection not in triplet_used:
+                                triplet_used.add(connection)
+                                triplet_ordering_complete.append(t_mapping[connection])
+    return triplet_ordering_complete
+
+
+def make_connection_list_legacy(triplet_list,
+                                t_mapping):
+    """Creates a preferred connections list and returns a list of indices for the triplets
+    :param triplet_list: list of triplet objects
+    :param t_mapping: triplet mapping
+    :return:
         list of indices ordered from the highest connection value to the lowest connection value
     """
     # function to pass to .sorted()

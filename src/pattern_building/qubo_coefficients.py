@@ -35,7 +35,7 @@ class QuboCoefficients:
     def parameter_setting(self) -> None:
         """Reads in the parameter setting and sets the fields accordingly.
         """
-        self.conflict = b_ij_conflict = self.configuration["qubo parameters"]["b_ij conflict"]
+        self.conflict = self.configuration["qubo parameters"]["b_ij conflict"]
         b_ij_match = self.configuration["qubo parameters"]["b_ij match"]
         a_i_quality = self.configuration["qubo parameters"]["a_i"]
 

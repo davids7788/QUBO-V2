@@ -165,7 +165,8 @@ class SegmentManager:
                              self.z_position_to_layer[0])
 
         #  exclude heavy scattering in y-direction
-        if min_dy / x0_max > self.mapping_criteria["dy/x0 eps"]:
+        if min_dy / x0_max / (target_segment.z_position - source_segment.z_position) > \
+                self.mapping_criteria["dy/x0 eps"]:
             return False
 
         # min x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
@@ -178,10 +179,12 @@ class SegmentManager:
         max_dx = target_segment.x_end - source_segment.x_start
         min_dx = max([target_segment.x_start - source_segment.x_end, 0])
 
-        if max_dx / x0_min < self.mapping_criteria["dx/x0"] - self.mapping_criteria["dx/x0 eps"]:
+        if max_dx / x0_min / (target_segment.z_position - source_segment.z_position) < \
+                self.mapping_criteria["dx/x0"] - self.mapping_criteria["dx/x0 eps"]:
             return False
 
-        elif min_dx / x0_max > self.mapping_criteria["dx/x0"] + self.mapping_criteria["dx/x0 eps"]:
+        elif min_dx / x0_max / (target_segment.z_position - source_segment.z_position) > \
+                self.mapping_criteria["dx/x0"] + self.mapping_criteria["dx/x0 eps"]:
             return False
         else:
             return True

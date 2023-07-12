@@ -5,19 +5,23 @@ from math import sqrt
 @jit(nopython=True)
 def dxy_x0_check(xy1: float,
                  xy2: float,
+                 z1: float,
+                 z2: float,
                  x0: float,
                  criteria_mean: float = 0,
                  criteria_eps: float = 0) -> bool:
     """Checks doublet dx/x0 and dy/x0 criteria.
     :param xy1: x or y value og the first hit
     :param xy2: x or y value of the second hit
+    :param z1: z value of first hit
+    :param z2: z value of second hit
     :param x0: extrapolated x value on reference layer
     :param criteria_mean: mean value of dx/x0 criteria
     :param criteria_eps: allowed epsilon range of dx/x0 criteria
     :return
         True if criteria is fulfilled, else False
     """
-    if abs((xy2 - xy1) / x0 - criteria_mean) > criteria_eps:
+    if abs((xy2 - xy1) / x0 / abs(z2 - z1) - criteria_mean) > criteria_eps:
         return False
     return True
 

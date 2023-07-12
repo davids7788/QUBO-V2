@@ -130,6 +130,8 @@ class PatternBuilder:
         # check dx / x0 criteria
         if not dxy_x0_check(first_hit.x,
                             second_hit.x,
+                            first_hit.z,
+                            second_hit.z,
                             x0,
                             criteria_mean=self.configuration["doublet"]["dx/x0"],
                             criteria_eps=self.configuration["doublet"]["dx/x0 eps"]):
@@ -138,6 +140,8 @@ class PatternBuilder:
         # check dy / x0 criteria
         if not dxy_x0_check(first_hit.y,
                             second_hit.y,
+                            first_hit.z,
+                            second_hit.z,
                             x0,
                             criteria_mean=self.configuration["doublet"]["dy/x0"],
                             criteria_eps=self.configuration["doublet"]["dy/x0 eps"]):

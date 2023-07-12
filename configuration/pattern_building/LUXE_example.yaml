@@ -1,12 +1,12 @@
 ---
 doublet:
-  dx/x0: 0.0526
-  dx/x0 eps: 0.002
+  dx/x0: 0.526
+  dx/x0 eps: 0.01
   dy/x0: 0
-  dy/x0 eps: 0.002
+  dy/x0 eps: 0.01
 
 triplet:
-  max scattering: 0.001
+  max scattering: 0.002
 
 binning:
   num bins x: 128
