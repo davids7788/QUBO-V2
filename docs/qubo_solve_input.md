@@ -1,7 +1,7 @@
 # Configuration file for `qubo_solve.py`
 The `qubo_solve.py` script takes a YAML configuration file as first input argument. 
 It consists of the sections [ansatz](#ansatz), [solver](#solver), [qubo](#qubo) and 
-[bit flip optimisation](#bit%20flip%20optimisation).
+[bit flip optimisation](#bit&20flip&20optimisation).
 
 # ansatz
 Defines the parameters of the quantum circuit used for the quantum part of the solving algorithm.
