@@ -40,10 +40,9 @@ comparing to analytical solution.
   minimum energy (int)
 * `num qubits:` number of qubits of the SubQUBO (int)
 * `error mitigation algorithm:` "algebraic" for error mitigation via matrix inverse of a calibration measurement (adding method of https://arxiv.org/pdf/2007.03663.pdf soon)
-* `compare to eigensolver:` True if calculation on SubQUBO level is done with Eigensolver too
+* `compare to eigensolver:` True if sub-QUBO results should be compared with Eigensolver too
 
 # bit flip optimisation
 Parameters for the bit flip optimisation 
 * `iterations:` num of iterations (int)
-* `reverse:` bit flip optimisation is done in order of the impact list, if True, then of reversed impact list, 
-  else False (other optimisation algorithms will be added in the future)
+* `reverse:` if True, optimisation starts from the end of the ordered triplet list
