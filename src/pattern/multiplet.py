@@ -31,8 +31,10 @@ class Multiplet:
         self.y.append(hit.y)
         self.z.append(hit.z)
         self.particle_energy.append(hit.particle_energy)
-        if hit.time:
+        try:
             self.time.append(hit.time)
+        except AttributeError:
+            pass
 
     @staticmethod
     @jit(nopython=True)

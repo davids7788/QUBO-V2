@@ -13,7 +13,7 @@ class DetectorHit:
         self.particle_energy = DetectorHit.fieldnames_matching(detector_hit, 'particle_energy')
         try:
             self.time = DetectorHit.fieldnames_matching(detector_hit, 'time')
-        except ValueError:
+        except IndexError:
             pass
 
     @staticmethod
