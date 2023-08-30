@@ -13,3 +13,23 @@ submit/
 /qubo_files
 /geant4_*/*
 
+
+CMakeLists.txt
+MANIFEST.in
+bin/
+cmake/
+contrib/
+lib/
+lib64
+pyproject.toml
+pyvenv.cfg
+qiskit/
+share/
+src/controllers/
+src/framework/
+src/misc/
+src/noise/
+src/open_pulse/
+src/simulators/
+src/third-party/
+src/transpile/

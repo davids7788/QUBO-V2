@@ -3,13 +3,14 @@ from pattern.detector_hit import DetectorHit
 
 
 class Doublet:
+    """Class for combining DetectorHits to a doublet structure. It provides methods to analyse the doublet.
+    """
     def __init__(self,
                  hit_1: DetectorHit,
                  hit_2: DetectorHit):
-        """Class for doublet objects, consisting of two hits on consecutive detector layers.
+        """Set fieldnames according to the provided DetectorHit objects.
         :param hit_1: detector hit 1
         :param hit_2: detector hit 2
-
         """
         self.hit_1 = hit_1
         self.hit_2 = hit_2
@@ -24,9 +25,9 @@ class Doublet:
         return False
 
     def xz_angle(self) -> float:
-        """Calculating the angle in the xz-plane with respect to beam axis in z direction.
+        """Returns angle in the xz-plane with respect to the beam axis in z direction.
         :return
-            angle in the xz plane.
+            angle in the xz-plane.
         """
         return xyz_angle(self.hit_1.x,
                          self.hit_2.x,
@@ -34,9 +35,9 @@ class Doublet:
                          self.hit_2.z)
 
     def yz_angle(self) -> float:
-        """Calculating the angle in the xz-plane with respect to beam axis in z direction.
+        """Return the angle in the xz-plane with respect to the beam axis in z direction.
         :return
-            angle in the yz plane.
+            angle in the yz-plane.
         """
         return xyz_angle(self.hit_1.y,
                          self.hit_2.y,
