@@ -8,7 +8,7 @@ class Multiplet:
     """Class for storing information from DetectorHit objects in a multiplet object.
     """
     def __init__(self):
-        """Preparing fieldnames.
+        """Preparing fields.
         """
         self.hit_id = []
         self.x = []

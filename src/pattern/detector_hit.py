@@ -3,7 +3,7 @@ class DetectorHit:
     """
     def __init__(self,
                  detector_hit: list[str]):
-        """Set fieldnames according to the information provided by the list of values
+        """Set fields according to the information provided by the list of values
         :param detector_hit: list of values matching the definitions of the fieldnames provided in the
         fieldnames_matching method.
         """

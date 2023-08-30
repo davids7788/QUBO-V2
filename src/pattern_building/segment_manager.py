@@ -6,10 +6,12 @@ from pattern_building.segment import DetectorSegment
 
 
 class SegmentManager:
+    """Managing segmentation algorithm for the given detector geometry.
+    """
     def __init__(self,
                  configuration,
                  detector_geometry: str):
-        """Class for handling segments for doublet and triplet creation for LUXE data.
+        """Setting fields according to the configuration and detector geometry.
         :param configuration: pattern building configuration file
         :param detector_geometry: .csv detector layer file geometry file
         """
@@ -24,7 +26,9 @@ class SegmentManager:
         print(f'Segmentation binning:\n'
               f'num bins x: {configuration["binning"]["num bins x"]}\n'
               f'num bins y: {configuration["binning"]["num bins y"]}\n')
-        self.detector_chips = []   # list containing coordinate information about detector layers
+
+        # list containing coordinate information about detector layers
+        self.detector_chips = []
         self.setup = None
 
         # load detector layers / chips information and add them to the detector layers list
@@ -43,12 +47,12 @@ class SegmentManager:
         # check setup
         if len(self.z_position_to_layer) == 4:
             self.setup = "simplified"
-            print(f'Simplified geometry setup was chosen...\n')
+            print(f'Set to simplified geometry setup...\n')
         elif len(self.z_position_to_layer) == 8:
             self.setup = "full"
-            print(f'Full geometry setup was chosen...\n')
+            print(f'Set to full geometry setup...\n')
         else:
-            print("No valid LUXE setup was chosen!")
+            print("No valid LUXE setup set!")
             exit()
 
         # Segmentation is done on the chips level
@@ -57,8 +61,10 @@ class SegmentManager:
         if self.setup == 'simplified':
             self.chips_per_layer = 1
 
-        self.segment_mapping = {}   # <segment> (key): [<target_segment_0>, <target_segment_1>, ...] (value)
-        self.segment_storage = {}   # organising segment objects, subdicts ordered by construction in the following way:
+        # <segment> (key): [<target_segment_0>, <target_segment_1>, ...] (value)
+        self.segment_mapping = {}
+        self.segment_storage = {}
+        # organising segment objects, subdicts ordered by construction in the following way:
         # <layer> (key):
         # [<segment_x0_y0>, <segment_x0_y1>, ..., <segment_x0_yn>
         #  <segment_x1_y0>, <segment_x1_y1>, ...,
@@ -66,7 +72,7 @@ class SegmentManager:
         self.layer_ranges = {}
 
     def create_LUXE_segments(self) -> None:
-        """Segments are created according to their x, y and z coordinates. The name of the segments gives
+        """Create segments according to their x, y and z coordinates. The name of the segments gives
         information about their position and layer.
         """
         for layer_number, stave in enumerate(self.z_position_to_layer):
@@ -83,8 +89,11 @@ class SegmentManager:
                 self.segment_storage.update({layer_number: []})
             segment_size_x = (max_x - min_x) / int(self.binning[0])
             segment_size_y = (max_y - min_y) / int(self.binning[1])
+
+            # segment creation
             for j in range(int(self.binning[0])):
                 for k in range(int(self.binning[1])):
+
                     # name of the segment consists of layer number, segment numbering in x and in y
                     new_segment = DetectorSegment(f"L{layer_number}_SX{j}_SY{k}",
                                                   layer_number,
@@ -92,7 +101,8 @@ class SegmentManager:
                                                   min_x + (j + 1) * segment_size_x,
                                                   min_y + k * segment_size_y,
                                                   min_y + (k + 1) * segment_size_y,
-                                                  self.z_position_to_layer[layer_number])
+                                                  self.z_position_to_layer[layer_number] - 0.5e-3,
+                                                  self.z_position_to_layer[layer_number] + 0.5e-3)
 
                     self.segment_storage[layer_number].append(new_segment)
 
@@ -146,6 +156,7 @@ class SegmentManager:
         """Takes two segments and checks if they are compatible with the pattern_building criteria.
         :param source_segment: segment from which the mapping starts
         :param target_segment: segment considered as a target
+
         :return:
             True if compatible, else false
         """
@@ -193,6 +204,7 @@ class SegmentManager:
                         name: str) -> list[DetectorSegment]:
         """Takes the name of a segment and the target segments are returned
         :param name: name of segment
+
         :return:
             target segments
         """
@@ -206,6 +218,7 @@ class SegmentManager:
         :param x: x value of hit
         :param y: y value of hit
         :param z: z value of hit
+
         :return:
             index of corresponding segment in segment list
         """

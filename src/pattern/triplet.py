@@ -9,7 +9,7 @@ class Triplet:
                  hit_1: DetectorHit,
                  hit_2: DetectorHit,
                  hit_3: DetectorHit):
-        """Set fieldnames according to the provided DetectorHit objects.
+        """Set fields according to the provided DetectorHit objects.
         :param hit_1: detector hit 1
         :param hit_2: detector hit 2
         :param hit_3: detector hit 3
