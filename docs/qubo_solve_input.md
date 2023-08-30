@@ -1,7 +1,7 @@
 # Configuration file for `qubo_solve.py`
 The `qubo_solve.py` script takes a YAML configuration file as first input argument. 
 It consists of the sections [ansatz](#ansatz), [solver](#solver), [qubo](#qubo) and 
-[bit flip optimisation](#bit%20flip%20optimisation).
+[bit flip optimisation](#bit&20flip&20optimisation).
 
 # ansatz
 Defines the parameters of the quantum circuit used for the quantum part of the solving algorithm.
@@ -40,10 +40,9 @@ comparing to analytical solution.
   minimum energy (int)
 * `num qubits:` number of qubits of the SubQUBO (int)
 * `error mitigation algorithm:` "algebraic" for error mitigation via matrix inverse of a calibration measurement (adding method of https://arxiv.org/pdf/2007.03663.pdf soon)
-* `compare to eigensolver:` True if calculation on SubQUBO level is done with Eigensolver too
+* `compare to eigensolver:` True if sub-QUBO results should be compared with Eigensolver too
 
 # bit flip optimisation
 Parameters for the bit flip optimisation 
 * `iterations:` num of iterations (int)
-* `reverse:` bit flip optimisation is done in order of the impact list, if True, then of reversed impact list, 
-  else False (other optimisation algorithms will be added in the future)
+* `reverse:` if True, optimisation starts from the end of the ordered triplet list

@@ -4,12 +4,12 @@ It consists of the sections [doublet](#doublet), [triplet](#triplet), [binning](
 
 # doublet
 Criterion for a preselection on doublet level. Creating a Doublet object, if a set of two hits fulfill the criterion.
-* `dx/x0:` $\frac{(x_2 - x_1)}{x_0}$ with $x_1$ (float) and $x_2$ (float) as x-coordinates of hits ond 
-  (consecutive layers) and $x_0$ as linearly interpolated hit on reference layer (float)
-* `dx/x0 eps:` maximum deviation from the dx/dx0 criteria (float)
-* `dy/x0:` $\frac{(y_2 - y_1)}{x_0}$ with $y_1$ (float) and $y_2$ (float) as y-coordinates of hits ond 
-  (consecutive layers) and $x_0$ as linearly interpolated hit on reference layer (float)
-* `dy/x0 eps:` maximum deviation from the dy/dx0 criteria (float)
+* `dx/x0:` $\frac{(x_2 - x_1)}{x_0 \cdot (z_2 - z_1)}$ with $x_1$ and $x_2$ as x-coordinates of hits, $z_1$ and $z_2$ as 
+z-coordinates of the hits and $x_0$ as linearly interpolated hit x-value on the reference layer (float)
+* `dx/x0 eps:` maximum deviation from the dx/x0 criteria (float)
+* `dy/x0:` $\frac{(y_2 - y_1)}{x_0 \cdot (z_2 - z_1)}$ with $y_1$ (float) and $y_2$ (float) as y-coordinates of hits,
+   $z_1$ and $z_2$  as the z-coordinates of the hits and $x_0$ as linearly interpolated x-value on the reference layer (float)
+* `dy/x0 eps:` maximum deviation from the dy/x0 criteria (float)
 
 Criteria for a preselection on triplet level. Creating a Doublet object, if a set of two doublets fulfill both criteria.
 # triplet
