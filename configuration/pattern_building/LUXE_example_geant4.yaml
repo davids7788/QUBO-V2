@@ -21,3 +21,5 @@ scale range parameters:
   z_scores: True
   quality: [-0.1, 0.1]
   interaction: [-1.0, -0.9]
+
+mode: signal

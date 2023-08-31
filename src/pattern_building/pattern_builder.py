@@ -15,20 +15,25 @@ import matplotlib.pyplot as plt
 
 
 class PatternBuilder:
+    """Class for pattern building."""
     def __init__(self,
-                 configuration: dict,
-                 save_to_folder: str):
-        """Class for creating x_plets from LUXE detector hits
-        :param configuration: information needed for the creating segmentation list,
-              provided as a nested dictionary
-        :param save_to_folder : folder in which results are stored
+                 configuration: dict):
+        """Set fields.
+        :param configuration: dictionary with pattern building configuration
         """
         self.configuration = configuration
-        self.save_to_folder = save_to_folder
         self.doublet_creation_time = None
         self.triplet_creation_time = None
         self.num_particles = 0
-        self.particle_dict = {}
+
+        # only signal particles
+        self.particle_dict_signal = {}
+
+        # background particle
+        self.particle_dict_background = {}
+
+        # undecided (blind example)
+        self.particle_dict_unknown = {}
 
         # some values to check if computation successful
         self.num_complete_tracks = 0
@@ -42,27 +47,39 @@ class PatternBuilder:
     def load_tracking_data(self,
                            tracking_data_file: str,
                            segment_manager: SegmentManager) -> None:
-        """Loads data from a .csv file and stores it into a 2-dim array. Also converts values which are used for
-        calculations to float from string. The file structure is displayed in the class description.
-        :param tracking_data_file: Luxe tracking data file
-        :param segment_manager: SegmentManager object with already set segments and mapping
+        """Loads tracking data from a file and stores and places the data in the corresponding segments.
+        :param tracking_data_file: LUXE tracking data file
+        :param segment_manager: SegmentManager object
         """
         print('\n-----------------------------------\n')
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
-              f"Distributing data into segments ...\n")
+              f"Placing data in segments ...\n")
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                # Create new DetectorHit object
+                # Create DetectorHit object from tracking file entry
                 hit = DetectorHit(row)
 
                 # check if particle ID was already seen
-                if hit.particle_id in self.particle_dict.keys():
-                    self.particle_dict[hit.particle_id].append(hit)
+                if hit.is_signal:
+                    if hit.particle_id in self.particle_dict_signal.keys():
+                        self.particle_dict_signal[hit.particle_id].append(hit)
+                    else:
+                        self.particle_dict_signal.update({hit.particle_id: [hit]})
+
+                elif hit.is_signal is None:
+                    if hit.particle_id in self.particle_dict_unknown.keys():
+                        self.particle_dict_unknown[hit.particle_id].append(hit)
+                    else:
+                        self.particle_dict_unknown.update({hit.particle_id: [hit]})
+
                 else:
-                    self.particle_dict.update({hit.particle_id: [hit]})
+                    if hit.particle_id in self.particle_dict_background.keys():
+                        self.particle_dict_background[hit.particle_id].append(hit)
+                    else:
+                        self.particle_dict_background.update({hit.particle_id: [hit]})
 
                 # adding particle to a segment, used to reduce combinatorial candidates
                 segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
@@ -72,11 +89,13 @@ class PatternBuilder:
                     segment.data.append(hit)
 
         self.information_about_particle_tracks(z_position_layers=segment_manager.z_position_to_layer,
-                                               setup=segment_manager.setup)
+                                               setup=segment_manager.setup,
+                                               mode=self.configuration['mode'])
 
     def information_about_particle_tracks(self,
                                           z_position_layers: list[float],
-                                          setup: str) -> None:
+                                          setup: str,
+                                          mode: str) -> None:
         """Prints information about how many particles interact at least once with a detector chip
         and how many complete tracks can be reconstructed.
         :param setup 'full' or simplified
