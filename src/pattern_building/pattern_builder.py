@@ -17,9 +17,11 @@ import matplotlib.pyplot as plt
 class PatternBuilder:
     """Class for pattern building."""
     def __init__(self,
-                 configuration: dict):
+                 configuration: dict,
+                 mode: str):
         """Set fields.
         :param configuration: dictionary with pattern building configuration
+        :param mode: signal, signal + background or blinded
         """
         self.configuration = configuration
         self.doublet_creation_time = None
@@ -33,7 +35,7 @@ class PatternBuilder:
         self.particle_dict_background = {}
 
         # undecided (blind example)
-        self.particle_dict_unknown = {}
+        self.particle_dict_blinded = {}
 
         # some values to check if computation successful
         self.num_complete_tracks = 0
@@ -64,22 +66,11 @@ class PatternBuilder:
 
                 # check if particle ID was already seen
                 if hit.is_signal:
-                    if hit.particle_id in self.particle_dict_signal.keys():
-                        self.particle_dict_signal[hit.particle_id].append(hit)
-                    else:
-                        self.particle_dict_signal.update({hit.particle_id: [hit]})
-
+                    self.fill_signal_particle_dictionary(hit)
                 elif hit.is_signal is None:
-                    if hit.particle_id in self.particle_dict_unknown.keys():
-                        self.particle_dict_unknown[hit.particle_id].append(hit)
-                    else:
-                        self.particle_dict_unknown.update({hit.particle_id: [hit]})
-
+                    self.fill_blinded_particle_dictionary(hit)
                 else:
-                    if hit.particle_id in self.particle_dict_background.keys():
-                        self.particle_dict_background[hit.particle_id].append(hit)
-                    else:
-                        self.particle_dict_background.update({hit.particle_id: [hit]})
+                    self.fill_background_particle_dictionary(hit)
 
                 # adding particle to a segment, used to reduce combinatorial candidates
                 segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
@@ -92,16 +83,51 @@ class PatternBuilder:
                                                setup=segment_manager.setup,
                                                mode=self.configuration['mode'])
 
+    def fill_signal_particle_dictionary(self,
+                                        hit: DetectorHit):
+        """Fill signal particle dict.
+        :param hit: detector hit object
+        """
+        if hit.particle_id in self.particle_dict_signal.keys():
+            self.particle_dict_signal[hit.particle_id].append(hit)
+        else:
+            self.particle_dict_signal.update({hit.particle_id: [hit]})
+
+    def fill_blinded_particle_dictionary(self,
+                                         hit: DetectorHit):
+        """Fill unknown particle dict.
+        :param hit: detector hit object
+        """
+        if hit.particle_id in self.particle_dict_blinded.keys():
+            self.particle_dict_blinded[hit.particle_id].append(hit)
+        else:
+            self.particle_dict_blinded.update({hit.particle_id: [hit]})
+
+    def fill_background_particle_dictionary(self,
+                                            hit: DetectorHit):
+        """Fill unknown particle dict.
+        :param hit: detector hit object
+        """
+        if hit.particle_id in self.particle_dict_background.keys():
+            self.particle_dict_background[hit.particle_id].append(hit)
+        else:
+            self.particle_dict_background.update({hit.particle_id: [hit]})
+
     def information_about_particle_tracks(self,
                                           z_position_layers: list[float],
                                           setup: str,
                                           mode: str) -> None:
         """Prints information about how many particles interact at least once with a detector chip
         and how many complete tracks can be reconstructed.
-        :param setup 'full' or simplified
+        :param setup 'full' or 'simplified'
         :param z_position_layers: z position of detector layers
+        :param mode: signal, signal + background or blind
         """
 
+        if mode == 'signal':
+            particle_dict_for_tracks = self.particle_dict_signal
+        elif mode == 'signal + background':
+            particle_dict = self.particle
         for key, values in self.particle_dict.items():
             self.num_particles += 1
             if len(values) >= 4:
