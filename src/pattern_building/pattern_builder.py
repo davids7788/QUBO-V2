@@ -54,28 +54,57 @@ class PatternBuilder:
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Placing data in segments ...\n")
 
+        if tracking_data_file.split('.')[-1] == 'csv':
+            list_of_hits = PatternBuilder.load_tracking_data_from_csv(tracking_data_file)
+
+        else:
+            print('Loading data from given file format not implemented yet!')
+            print('Exiting...')
+            exit()
+
+        signal_hits = 0
+        background_hits = 0
+        blinded_hits = 0
+
+        for hit in list_of_hits:
+            if hit.is_signal:
+                self.fill_signal_particle_dictionary(hit)
+                signal_hits += 1
+            elif hit.is_signal is None:
+                self.fill_blinded_particle_dictionary(hit)
+                blinded_hits += 1
+            else:
+                self.fill_background_particle_dictionary(hit)
+                background_hits += 1
+
+            # adding particle to a segment, used to reduce combinatorial candidates
+            segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
+                                                                     hit.y,
+                                                                     hit.z)
+            if segment:
+                segment.data.append(hit)
+
+        print(f'Number of signal hits found: {signal_hits}')
+        print(f'Number of background hits found: {background_hits}')
+        print(f'Number of blinded hits found: {blinded_hits}')
+
+    @staticmethod
+    def load_tracking_data_from_csv(tracking_data_file: str) -> list[DetectorHit]:
+        """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
+        :param tracking_data_file: .csv tracking data file
+
+        :return:
+            list of DetectorHit objects
+        """
+        detector_hits = []
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                # Create DetectorHit object from tracking file entry
-                hit = DetectorHit(row)
+                detector_hits.append(DetectorHit(row))
 
-                # check if particle ID was already seen
-                if hit.is_signal:
-                    self.fill_signal_particle_dictionary(hit)
-                elif hit.is_signal is None:
-                    self.fill_blinded_particle_dictionary(hit)
-                else:
-                    self.fill_background_particle_dictionary(hit)
-
-                # adding particle to a segment, used to reduce combinatorial candidates
-                segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
-                                                                         hit.y,
-                                                                         hit.z)
-                if segment:
-                    segment.data.append(hit)
+        return detector_hits
 
     def fill_signal_particle_dictionary(self,
                                         hit: DetectorHit) -> None:
@@ -315,8 +344,9 @@ class PatternBuilder:
                 f.write("\n")
             f.write("\n\n")
             f.write("---\n")
-            f.write(f"Number of particles with at least one hit on the detector:: {self.num_particles}\n")
-            f.write(f"Number of generated tracks: {self.num_complete_tracks}\n")
+            f.write(f"Number of particles with at least one hit on the detector: "
+                    f"{len(self.particle_dict_signal.keys())}\n")
+            f.write(f"Number of generated tracks: {self.num_signal_tracks}\n")
             f.write("\n\n")
 
             f.write(f"Time elapsed for forming doublets: "
