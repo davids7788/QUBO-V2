@@ -22,4 +22,5 @@ scale range parameters:
   quality: [-0.1, 0.1]
   interaction: [-1.0, -0.9]
 
-mode: signal
+track:
+  minimum track length: 4

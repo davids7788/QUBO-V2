@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 
-from math_functions.checks import w_is_valid_triplet, dxy_x0_check
+from math_functions.checks import jit_is_valid_triplet, dxy_x0_check
 from math_functions.geometry import x0_at_z_ref, xyz_angle
 from utility.time_tracking import hms_string
 from pattern.detector_hit import DetectorHit
@@ -11,22 +11,17 @@ from pattern.doublet import Doublet
 from pattern.triplet import Triplet
 from pattern_building.segment_manager import SegmentManager
 
-import matplotlib.pyplot as plt
-
 
 class PatternBuilder:
     """Class for pattern building."""
     def __init__(self,
-                 configuration: dict,
-                 mode: str):
+                 configuration: dict):
         """Set fields.
         :param configuration: dictionary with pattern building configuration
-        :param mode: signal, signal + background or blinded
         """
         self.configuration = configuration
         self.doublet_creation_time = None
         self.triplet_creation_time = None
-        self.num_signal_particles = 0
 
         # only signal particles
         self.particle_dict_signal = {}
@@ -38,13 +33,15 @@ class PatternBuilder:
         self.particle_dict_blinded = {}
 
         # some values to check if computation successful
-        self.num_signal_tracks = 0
         self.all_truth_doublets = set()
         self.all_truth_triplets = set()
         self.found_correct_doublets = 0
         self.found_correct_triplets = 0
         self.found_doublets = 0
         self.found_triplets = 0
+
+        # track level
+        self.num_signal_tracks = 0
 
     def load_tracking_data(self,
                            tracking_data_file: str,
@@ -56,6 +53,7 @@ class PatternBuilder:
         print('\n-----------------------------------\n')
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Placing data in segments ...\n")
+
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
@@ -80,7 +78,7 @@ class PatternBuilder:
                     segment.data.append(hit)
 
     def fill_signal_particle_dictionary(self,
-                                        hit: DetectorHit):
+                                        hit: DetectorHit) -> None:
         """Fill signal particle dict.
         :param hit: detector hit object
         """
@@ -90,7 +88,7 @@ class PatternBuilder:
             self.particle_dict_signal.update({hit.particle_id: [hit]})
 
     def fill_blinded_particle_dictionary(self,
-                                         hit: DetectorHit):
+                                         hit: DetectorHit) -> None:
         """Fill unknown particle dict.
         :param hit: detector hit object
         """
@@ -112,20 +110,20 @@ class PatternBuilder:
     def information_about_particle_tracks(self,
                                           z_position_layers: list[float],
                                           setup: str,
-                                          sample_composition: str) -> None:
+                                          sample_composition: str,
+                                          min_track_length) -> None:
         """Prints information about how many particles interact at least once with a detector chip
         and how many complete tracks can be reconstructed.
         :param z_position_layers: z position of detector layers:
         :param setup 'full' or 'simplified'
-        :param sample_composition: string with information about the given tracking sample, signal, signal+background
-                                   or blinded
+        :param sample_composition: information about the tracking sample, signal, signal+background or blinded
+        :param min_track_length: minimum number of hits required from a signal positron to be counted as track
         """
 
         max_layer_dist = None
 
         for key, values in self.particle_dict_signal.items():
-            self.num_signal_particles += 1
-            if len(values) >= 4:
+            if len(values) >= min_track_length:
                 self.num_signal_tracks += 1
             if setup == 'simplified':
                 max_layer_dist = 1
@@ -148,8 +146,8 @@ class PatternBuilder:
         if sample_composition == 'blinded':
             print('Blinded example, no truth information about signal or background are provided!')
         else:
-            print(f"Number of particles with at least one hit: {self.num_signal_particles}")
-            print(f"Number of complete tracks: {self.num_signal_tracks}\n")
+            print(f"Number of signal particles with at least one hit: {len(self.particle_dict_signal.keys())}")
+            print(f"Number of complete signal tracks: {self.num_signal_tracks}\n")
 
     def is_valid_doublet_candidate(self,
                                    first_hit: DetectorHit,
@@ -159,6 +157,7 @@ class PatternBuilder:
         :param first_hit: hit with lower z-value
         :param second_hit: hit with higher z-value
         :param z_ref: reference layer z-value
+
         :return
             True if valid doublet candidate, else False
         """
@@ -280,11 +279,13 @@ class PatternBuilder:
     def is_valid_triplet(self,
                          hit_1: DetectorHit,
                          hit_2: DetectorHit,
-                         hit_3: DetectorHit):
+                         hit_3: DetectorHit) -> bool:
         """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
         :param hit_1: first hit of a triplets
         :param hit_2: second hit of a triplets
         :param hit_3: third hit of a triplets
+
+        :return:
             True if criteria applies, else False
         """
         xz_12 = xyz_angle(hit_1.x, hit_2.x, hit_1.z, hit_2.z)
@@ -295,17 +296,18 @@ class PatternBuilder:
 
         yz_23 = xyz_angle(hit_2.y, hit_3.y, hit_2.z, hit_3.z)
 
-        return w_is_valid_triplet(xz_12,
-                                  xz_23,
-                                  yz_12,
-                                  yz_23,
-                                  self.configuration["triplet"]["max scattering"])
+        return jit_is_valid_triplet(xz_12,
+                                    xz_23,
+                                    yz_12,
+                                    yz_23,
+                                    self.configuration["triplet"]["max scattering"])
 
-    def write_info_file(self) -> None:
+    def write_info_file(self,
+                        target_folder) -> None:
         """Writes information about the Preselection parameters and some statistics into
         'preselection_info.txt' which is stored inside the output folder.
         """
-        with open(self.save_to_folder + "/preselection_info.txt", "w") as f:
+        with open(target_folder + "/preselection_info.txt", "w") as f:
             f.write("Preselection performed with the following configuration: \n")
             for outer_key in self.configuration.keys():
                 for inner_key, value in self.configuration[outer_key].items():
