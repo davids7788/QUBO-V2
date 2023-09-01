@@ -36,11 +36,18 @@ parser.add_argument('--target_folder',
                     default=None,
                     help='Folder to store results')
 
+parser.add_argument('--sample_composition',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='signal, signal+background, blinded')
+
 parser_args = parser.parse_args()
 config_file = parser_args.config_file
 tracking_data = parser_args.tracking_data
 geometry_file = parser_args.geometry_file
 target_folder = parser_args.target_folder
+sample_composition = parser_args.sample_composition
 
 
 # loading arguments, creating folder
@@ -71,6 +78,9 @@ s_manager.segment_mapping_LUXE()
 # Triplet creation
 pattern_builder = PatternBuilder(configuration, new_folder)
 pattern_builder.load_tracking_data(tracking_data, s_manager)
+pattern_builder.information_about_particle_tracks(z_position_layers=s_manager.z_position_to_layer,
+                                                  setup=s_manager.setup,
+                                                  sample_composition=sample_composition)
 pattern_builder.create_x_plets_LUXE(s_manager)
 pattern_builder.write_info_file()
 

@@ -26,7 +26,7 @@ class PatternBuilder:
         self.configuration = configuration
         self.doublet_creation_time = None
         self.triplet_creation_time = None
-        self.num_particles = 0
+        self.num_signal_particles = 0
 
         # only signal particles
         self.particle_dict_signal = {}
@@ -38,7 +38,7 @@ class PatternBuilder:
         self.particle_dict_blinded = {}
 
         # some values to check if computation successful
-        self.num_complete_tracks = 0
+        self.num_signal_tracks = 0
         self.all_truth_doublets = set()
         self.all_truth_triplets = set()
         self.found_correct_doublets = 0
@@ -79,10 +79,6 @@ class PatternBuilder:
                 if segment:
                     segment.data.append(hit)
 
-        self.information_about_particle_tracks(z_position_layers=segment_manager.z_position_to_layer,
-                                               setup=segment_manager.setup,
-                                               mode=self.configuration['mode'])
-
     def fill_signal_particle_dictionary(self,
                                         hit: DetectorHit):
         """Fill signal particle dict.
@@ -116,22 +112,21 @@ class PatternBuilder:
     def information_about_particle_tracks(self,
                                           z_position_layers: list[float],
                                           setup: str,
-                                          mode: str) -> None:
+                                          sample_composition: str) -> None:
         """Prints information about how many particles interact at least once with a detector chip
         and how many complete tracks can be reconstructed.
+        :param z_position_layers: z position of detector layers:
         :param setup 'full' or 'simplified'
-        :param z_position_layers: z position of detector layers
-        :param mode: signal, signal + background or blind
+        :param sample_composition: string with information about the given tracking sample, signal, signal+background
+                                   or blinded
         """
 
-        if mode == 'signal':
-            particle_dict_for_tracks = self.particle_dict_signal
-        elif mode == 'signal + background':
-            particle_dict = self.particle
-        for key, values in self.particle_dict.items():
-            self.num_particles += 1
+        max_layer_dist = None
+
+        for key, values in self.particle_dict_signal.items():
+            self.num_signal_particles += 1
             if len(values) >= 4:
-                self.num_complete_tracks += 1
+                self.num_signal_tracks += 1
             if setup == 'simplified':
                 max_layer_dist = 1
             if setup == 'full':
@@ -150,8 +145,11 @@ class PatternBuilder:
                     if d1.hit_2.hit_id == d2.hit_1.hit_id:
                         self.all_truth_triplets.add(Triplet(d1.hit_1, d2.hit_1, d2.hit_2))
 
-        print(f"Number of particles with at least one hit: {self.num_particles}")
-        print(f"Number of complete tracks: {self.num_complete_tracks}\n")
+        if sample_composition == 'blinded':
+            print('Blinded example, no truth information about signal or background are provided!')
+        else:
+            print(f"Number of particles with at least one hit: {self.num_signal_particles}")
+            print(f"Number of complete tracks: {self.num_signal_tracks}\n")
 
     def is_valid_doublet_candidate(self,
                                    first_hit: DetectorHit,
