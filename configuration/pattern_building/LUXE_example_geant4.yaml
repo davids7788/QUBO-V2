@@ -1,9 +1,9 @@
 ---
 doublet:
   dx/x0: 0.523
-  dx/x0 eps: 0.01
+  dx/x0 eps: 0.02
   dy/x0: 0.0
-  dy/x0 eps: 0.01
+  dy/x0 eps: 0.02
 
 triplet:
   max scattering: 0.01

@@ -67,10 +67,10 @@ class PatternBuilder:
         blinded_hits = 0
 
         for hit in list_of_hits:
-            if hit.is_signal:
+            if hit.is_signal_hit:
                 self.fill_signal_particle_dictionary(hit)
                 signal_hits += 1
-            elif hit.is_signal is None:
+            elif hit.is_signal_hit is None:
                 self.fill_blinded_particle_dictionary(hit)
                 blinded_hits += 1
             else:

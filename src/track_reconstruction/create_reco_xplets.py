@@ -80,7 +80,7 @@ def reco_xplets_simplified_LUXE(triplets,
 
     hit_to_xplet_map = {}
     for multiplet in reco_track_candidates:
-        for hit_id in multiplet.hit_ids:
+        for hit_id in multiplet.hit_id:
             if hit_id not in hit_to_xplet_map.keys():
                 hit_to_xplet_map.update({hit_id: 1})
             else:
@@ -104,7 +104,7 @@ def reco_xplets_simplified_LUXE(triplets,
         :return:
             True if more than max overlaps, else False"""
         overlaps = 0
-        for h_id in reco_track.hit_ids:
+        for h_id in reco_track.hit_id:
             if hit_to_xplet_map[h_id] > 1:
                 overlaps += 1
         if overlaps > max_overlaps:

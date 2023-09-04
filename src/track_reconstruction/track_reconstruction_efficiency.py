@@ -15,7 +15,7 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
     :param gen_xplet_file: string
     """
     reco_xplets = np.load(reco_xplet_file, allow_pickle=True)
-    gen_xplet = [g for g in np.load(gen_xplet_file, allow_pickle=True) if len(g.hit_ids) >=4]
+    gen_xplet = [g for g in np.load(gen_xplet_file, allow_pickle=True) if len(g.hit_id) >= 4]
 
     matched_tracks = 0
     fake_tracks = 0
@@ -26,9 +26,9 @@ def track_reconstruction_efficiency_simplified_LUXE(reco_xplet_file: str,
         matched = False
         p_id = None
         # ids  corresponds to the particle id's of each hit
-        for test_id in track.particle_ids:
+        for test_id in track.particle_id:
             # more than half of the hits from same particle
-            if track.particle_ids.count(test_id) > len(track.particle_ids) / 2:
+            if track.particle_id.count(test_id) > len(track.particle_id) / 2:
                 p_id = test_id
                 matched = True
         if matched:

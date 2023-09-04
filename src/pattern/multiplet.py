@@ -36,7 +36,7 @@ class Multiplet:
         self.layer_id.append(hit.layer_id)
         self.cell_id.append(hit.cell_id)
         self.particle_id.append(hit.particle_id)
-        self.is_signal.append(hit.is_signal)
+        self.is_signal.append(hit.is_signal_hit)
         self.particle_energy.append(hit.particle_energy)
         self.time.append(hit.time)
 

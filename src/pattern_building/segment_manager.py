@@ -171,30 +171,33 @@ class SegmentManager:
         # max x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
         x0_max = x0_at_z_ref(target_segment.x_start,
                              source_segment.x_end,
-                             target_segment.z_position,
-                             source_segment.z_position,
+                             (target_segment.z_end + target_segment.z_start) / 2,
+                             (source_segment.z_end + source_segment.z_start) / 2,
                              self.z_position_to_layer[0])
 
         #  exclude heavy scattering in y-direction
-        if min_dy / x0_max / (target_segment.z_position - source_segment.z_position) > \
+        if min_dy / x0_max / ((target_segment.z_start + target_segment.z_end) / 2 -
+                              (source_segment.z_start + source_segment.z_end) / 2) > \
                 self.mapping_criteria["dy/x0 eps"]:
             return False
 
         # min x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
         x0_min = x0_at_z_ref(target_segment.x_end,
                              source_segment.x_start,
-                             target_segment.z_position,
-                             source_segment.z_position,
+                             (target_segment.z_end + target_segment.z_start) / 2,
+                             (source_segment.z_end + source_segment.z_start) / 2,
                              self.z_position_to_layer[0])
 
         max_dx = target_segment.x_end - source_segment.x_start
         min_dx = max([target_segment.x_start - source_segment.x_end, 0])
 
-        if max_dx / x0_min / (target_segment.z_position - source_segment.z_position) < \
+        if max_dx / x0_min / ((target_segment.z_start + target_segment.z_end) / 2 -
+                              (source_segment.z_start + source_segment.z_end) / 2) < \
                 self.mapping_criteria["dx/x0"] - self.mapping_criteria["dx/x0 eps"]:
             return False
 
-        elif min_dx / x0_max / (target_segment.z_position - source_segment.z_position) > \
+        elif min_dx / x0_max / ((target_segment.z_start + target_segment.z_end) / 2 -
+                                (source_segment.z_start + source_segment.z_end) / 2) > \
                 self.mapping_criteria["dx/x0"] + self.mapping_criteria["dx/x0 eps"]:
             return False
         else:
@@ -222,6 +225,7 @@ class SegmentManager:
         :return:
             index of corresponding segment in segment list
         """
+        print(x, y, z)
         for segment in self.segment_storage[self.z_position_to_layer.index(z)]:
             if segment.x_start <= x <= segment.x_end and segment.y_start <= y <= segment.y_end:
                 return segment

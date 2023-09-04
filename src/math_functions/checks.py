@@ -27,14 +27,14 @@ def dxy_x0_check(xy1: float,
 
 
 @jit(npython=True)
-def w_is_in_segment(x: float,
-                    y: float,
-                    z: float,
-                    x_start: float,
-                    x_end: float,
-                    y_start: float,
-                    y_end: float,
-                    z_position: float) -> float:
+def jit_is_in_segment(x: float,
+                      y: float,
+                      z: float,
+                      x_start: float,
+                      x_end: float,
+                      y_start: float,
+                      y_end: float,
+                      z_position: float) -> float:
     """Checks if position x is inside the segment
     :param x: position in x [m]
     :param y: position in y [m]
@@ -53,11 +53,11 @@ def w_is_in_segment(x: float,
 
 
 @jit(nopython=True)
-def w_is_valid_triplet(xz_angle_1: float,
-                       xz_angle_2: float,
-                       yz_angle_1: float,
-                       yz_angle_2: float,
-                       max_angle: float) -> bool:
+def jit_is_valid_triplet(xz_angle_1: float,
+                         xz_angle_2: float,
+                         yz_angle_1: float,
+                         yz_angle_2: float,
+                         max_angle: float) -> bool:
     """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
     :param xz_angle_1: angle xz doublet 1
     :param xz_angle_2: angle xz doublet 2
@@ -70,5 +70,3 @@ def w_is_valid_triplet(xz_angle_1: float,
     if sqrt((xz_angle_2 - xz_angle_1) ** 2 + (yz_angle_2 - yz_angle_1) ** 2) < max_angle:
         return True
     return False
-
-
