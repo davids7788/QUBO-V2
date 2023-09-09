@@ -142,7 +142,7 @@ for train_sample in training_samples:
         train_input_feature_vector.append(extract_feature_vector(t,
                                                                  max_num_conflicts_train,
                                                                  max_num_connections_train))
-        if t.is_correct_match():
+        if t.from_same_particle():
             train_input_labels.append(1)
         else:
             train_input_labels.append(0)
@@ -153,7 +153,7 @@ for val_sample in validation_samples:
         val_input_feature_vector.append(extract_feature_vector(t,
                                                                max_num_conflicts_train,
                                                                max_num_connections_train))
-        if t.is_correct_match():
+        if t.from_same_particle():
             val_input_labels.append(1)
         else:
             val_input_labels.append(0)
@@ -165,7 +165,7 @@ for test_sample in test_samples:
                                                                 max_num_conflicts_test,
                                                                 max_num_connections_test))
         test_triplets_complete.append(t)
-        if t.is_correct_match():
+        if t.from_same_particle():
             test_input_labels.append(1)
         else:
             test_input_labels.append(0)

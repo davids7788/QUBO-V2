@@ -15,7 +15,7 @@ for triplet in data:
     correct = None
     for partner, connection in zip(triplet.interactions.keys(), triplet.interactions.values()):
         if connection < 0:
-            if triplet.is_correct_match and data[partner].is_correct_match:
+            if triplet.from_same_particle and data[partner].is_correct_match:
                 correct = connection
             connections.append(connection)
     connections.sort()

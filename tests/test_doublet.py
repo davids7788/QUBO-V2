@@ -26,8 +26,8 @@ class TestDoublet(unittest.TestCase):
                                  energy_1=0,
                                  energy_2=0)
 
-        self.assertTrue(test_doublet_0.is_correct_match)
-        self.assertFalse(test_doublet_1.is_correct_match)
+        self.assertTrue(test_doublet_0.from_same_particle)
+        self.assertFalse(test_doublet_1.from_same_particle)
 
     def test_xz_angle(self):
         test_doublet_2 = Doublet(hit_1_particle_key=0,

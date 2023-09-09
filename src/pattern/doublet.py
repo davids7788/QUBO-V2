@@ -15,11 +15,18 @@ class Doublet:
         self.hit_1 = hit_1
         self.hit_2 = hit_2
 
-    def is_correct_match(self) -> bool:
+    def from_same_particle(self) -> bool:
         """Checks if doublet hits stem from the same particle.
         :return
-            True if created from same particle, else False.
+            True if created from same signal particle, else False.
         """
+        # check if particles stem from signal
+        if self.hit_1.particle_info != 'signal':
+            return False
+        if self.hit_2.particle_info != 'signal':
+            return False
+
+        # check if same particle
         if self.hit_1.particle_id == self.hit_2.particle_id:
             return True
         return False

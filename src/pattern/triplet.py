@@ -61,6 +61,15 @@ class Triplet:
         :return
             True if triplet originates from one single particle, else False.
         """
+        # check if particles stem from signal
+        if self.hit_1.particle_info != 'signal':
+            return False
+        if self.hit_2.particle_info != 'signal':
+            return False
+        if self.hit_3.particle_info != 'signal':
+            return False
+
+        # check if same particle
         if self.hit_1.particle_id == self.hit_2.particle_id == self.hit_3.particle_id:
             return True
         return False

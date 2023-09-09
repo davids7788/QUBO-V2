@@ -45,18 +45,21 @@ class PatternBuilder:
 
     def load_tracking_data(self,
                            tracking_data_file: str,
-                           segment_manager: SegmentManager) -> None:
+                           segment_manager: SegmentManager,
+                           simulation_tool: str) -> None:
         """Loads tracking data from a file and stores and places the data in the corresponding segments.
         :param tracking_data_file: LUXE tracking data file
         :param segment_manager: SegmentManager object
+        :param simulation_tool: simplified_simulation_csv or key4hep_csv
         """
         print('\n-----------------------------------\n')
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Placing data in segments ...\n")
 
-        if tracking_data_file.split('.')[-1] == 'csv':
-            list_of_hits = PatternBuilder.load_tracking_data_from_csv(tracking_data_file)
-
+        if simulation_tool == 'simplified_simulation':
+            list_of_hits = PatternBuilder.load_tracking_data_from_simplified_simulation_csv(tracking_data_file)
+        elif simulation_tool == 'key4hep':
+            list_of_hits = PatternBuilder.load_tracking_data_from_key4hep_csv(tracking_data_file)
         else:
             print('Loading data from given file format not implemented yet!')
             print('Exiting...')
@@ -89,7 +92,7 @@ class PatternBuilder:
         print(f'Number of blinded hits found: {blinded_hits}')
 
     @staticmethod
-    def load_tracking_data_from_csv(tracking_data_file: str) -> list[DetectorHit]:
+    def load_tracking_data_from_simplified_simulation_csv(tracking_data_file: str) -> list[DetectorHit]:
         """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
         :param tracking_data_file: .csv tracking data file
 
@@ -103,6 +106,78 @@ class PatternBuilder:
 
             for row in csv_reader:
                 detector_hits.append(DetectorHit(row))
+
+        return detector_hits
+
+    @staticmethod
+    def load_tracking_data_from_key4hep_csv(tracking_data_file: str) -> list[DetectorHit]:
+        """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
+        :param tracking_data_file: .csv tracking data file
+
+        :return:
+            list of DetectorHit objects
+        """
+
+        fieldnames_key4hep_csv = ['particle_id',
+                                  'geometry_id',
+                                  'system_id',
+                                  'layer_id',
+                                  'side_id',
+                                  'module_id',
+                                  'sensor_id',
+                                  'tx',
+                                  'ty',
+                                  'tz',
+                                  'tt',
+                                  'tpx',
+                                  'tpy',
+                                  'tpz',
+                                  'te',
+                                  'deltapx',
+                                  'deltapy',
+                                  'deltapz',
+                                  'deltae',
+                                  'index']
+        fieldnames = ['hit_ID',
+                      'x',
+                      'y',
+                      'z',
+                      'layer_ID',
+                      'module_id',
+                      'cell_ID',
+                      'particle_ID',
+                      'particle_info',
+                      'particle_energy',
+                      'time']
+
+        def get_cell_id(row_for_cell_id: list[str]) -> str:
+            """Returns the cell id, used for ACTS Kalman Filter for LUXE inside key4hep environment for.
+            :param row_for_cell_id: list of str with information about particle hit in detector
+
+            :return
+                concatenated string of module and stave to identify region where hit stems from"""
+            return f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("module_id")]))[2:].zfill(3)}' \
+                   f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("layer_id")])).zfill(3)}10'
+
+        detector_hits = []
+        with open(tracking_data_file, 'r') as file:
+            csv_reader = csv.reader(file)
+            _ = next(csv_reader)  # access header, csv files should consist of one line of header
+
+            for row in csv_reader:
+                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],
+                               row[fieldnames_key4hep_csv.index('tx')],
+                               row[fieldnames_key4hep_csv.index('ty')],
+                               row[fieldnames_key4hep_csv.index('tz')],
+                               row[fieldnames_key4hep_csv.index('layer_id')],
+                               row[fieldnames_key4hep_csv.index('module_id')],
+                               int(get_cell_id(row), base=2),
+                               row[fieldnames_key4hep_csv.index('particle_id')],
+                               None,   # not provided yet
+                               row[fieldnames_key4hep_csv.index('te')],
+                               row[fieldnames_key4hep_csv.index('tt')],
+                               ]
+                detector_hits.append(DetectorHit(row_trimmed))
 
         return detector_hits
 
@@ -244,7 +319,7 @@ class PatternBuilder:
                             segment.doublet_data.append(doublet)
                             self.found_doublets += 1
 
-                            if doublet.is_correct_match():
+                            if doublet.from_same_particle():
                                 self.found_correct_doublets += 1
 
     def create_triplet_list(self,
@@ -269,7 +344,7 @@ class PatternBuilder:
                                 segment.triplet_data.append(triplet)
 
                                 # filling lists for statistical purposes
-                                if triplet.is_correct_match():
+                                if triplet.from_same_particle():
                                     self.found_correct_triplets += 1
 
     def create_x_plets_LUXE(self,

@@ -13,7 +13,7 @@ quality_conflicts_more_than_150 = 0
 fake_conflicts_more_than_150 = 0
 
 for triplet in data:
-    if triplet.is_correct_match:
+    if triplet.from_same_particle:
         number_of_conflicts_matched.append(list(triplet.interactions.values()).count(1))
         if number_of_conflicts_matched[-1] > 135:
             quality_conflicts_more_than_150 += 1

@@ -25,7 +25,7 @@ def plot_coefficients_statistics(num_particles: float,
                                                   np.arange(len(qubo_coefficients.triplet_list)))}
 
     for i, t1 in enumerate(qubo_coefficients.triplet_list):
-        if t1.is_correct_match():
+        if t1.from_same_particle():
             quality_correct_match_list.append(t1.quality)
         else:
             quality_wrong_match_list.append(t1.quality)
@@ -34,7 +34,7 @@ def plot_coefficients_statistics(num_particles: float,
             if t_mapping[i_key] > i:
                 continue
             t2 = qubo_coefficients.triplet_list[t_mapping[i_key]]
-            if t1.is_correct_match() and t2.is_correct_match():  # need to have 2 overlap hits, so this is enough
+            if t1.from_same_particle() and t2.is_correct_match():  # need to have 2 overlap hits, so this is enough
                 connectivity_correct_match_list.append(i_value)
             else:
                 if i_value >= 0:

@@ -221,7 +221,7 @@ class QuboProcessing:
             minimum energy state, minimum energy value """
         minimum_energy_state = []
         for t in self.triplets:
-            if t.is_correct_match():
+            if t.from_same_particle():
                 minimum_energy_state.append(1)
             else:
                 minimum_energy_state.append(0)

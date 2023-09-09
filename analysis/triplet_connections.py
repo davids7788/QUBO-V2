@@ -20,7 +20,7 @@ fake_more_than_0_92 = 0
 
 
 for triplet in data:
-    if triplet.is_correct_match:
+    if triplet.from_same_particle:
         quality_matched.append(triplet.quality)
         if quality_matched[-1] > 0.8:
             quality_matched_more_0_8 +=1

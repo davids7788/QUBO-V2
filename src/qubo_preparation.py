@@ -42,12 +42,19 @@ parser.add_argument('--sample_composition',
                     default=None,
                     help='signal, signal+background, blinded')
 
+parser.add_argument('--simulation_tool',
+                    action='store',
+                    type=str,
+                    default=None,
+                    help='simplified_simulation_csv, key4hep_csv')
+
 parser_args = parser.parse_args()
 config_file = parser_args.config_file
 tracking_data = parser_args.tracking_data
 geometry_file = parser_args.geometry_file
 target_folder = parser_args.target_folder
 sample_composition = parser_args.sample_composition
+simulation_tool = parser_args.simulaton_tool
 
 
 # loading arguments, creating folder
@@ -77,7 +84,7 @@ s_manager.segment_mapping_LUXE()
 
 # Triplet creation
 pattern_builder = PatternBuilder(configuration)
-pattern_builder.load_tracking_data(tracking_data, s_manager)
+pattern_builder.load_tracking_data(tracking_data, s_manager, simulation_tool)
 pattern_builder.information_about_particle_tracks(z_position_layers=s_manager.z_position_to_layer,
                                                   setup=s_manager.setup,
                                                   sample_composition=sample_composition,

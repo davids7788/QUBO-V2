@@ -1,6 +1,6 @@
 from pattern.triplet import DetectorHit
 from scipy.optimize import curve_fit
-from scipy.stats import chisquare, chi2
+from scipy.stats import chi2
 from numba import jit
 
 
@@ -15,9 +15,10 @@ class Multiplet:
         self.y = []
         self.z = []
         self.layer_id = []
+        self.module_id = []
         self.cell_id = []
         self.particle_id = []
-        self.is_signal = []
+        self.particle_info = []
         self.particle_energy = []
         self.time = []
 
@@ -35,8 +36,9 @@ class Multiplet:
         self.z.append(hit.z)
         self.layer_id.append(hit.layer_id)
         self.cell_id.append(hit.cell_id)
+        self.module_id.append(hit.module_id)
         self.particle_id.append(hit.particle_id)
-        self.is_signal.append(hit.is_signal_hit)
+        self.particle_info.append(hit.particle_info)
         self.particle_energy.append(hit.particle_energy)
         self.time.append(hit.time)
 
