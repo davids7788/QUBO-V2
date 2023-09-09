@@ -56,10 +56,14 @@ class PatternBuilder:
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Placing data in segments ...\n")
 
+        list_of_hits = None   # Initialising variable for list of detector hits
         if simulation_tool == 'simplified_simulation':
             list_of_hits = PatternBuilder.load_tracking_data_from_simplified_simulation_csv(tracking_data_file)
         elif simulation_tool == 'key4hep':
-            list_of_hits = PatternBuilder.load_tracking_data_from_key4hep_csv(tracking_data_file)
+            if '.csv' in tracking_data_file:
+                list_of_hits = PatternBuilder.load_tracking_data_from_key4hep_csv(tracking_data_file)
+            else:
+                pass   # slcio implementation
         else:
             print('Loading data from given file format not implemented yet!')
             print('Exiting...')
@@ -70,10 +74,10 @@ class PatternBuilder:
         blinded_hits = 0
 
         for hit in list_of_hits:
-            if hit.is_signal_hit:
+            if hit.is_signal:
                 self.fill_signal_particle_dictionary(hit)
                 signal_hits += 1
-            elif hit.is_signal_hit is None:
+            elif hit.is_signal is None:
                 self.fill_blinded_particle_dictionary(hit)
                 blinded_hits += 1
             else:
@@ -138,17 +142,6 @@ class PatternBuilder:
                                   'deltapz',
                                   'deltae',
                                   'index']
-        fieldnames = ['hit_ID',
-                      'x',
-                      'y',
-                      'z',
-                      'layer_ID',
-                      'module_id',
-                      'cell_ID',
-                      'particle_ID',
-                      'particle_info',
-                      'particle_energy',
-                      'time']
 
         def get_cell_id(row_for_cell_id: list[str]) -> str:
             """Returns the cell id, used for ACTS Kalman Filter for LUXE inside key4hep environment for.
@@ -156,8 +149,8 @@ class PatternBuilder:
 
             :return
                 concatenated string of module and stave to identify region where hit stems from"""
-            return f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("module_id")]))[2:].zfill(3)}' \
-                   f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("layer_id")])).zfill(3)}10'
+            return f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("module_id")])).zfill(3)[2:]}' \
+                   f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("layer_id")])).zfill(3)[2:]}10'
 
         detector_hits = []
         with open(tracking_data_file, 'r') as file:
@@ -165,18 +158,17 @@ class PatternBuilder:
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],
-                               row[fieldnames_key4hep_csv.index('tx')],
-                               row[fieldnames_key4hep_csv.index('ty')],
-                               row[fieldnames_key4hep_csv.index('tz')],
-                               row[fieldnames_key4hep_csv.index('layer_id')],
-                               row[fieldnames_key4hep_csv.index('module_id')],
-                               int(get_cell_id(row), base=2),
-                               row[fieldnames_key4hep_csv.index('particle_id')],
-                               None,   # not provided yet
-                               row[fieldnames_key4hep_csv.index('te')],
-                               row[fieldnames_key4hep_csv.index('tt')],
-                               ]
+                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],              # hit_id
+                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tx')]), 3),   # x-coordinate
+                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('ty')]), 3),   # y-coordinate
+                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tz')]), 3),   # z-coordinate
+                               row[fieldnames_key4hep_csv.index('layer_id')],           # layer_id
+                               row[fieldnames_key4hep_csv.index('module_id')],          # module_id
+                               int(get_cell_id(row), base=2),                           # cell_id for ACTS tracking
+                               row[fieldnames_key4hep_csv.index('particle_id')],        # particle_id
+                               True,                                                    # not provided in key4hep csv
+                               row[fieldnames_key4hep_csv.index('te')],                 # energy of particle
+                               row[fieldnames_key4hep_csv.index('tt')]]                 # time of particle
                 detector_hits.append(DetectorHit(row_trimmed))
 
         return detector_hits
@@ -349,7 +341,7 @@ class PatternBuilder:
 
     def create_x_plets_LUXE(self,
                             segment_manager: SegmentManager) -> None:
-        """Creates xplets. For LUXE detector model only.
+        """Creates multiplets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
         print("-----------------------------------\n")

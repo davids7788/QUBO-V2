@@ -9,7 +9,7 @@ class DetectorHit:
                   'module_id',
                   'cell_ID',
                   'particle_ID',
-                  'particle_info',
+                  'is_signal',
                   'particle_energy',
                   'time']
 
@@ -27,7 +27,7 @@ class DetectorHit:
         self.module_id = DetectorHit.fieldnames_matching(detector_hit, 'module_ID')
         self.cell_id = DetectorHit.fieldnames_matching(detector_hit, 'cell_ID')
         self.particle_id = DetectorHit.fieldnames_matching(detector_hit, 'particle_ID')
-        self.particle_info = DetectorHit.fieldnames_matching(detector_hit, 'particle_info')
+        self.is_signal = DetectorHit.fieldnames_matching(detector_hit, 'is_signal')
         self.particle_energy = DetectorHit.fieldnames_matching(detector_hit, 'particle_energy')
         try:
             self.time = DetectorHit.fieldnames_matching(detector_hit, 'time')
@@ -43,6 +43,7 @@ class DetectorHit:
         :return:
             value in specified datatype
         """
+
         if info not in DetectorHit.fieldnames:
             return None
         if info in ['hit_ID', 'layer_ID', 'module_id', 'particle_info']:

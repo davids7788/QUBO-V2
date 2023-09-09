@@ -18,7 +18,7 @@ class Multiplet:
         self.module_id = []
         self.cell_id = []
         self.particle_id = []
-        self.particle_info = []
+        self.is_signal = []
         self.particle_energy = []
         self.time = []
 
@@ -38,7 +38,7 @@ class Multiplet:
         self.cell_id.append(hit.cell_id)
         self.module_id.append(hit.module_id)
         self.particle_id.append(hit.particle_id)
-        self.particle_info.append(hit.particle_info)
+        self.is_signal.append(hit.is_signal)
         self.particle_energy.append(hit.particle_energy)
         self.time.append(hit.time)
 

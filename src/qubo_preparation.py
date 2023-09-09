@@ -46,7 +46,8 @@ parser.add_argument('--simulation_tool',
                     action='store',
                     type=str,
                     default=None,
-                    help='simplified_simulation_csv, key4hep_csv')
+                    help='simplified_simulation, key4hep')
+
 
 parser_args = parser.parse_args()
 config_file = parser_args.config_file
@@ -54,7 +55,7 @@ tracking_data = parser_args.tracking_data
 geometry_file = parser_args.geometry_file
 target_folder = parser_args.target_folder
 sample_composition = parser_args.sample_composition
-simulation_tool = parser_args.simulaton_tool
+simulation_tool = parser_args.simulation_tool
 
 
 # loading arguments, creating folder

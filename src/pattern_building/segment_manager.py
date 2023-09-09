@@ -225,7 +225,6 @@ class SegmentManager:
         :return:
             index of corresponding segment in segment list
         """
-        print(x, y, z)
         for segment in self.segment_storage[self.z_position_to_layer.index(z)]:
             if segment.x_start <= x <= segment.x_end and segment.y_start <= y <= segment.y_end:
                 return segment

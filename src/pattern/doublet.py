@@ -21,9 +21,9 @@ class Doublet:
             True if created from same signal particle, else False.
         """
         # check if particles stem from signal
-        if self.hit_1.particle_info != 'signal':
+        if not self.hit_1.is_signal:
             return False
-        if self.hit_2.particle_info != 'signal':
+        if not self.hit_2.is_signal:
             return False
 
         # check if same particle

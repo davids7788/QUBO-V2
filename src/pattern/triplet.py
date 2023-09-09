@@ -56,17 +56,17 @@ class Triplet:
 
         return xz_23 - xz_12, yz_23 - yz_12
 
-    def is_correct_match(self) -> bool:
+    def from_same_particle(self) -> bool:
         """Check if all hits of the triplet stem from the same particle.
         :return
             True if triplet originates from one single particle, else False.
         """
         # check if particles stem from signal
-        if self.hit_1.particle_info != 'signal':
+        if not self.hit_1.is_signal:
             return False
-        if self.hit_2.particle_info != 'signal':
+        if not self.hit_2.is_signal:
             return False
-        if self.hit_3.particle_info != 'signal':
+        if not self.hit_3.is_signal:
             return False
 
         # check if same particle
