@@ -53,7 +53,7 @@ To create xplets on generator level (truth xplets), the following arguments are 
    * `geometry:` file of the detector configuration in .csv format
    * `save_to:` folder to which results are saved
 ```bash
-python create_gen_xplets.py tracking_data geometry save_to
+python gen_multiplets.py tracking_data geometry save_to
 ```
 
 

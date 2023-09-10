@@ -158,17 +158,17 @@ class PatternBuilder:
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],              # hit_id
+                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],                           # hit_id
                                np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tx')]), 3),   # x-coordinate
                                np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('ty')]), 3),   # y-coordinate
                                np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tz')]), 3),   # z-coordinate
-                               row[fieldnames_key4hep_csv.index('layer_id')],           # layer_id
-                               row[fieldnames_key4hep_csv.index('module_id')],          # module_id
-                               int(get_cell_id(row), base=2),                           # cell_id for ACTS tracking
-                               row[fieldnames_key4hep_csv.index('particle_id')],        # particle_id
-                               True,                                                    # not provided in key4hep csv
-                               row[fieldnames_key4hep_csv.index('te')],                 # energy of particle
-                               row[fieldnames_key4hep_csv.index('tt')]]                 # time of particle
+                               row[fieldnames_key4hep_csv.index('layer_id')],        # layer_id
+                               row[fieldnames_key4hep_csv.index('module_id')],       # module_id
+                               int(get_cell_id(row), base=2),                        # cell_id for ACTS tracking
+                               row[fieldnames_key4hep_csv.index('particle_id')],     # particle_id
+                               True,                                                 # not provided in key4hep csv
+                               row[fieldnames_key4hep_csv.index('te')],              # energy of particle
+                               row[fieldnames_key4hep_csv.index('tt')]]              # time of particle
                 detector_hits.append(DetectorHit(row_trimmed))
 
         return detector_hits
@@ -339,8 +339,8 @@ class PatternBuilder:
                                 if triplet.from_same_particle():
                                     self.found_correct_triplets += 1
 
-    def create_x_plets_LUXE(self,
-                            segment_manager: SegmentManager) -> None:
+    def create_multiplets(self,
+                          segment_manager: SegmentManager) -> None:
         """Creates multiplets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
@@ -355,8 +355,11 @@ class PatternBuilder:
         print(f"Time elapsed for forming doublets: "
               f"{self.doublet_creation_time}")
         print(f"Number of doublets found: {self.found_doublets}")
-        print(f"Doublet selection efficiency: "
-              f"{np.around(100 * self.found_correct_doublets / len(self.all_truth_doublets), 2)} %\n")
+        if len(self.all_truth_doublets) > 0:
+            print(f"Doublet selection efficiency: "
+                  f"{np.around(100 * self.found_correct_doublets / len(self.all_truth_doublets), 2)} %\n")
+        else:
+            print(f"Doublet efficiency not accessible from blinded sample")
 
         print("-----------------------------------\n")
         print("Forming triplets ...\n")
@@ -368,9 +371,12 @@ class PatternBuilder:
         print(f"Time elapsed for forming triplets: "
               f"{self.triplet_creation_time}")
         print(f"Number of triplets found: {self.found_triplets}")
-        print(f"Triplet selection efficiency: "
-              f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 2)} %\n")
-        print("-----------------------------------\n")
+        if len(self.all_truth_doublets) > 0:
+            print(f"Triplets selection efficiency: "
+                  f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 2)} %\n")
+        else:
+            print(f"Triplets efficiency not accessible from blinded sample\n")
+            print("-----------------------------------\n")
 
     def is_valid_triplet(self,
                          hit_1: DetectorHit,
@@ -385,11 +391,9 @@ class PatternBuilder:
             True if criteria applies, else False
         """
         xz_12 = xyz_angle(hit_1.x, hit_2.x, hit_1.z, hit_2.z)
-
         xz_23 = xyz_angle(hit_2.x, hit_3.x, hit_2.z, hit_3.z)
 
         yz_12 = xyz_angle(hit_1.y, hit_2.y, hit_1.z, hit_2.z)
-
         yz_23 = xyz_angle(hit_2.y, hit_3.y, hit_2.z, hit_3.z)
 
         return jit_is_valid_triplet(xz_12,
@@ -416,15 +420,22 @@ class PatternBuilder:
             f.write(f"Number of generated tracks: {self.num_signal_tracks}\n")
             f.write("\n\n")
 
+            # write doublet information into file
             f.write(f"Time elapsed for forming doublets: "
                     f"{self.doublet_creation_time}\n")
             f.write(f"Number of doublets found: {self.found_doublets}\n")
-            f.write(f"Doublet selection efficiency: "
-                    f"{np.around(100 * self.found_correct_doublets / len(self.all_truth_doublets), 3)} %\n")
-            f.write("\n\n")
+            if len(self.all_truth_doublets) > 0:
+                f.write(f"Doublet selection efficiency: "
+                        f"{np.around(100 * self.found_correct_doublets / len(self.all_truth_doublets), 2)} %\n")
+            else:
+                f.write(f"Doublet efficiency not accessible from blinded sample")
 
+            # write triplet information to file
             f.write(f"Time elapsed for creating triplets: "
                     f"{self.triplet_creation_time}\n")
             f.write(f"Number of triplets found: {self.found_triplets}\n")
-            f.write(f"Triplet selection efficiency: "
-                    f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 3)} %\n")
+            if len(self.all_truth_doublets) > 0:
+                f.write(f"Triplets selection efficiency: "
+                        f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 2)} %\n")
+            else:
+                f.write(f"Triplets efficiency not accessible from blinded sample")

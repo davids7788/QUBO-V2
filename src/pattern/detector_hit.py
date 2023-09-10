@@ -46,8 +46,10 @@ class DetectorHit:
 
         if info not in DetectorHit.fieldnames:
             return None
-        if info in ['hit_ID', 'layer_ID', 'module_id', 'particle_info']:
+        elif info in ['hit_ID', 'layer_ID', 'module_id', 'particle_info']:
             return detector_hit[DetectorHit.fieldnames.index(info)]
+        elif info in ['is_signal']:
+            return bool(detector_hit[DetectorHit.fieldnames.index(info)])
         elif info in ['particle_ID', 'cell_ID']:
             return int(detector_hit[DetectorHit.fieldnames.index(info)])
         else:

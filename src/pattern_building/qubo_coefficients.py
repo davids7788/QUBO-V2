@@ -60,7 +60,6 @@ class QuboCoefficients:
         triplet list is displayed.
         :param segment_manager: segment manager object
         """
-        print("Calculate triplet coefficients a_i and b_ij...")
         set_triplet_coefficients_start = time.process_time()
 
         num_layers = len(segment_manager.segment_storage.keys())
@@ -153,7 +152,7 @@ class QuboCoefficients:
               f"{rescale_coefficients_time}\n")
 
         print("Finished setting and rescaling of parameters.\n")
-        print(f"Save triplet list...")
+        print(f"Save triplet list...\n")
         np.save(f"{self.save_to_folder}/triplet_list", self.triplet_list)
 
     def triplet_interaction(self,

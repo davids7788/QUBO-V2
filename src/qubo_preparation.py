@@ -1,8 +1,9 @@
 import yaml
 import argparse
+import os
 
 from pathlib import Path
-from track_reconstruction.create_gen_xplets import *
+from track_reconstruction.gen_multiplets import GenMultiplet
 
 from pattern_building.pattern_builder import PatternBuilder
 from pattern_building.segment_manager import SegmentManager
@@ -46,7 +47,7 @@ parser.add_argument('--simulation_tool',
                     action='store',
                     type=str,
                     default=None,
-                    help='simplified_simulation, key4hep')
+                    help='simplified_simulation, key4hep_csv')
 
 
 parser_args = parser.parse_args()
@@ -86,18 +87,36 @@ s_manager.segment_mapping_LUXE()
 # Triplet creation
 pattern_builder = PatternBuilder(configuration)
 pattern_builder.load_tracking_data(tracking_data, s_manager, simulation_tool)
-pattern_builder.information_about_particle_tracks(z_position_layers=s_manager.z_position_to_layer,
-                                                  setup=s_manager.setup,
-                                                  sample_composition=sample_composition,
-                                                  min_track_length=configuration['track']['minimum track length'])
-pattern_builder.create_x_plets_LUXE(s_manager)
+
+if sample_composition == 'blinded':
+    print("Truth information about particle tracks is not available in blinded sample!\n")
+else:
+    pattern_builder.information_about_particle_tracks(z_position_layers=s_manager.z_position_to_layer,
+                                                      setup=s_manager.setup,
+                                                      sample_composition=sample_composition,
+                                                      min_track_length=configuration['track']['minimum track length'])
+pattern_builder.create_multiplets(s_manager)
 pattern_builder.write_info_file(new_folder)
 
-# Create truth Xplets
-gen_xplets_simplified_LUXE(tracking_data, "/".join(new_folder.split("/")[0:-1]))
+# Create truth multiplets
+if sample_composition == 'blinded':
+    print("Creating truth multiplets is not possible from blinded sample!\n")
+    print("-----------------------------------")
+else:
+    print("Create multiplets on generator level with truth information...\n")
+    gen_multiplets = GenMultiplet(tracking_data_file=tracking_data)
+    if simulation_tool == 'simplified_simulation':
+        gen_multiplets.gen_multiplets_simplified_LUXE()
+    elif simulation_tool == 'key4hep':
+        if '.csv' in tracking_data:
+            gen_multiplets.gen_multiplets_key4hep_csv()
+        else:
+            pass   # slcio implementation
+    gen_multiplets.information_about_tracking_data()
 
 
 # Set and rescale parameters plot statistics
+print("\nCalculate triplet coefficients a_i and b_ij...")
 qubo_coefficients = QuboCoefficients(configuration, new_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)
 qubo_coefficients.coefficient_rescaling()

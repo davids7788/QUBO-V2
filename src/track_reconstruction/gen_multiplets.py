@@ -10,19 +10,17 @@ class GenMultiplet:
     """Class for multiplet creation on generator level information
     """
     def __init__(self,
-                 tracking_data_file: str,
-                 sample_composition: str) -> None:
+                 tracking_data_file: str) -> None:
         """Set fields
+        :param tracking_data_file: file with tracking data information
         """
         self.multiplets_dict = {}
         self.gen_multiplets = []
         self.tracking_data_file = tracking_data_file
         self.output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
-        sample_composition = sample_composition
 
         self.num_signal_hits = 0
         self.num_background_hits = 0
-        self.num_blinded_hits = 0
 
     def save_multiplets(self,
                         save_to_folder: str):
@@ -51,16 +49,13 @@ class GenMultiplet:
         """Adds a hit to the multiplet dictionary.
         :param hit: DetectorHit object
         """
-        # blinded sample
-        if hit.is_signal is None:
-            self.num_blinded_hits += 1
-
         # background hit
-        elif not hit.is_signal:
+        if not hit.is_signal:
             self.num_background_hits += 1
 
         # signal hit
         else:
+            self.num_signal_hits += 1
             if hit.particle_id in self.multiplets_dict.keys():
                 self.multiplets_dict[hit.particle_id].append(hit)
             else:
@@ -121,6 +116,9 @@ class GenMultiplet:
                 # add to multiplet dictionary
                 self.add_hit_to_multiplet_dict(hit)
 
+        # create multiplets from sorted particle dictionary
+        self.create_multiplets()
+
     def gen_multiplets_simplified_LUXE(self) -> None:
         """Creates all signal multiplets from the specified simplified simulation tracking data file.
         Assumes, that the structure of the csv file from the simplified simulation matches the DetectorHit class model.
@@ -139,3 +137,10 @@ class GenMultiplet:
 
         # create multiplets from sorted particle dictionary
         self.create_multiplets()
+
+    def information_about_tracking_data(self):
+        """Prints information about signal and background hits.
+        """
+        print(f'Number of signal hits: {self.num_signal_hits}')
+        print(f'Number of background hits: {self.num_background_hits}')
+        print("\n-----------------------------------")

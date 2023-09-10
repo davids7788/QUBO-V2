@@ -38,7 +38,7 @@ class SegmentManager:
             for row in csv_reader:
                 self.detector_chips.append([float(r) for r in (row[1:])])
 
-        print(f"Using geometry file {detector_geometry.split('/')[-1]} for segmentation algorithm\n")
+        print(f"Using geometry file {detector_geometry.split('/')[-1]} for segmentation algorithm")
 
         # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
         self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
@@ -47,12 +47,12 @@ class SegmentManager:
         # check setup
         if len(self.z_position_to_layer) == 4:
             self.setup = "simplified"
-            print(f'Set to simplified geometry setup...\n')
+            print(f'--> simplified geometry setup...\n')
         elif len(self.z_position_to_layer) == 8:
             self.setup = "full"
-            print(f'Set to full geometry setup...\n')
+            print(f'--> full geometry setup...\n')
         else:
-            print("No valid LUXE setup set!")
+            print("--> on valid LUXE setup set!")
             exit()
 
         # Segmentation is done on the chips level
