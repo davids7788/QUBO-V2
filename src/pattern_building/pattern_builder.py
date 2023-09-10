@@ -3,8 +3,8 @@ import time
 
 import numpy as np
 
-from math_functions.checks import jit_is_valid_triplet, dxy_x0_check
-from math_functions.geometry import x0_at_z_ref, xyz_angle
+from math_functions.checks import is_valid_doublet, is_valid_triplet, dxy_x0_check
+
 from utility.time_tracking import hms_string
 from utility.convert_tracking_data_format import from_key4hep_csv, get_key4hep_csv_format
 from pattern.detector_hit import DetectorHit
@@ -118,8 +118,7 @@ class PatternBuilder:
         return detector_hits
 
     @staticmethod
-    def load_tracking_data_from_key4hep_csv(self,
-                                            tracking_data_file: str) -> list[DetectorHit]:
+    def load_tracking_data_from_key4hep_csv(tracking_data_file: str) -> list[DetectorHit]:
         """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
         :param tracking_data_file: .csv tracking data file
 
@@ -209,48 +208,6 @@ class PatternBuilder:
             print(f"Number of signal particles with at least one hit: {len(self.particle_dict_signal.keys())}")
             print(f"Number of complete signal tracks: {self.num_signal_tracks}\n")
 
-    def is_valid_doublet_candidate(self,
-                                   first_hit: DetectorHit,
-                                   second_hit: DetectorHit,
-                                   z_ref: float) -> bool:
-        """Checks if two hits are actually a doublet candidate.
-        :param first_hit: hit with lower z-value
-        :param second_hit: hit with higher z-value
-        :param z_ref: reference layer z-value
-
-        :return
-            True if valid doublet candidate, else False
-        """
-
-        # calculate x0
-        x0 = x0_at_z_ref(second_hit.x,
-                         first_hit.x,
-                         second_hit.z,
-                         first_hit.z,
-                         z_ref)
-
-        # check dx / x0 criteria
-        if not dxy_x0_check(first_hit.x,
-                            second_hit.x,
-                            first_hit.z,
-                            second_hit.z,
-                            x0,
-                            criteria_mean=self.configuration["doublet"]["dx/x0"],
-                            criteria_eps=self.configuration["doublet"]["dx/x0 eps"]):
-            return False
-
-        # check dy / x0 criteria
-        if not dxy_x0_check(first_hit.y,
-                            second_hit.y,
-                            first_hit.z,
-                            second_hit.z,
-                            x0,
-                            criteria_mean=self.configuration["doublet"]["dy/x0"],
-                            criteria_eps=self.configuration["doublet"]["dy/x0 eps"]):
-            return False
-
-        return True
-
     def create_doublet_list(self,
                             segment_manager: SegmentManager) -> None:
         """Creates the doublets. For LUXE detector model only.
@@ -266,10 +223,10 @@ class PatternBuilder:
                 for first_hit in segment.data:
                     for target_segment in next_segments:
                         for second_hit in target_segment.data:
-                            is_valid_doublet = self.is_valid_doublet_candidate(first_hit,
-                                                                               second_hit,
-                                                                               segment_manager.z_position_to_layer[0])
-                            if not is_valid_doublet:
+                            if not is_valid_doublet(first_hit,
+                                                    second_hit,
+                                                    segment_manager.z_position_to_layer[0],
+                                                    self.configuration):
                                 continue
                             doublet = Doublet(first_hit, second_hit)
                             segment.doublet_data.append(doublet)
@@ -294,14 +251,20 @@ class PatternBuilder:
                         for second_doublet in target_segment.doublet_data:
                             if first_doublet.hit_2.hit_id != second_doublet.hit_1.hit_id:  # check if match
                                 continue
-                            if self.is_valid_triplet(first_doublet.hit_1, first_doublet.hit_2, second_doublet.hit_2):
-                                triplet = Triplet(first_doublet.hit_1, first_doublet.hit_2, second_doublet.hit_2)
-                                self.found_triplets += 1
-                                segment.triplet_data.append(triplet)
+                            if not is_valid_triplet(first_doublet.hit_1,
+                                                    first_doublet.hit_2,
+                                                    second_doublet.hit_2,
+                                                    self.configuration["triplet"]["max scattering"]):
+                                continue
+                            triplet = Triplet(first_doublet.hit_1,
+                                              first_doublet.hit_2,
+                                              second_doublet.hit_2)
+                            self.found_triplets += 1
+                            segment.triplet_data.append(triplet)
 
-                                # filling lists for statistical purposes
-                                if triplet.from_same_particle():
-                                    self.found_correct_triplets += 1
+                            # filling lists for statistical purposes
+                            if triplet.from_same_particle():
+                                self.found_correct_triplets += 1
 
     def create_multiplets(self,
                           segment_manager: SegmentManager) -> None:
@@ -340,27 +303,3 @@ class PatternBuilder:
                   f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 2)} %\n")
         else:
             print(f"Triplets selection efficiency cannot be calculated from blinded sample\n")
-
-    def is_valid_triplet(self,
-                         hit_1: DetectorHit,
-                         hit_2: DetectorHit,
-                         hit_3: DetectorHit) -> bool:
-        """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
-        :param hit_1: first hit of a triplets
-        :param hit_2: second hit of a triplets
-        :param hit_3: third hit of a triplets
-
-        :return:
-            True if criteria applies, else False
-        """
-        xz_12 = xyz_angle(hit_1.x, hit_2.x, hit_1.z, hit_2.z)
-        xz_23 = xyz_angle(hit_2.x, hit_3.x, hit_2.z, hit_3.z)
-
-        yz_12 = xyz_angle(hit_1.y, hit_2.y, hit_1.z, hit_2.z)
-        yz_23 = xyz_angle(hit_2.y, hit_3.y, hit_2.z, hit_3.z)
-
-        return jit_is_valid_triplet(xz_12,
-                                    xz_23,
-                                    yz_12,
-                                    yz_23,
-                                    self.configuration["triplet"]["max scattering"])

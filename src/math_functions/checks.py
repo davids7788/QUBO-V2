@@ -1,6 +1,9 @@
 from numba import jit
 from math import sqrt
 
+from pattern.detector_hit import DetectorHit
+from math_functions.geometry import xyz_angle, x0_at_z_ref
+
 
 @jit(nopython=True)
 def dxy_x0_check(xy1: float,
@@ -70,3 +73,72 @@ def jit_is_valid_triplet(xz_angle_1: float,
     if sqrt((xz_angle_2 - xz_angle_1) ** 2 + (yz_angle_2 - yz_angle_1) ** 2) < max_angle:
         return True
     return False
+
+
+def is_valid_triplet(hit_1: DetectorHit,
+                     hit_2: DetectorHit,
+                     hit_3: DetectorHit,
+                     max_scattering) -> bool:
+    """Checks if doublets may be combined to a triplet, depending on the doublet angles -> scattering
+    :param hit_1: first hit of a triplets
+    :param hit_2: second hit of a triplets
+    :param hit_3: third hit of a triplets
+    :param max_scattering: maximum allowed scattering
+
+    :return:
+        True if criteria applies, else False
+    """
+    xz_12 = xyz_angle(hit_1.x, hit_2.x, hit_1.z, hit_2.z)
+    xz_23 = xyz_angle(hit_2.x, hit_3.x, hit_2.z, hit_3.z)
+
+    yz_12 = xyz_angle(hit_1.y, hit_2.y, hit_1.z, hit_2.z)
+    yz_23 = xyz_angle(hit_2.y, hit_3.y, hit_2.z, hit_3.z)
+
+    return jit_is_valid_triplet(xz_12,
+                                xz_23,
+                                yz_12,
+                                yz_23,
+                                max_scattering)
+
+
+def is_valid_doublet(first_hit: DetectorHit,
+                     second_hit: DetectorHit,
+                     z_ref: float,
+                     configuration) -> bool:
+    """Checks if two hits are actually a doublet candidate.
+    :param first_hit: hit with lower z-value
+    :param second_hit: hit with higher z-value
+    :param z_ref: reference layer z-value
+    :param configuration: configuration file
+
+    :return
+        True if valid doublet candidate, else False
+    """
+    # calculate x0
+    x0 = x0_at_z_ref(second_hit.x,
+                     first_hit.x,
+                     second_hit.z,
+                     first_hit.z,
+                     z_ref)
+
+    # check dx / x0 criteria
+    if not dxy_x0_check(first_hit.x,
+                        second_hit.x,
+                        first_hit.z,
+                        second_hit.z,
+                        x0,
+                        criteria_mean=configuration["doublet"]["dx/x0"],
+                        criteria_eps=configuration["doublet"]["dx/x0 eps"]):
+        return False
+
+    # check dy / x0 criteria
+    if not dxy_x0_check(first_hit.y,
+                        second_hit.y,
+                        first_hit.z,
+                        second_hit.z,
+                        x0,
+                        criteria_mean=configuration["doublet"]["dy/x0"],
+                        criteria_eps=configuration["doublet"]["dy/x0 eps"]):
+        return False
+
+    return True
