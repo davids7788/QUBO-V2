@@ -10,9 +10,11 @@ class GenMultiplet:
     """Class for multiplet creation on generator level information
     """
     def __init__(self,
-                 tracking_data_file: str) -> None:
+                 tracking_data_file: str,
+                 min_track_length: int) -> None:
         """Set fields
         :param tracking_data_file: file with tracking data information
+        :param min_track_length: minimum required length of multiplet to be considered a track candidate
         """
         self.multiplets_dict = {}
         self.gen_multiplets = []
@@ -21,6 +23,7 @@ class GenMultiplet:
 
         self.num_signal_hits = 0
         self.num_background_hits = 0
+        self.min_track_length = min_track_length
 
     def save_multiplets(self,
                         save_to_folder: str):
@@ -29,7 +32,8 @@ class GenMultiplet:
         """
         np.save(f"{save_to_folder}/{self.output_name}_gen_xplet_list", self.gen_multiplets)
         print(f"Number of generated multiplets: {len(self.gen_multiplets)}")
-        print(f"Number of tracks with at least 4 hits: {len([g for g in self.gen_multiplets if len(g.hit_id) >= 4])}\n")
+        print(f"Number of tracks with at least {self.min_track_length} hits: "
+              f"{len([g for g in self.gen_multiplets if len(g.hit_id) >= self.min_track_length])}\n")
         print("-----------------------------------\n")
 
     def create_multiplets(self):
@@ -142,5 +146,4 @@ class GenMultiplet:
         """Prints information about signal and background hits.
         """
         print(f'Number of signal hits: {self.num_signal_hits}')
-        print(f'Number of background hits: {self.num_background_hits}')
-        print("\n-----------------------------------")
+        print(f'Number of background hits: {self.num_background_hits}\n')

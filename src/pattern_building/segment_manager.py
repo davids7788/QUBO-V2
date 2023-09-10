@@ -3,6 +3,7 @@ import numpy as np
 
 from math_functions.geometry import x0_at_z_ref
 from pattern_building.segment import DetectorSegment
+from pattern.detector_hit import DetectorHit
 
 
 class SegmentManager:
@@ -214,18 +215,15 @@ class SegmentManager:
         return self.segment_mapping[name]
 
     def get_segment_at_known_xyz_value(self,
-                                       x: float,
-                                       y: float,
-                                       z: float) -> DetectorSegment:
+                                       hit: DetectorHit) -> DetectorSegment:
         """Finds the correct segment of a hit, given via x,y,z value.
-        :param x: x value of hit
-        :param y: y value of hit
-        :param z: z value of hit
+        :param hit: DetectorHit object
 
         :return:
             index of corresponding segment in segment list
         """
-        for segment in self.segment_storage[self.z_position_to_layer.index(z)]:
-            if segment.x_start <= x <= segment.x_end and segment.y_start <= y <= segment.y_end:
+
+        for segment in self.segment_storage[self.z_position_to_layer.index(hit.z)]:
+            if segment.x_start <= hit.x <= segment.x_end and segment.y_start <= hit.y <= segment.y_end:
                 return segment
         return None

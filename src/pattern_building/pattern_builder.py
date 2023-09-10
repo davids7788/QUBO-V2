@@ -6,6 +6,7 @@ import numpy as np
 from math_functions.checks import jit_is_valid_triplet, dxy_x0_check
 from math_functions.geometry import x0_at_z_ref, xyz_angle
 from utility.time_tracking import hms_string
+from utility.convert_tracking_data_format import from_key4hep_csv, get_key4hep_csv_format
 from pattern.detector_hit import DetectorHit
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
@@ -23,14 +24,23 @@ class PatternBuilder:
         self.doublet_creation_time = None
         self.triplet_creation_time = None
 
-        # only signal particles
+        # signal particles
         self.particle_dict_signal = {}
+
+        # signal hits
+        self.signal_hits = 0
 
         # background particle
         self.particle_dict_background = {}
 
-        # undecided (blind example)
+        # background hits
+        self.background_hits = 0
+
+        # undecided (blind sample)
         self.particle_dict_blinded = {}
+
+        # undecided particles (blind sample)
+        self.blinded_hits = 0
 
         # some values to check if computation successful
         self.all_truth_doublets = set()
@@ -63,37 +73,31 @@ class PatternBuilder:
             if '.csv' in tracking_data_file:
                 list_of_hits = PatternBuilder.load_tracking_data_from_key4hep_csv(tracking_data_file)
             else:
-                pass   # slcio implementation
+                pass   # TODO: slcio implementation
         else:
             print('Loading data from given file format not implemented yet!')
             print('Exiting...')
             exit()
 
-        signal_hits = 0
-        background_hits = 0
-        blinded_hits = 0
-
         for hit in list_of_hits:
             if hit.is_signal:
                 self.fill_signal_particle_dictionary(hit)
-                signal_hits += 1
+                self.signal_hits += 1
             elif hit.is_signal is None:
                 self.fill_blinded_particle_dictionary(hit)
-                blinded_hits += 1
+                self.blinded_hits += 1
             else:
                 self.fill_background_particle_dictionary(hit)
-                background_hits += 1
+                self.background_hits += 1
 
             # adding particle to a segment, used to reduce combinatorial candidates
-            segment = segment_manager.get_segment_at_known_xyz_value(hit.x,
-                                                                     hit.y,
-                                                                     hit.z)
+            segment = segment_manager.get_segment_at_known_xyz_value(hit)
             if segment:
                 segment.data.append(hit)
 
-        print(f'Number of signal hits found: {signal_hits}')
-        print(f'Number of background hits found: {background_hits}')
-        print(f'Number of blinded hits found: {blinded_hits}')
+        print(f'Number of signal hits found: {self.signal_hits}')
+        print(f'Number of background hits found: {self.background_hits}')
+        print(f'Number of blinded hits found: {self.blinded_hits}')
 
     @staticmethod
     def load_tracking_data_from_simplified_simulation_csv(tracking_data_file: str) -> list[DetectorHit]:
@@ -114,62 +118,22 @@ class PatternBuilder:
         return detector_hits
 
     @staticmethod
-    def load_tracking_data_from_key4hep_csv(tracking_data_file: str) -> list[DetectorHit]:
+    def load_tracking_data_from_key4hep_csv(self,
+                                            tracking_data_file: str) -> list[DetectorHit]:
         """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
         :param tracking_data_file: .csv tracking data file
 
         :return:
             list of DetectorHit objects
         """
-
-        fieldnames_key4hep_csv = ['particle_id',
-                                  'geometry_id',
-                                  'system_id',
-                                  'layer_id',
-                                  'side_id',
-                                  'module_id',
-                                  'sensor_id',
-                                  'tx',
-                                  'ty',
-                                  'tz',
-                                  'tt',
-                                  'tpx',
-                                  'tpy',
-                                  'tpz',
-                                  'te',
-                                  'deltapx',
-                                  'deltapy',
-                                  'deltapz',
-                                  'deltae',
-                                  'index']
-
-        def get_cell_id(row_for_cell_id: list[str]) -> str:
-            """Returns the cell id, used for ACTS Kalman Filter for LUXE inside key4hep environment for.
-            :param row_for_cell_id: list of str with information about particle hit in detector
-
-            :return
-                concatenated string of module and stave to identify region where hit stems from"""
-            return f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("module_id")])).zfill(3)[2:]}' \
-                   f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("layer_id")])).zfill(3)[2:]}10'
-
+        key4hep_csv_format = get_key4hep_csv_format()
         detector_hits = []
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],                           # hit_id
-                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tx')]), 3),   # x-coordinate
-                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('ty')]), 3),   # y-coordinate
-                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tz')]), 3),   # z-coordinate
-                               row[fieldnames_key4hep_csv.index('layer_id')],        # layer_id
-                               row[fieldnames_key4hep_csv.index('module_id')],       # module_id
-                               int(get_cell_id(row), base=2),                        # cell_id for ACTS tracking
-                               row[fieldnames_key4hep_csv.index('particle_id')],     # particle_id
-                               True,                                                 # not provided in key4hep csv
-                               row[fieldnames_key4hep_csv.index('te')],              # energy of particle
-                               row[fieldnames_key4hep_csv.index('tt')]]              # time of particle
-                detector_hits.append(DetectorHit(row_trimmed))
+                detector_hits.append(DetectorHit(from_key4hep_csv(row, key4hep_csv_format)))
 
         return detector_hits
 
@@ -240,7 +204,7 @@ class PatternBuilder:
                         self.all_truth_triplets.add(Triplet(d1.hit_1, d2.hit_1, d2.hit_2))
 
         if sample_composition == 'blinded':
-            print('Blinded example, no truth information about signal or background are provided!')
+            print('Truth information about particles cannot be accessed in blinded example!')
         else:
             print(f"Number of signal particles with at least one hit: {len(self.particle_dict_signal.keys())}")
             print(f"Number of complete signal tracks: {self.num_signal_tracks}\n")
@@ -359,7 +323,7 @@ class PatternBuilder:
             print(f"Doublet selection efficiency: "
                   f"{np.around(100 * self.found_correct_doublets / len(self.all_truth_doublets), 2)} %\n")
         else:
-            print(f"Doublet efficiency not accessible from blinded sample")
+            print(f"Doublet selection efficiency cannot be calculated from blinded sample\n")
 
         print("-----------------------------------\n")
         print("Forming triplets ...\n")
@@ -375,8 +339,7 @@ class PatternBuilder:
             print(f"Triplets selection efficiency: "
                   f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 2)} %\n")
         else:
-            print(f"Triplets efficiency not accessible from blinded sample\n")
-            print("-----------------------------------\n")
+            print(f"Triplets selection efficiency cannot be calculated from blinded sample\n")
 
     def is_valid_triplet(self,
                          hit_1: DetectorHit,
@@ -401,41 +364,3 @@ class PatternBuilder:
                                     yz_12,
                                     yz_23,
                                     self.configuration["triplet"]["max scattering"])
-
-    def write_info_file(self,
-                        target_folder) -> None:
-        """Writes information about the Preselection parameters and some statistics into
-        'preselection_info.txt' which is stored inside the output folder.
-        """
-        with open(target_folder + "/preselection_info.txt", "w") as f:
-            f.write("Preselection performed with the following configuration: \n")
-            for outer_key in self.configuration.keys():
-                for inner_key, value in self.configuration[outer_key].items():
-                    f.write(f"\n{inner_key}: {value}")
-                f.write("\n")
-            f.write("\n\n")
-            f.write("---\n")
-            f.write(f"Number of particles with at least one hit on the detector: "
-                    f"{len(self.particle_dict_signal.keys())}\n")
-            f.write(f"Number of generated tracks: {self.num_signal_tracks}\n")
-            f.write("\n\n")
-
-            # write doublet information into file
-            f.write(f"Time elapsed for forming doublets: "
-                    f"{self.doublet_creation_time}\n")
-            f.write(f"Number of doublets found: {self.found_doublets}\n")
-            if len(self.all_truth_doublets) > 0:
-                f.write(f"Doublet selection efficiency: "
-                        f"{np.around(100 * self.found_correct_doublets / len(self.all_truth_doublets), 2)} %\n")
-            else:
-                f.write(f"Doublet efficiency not accessible from blinded sample")
-
-            # write triplet information to file
-            f.write(f"Time elapsed for creating triplets: "
-                    f"{self.triplet_creation_time}\n")
-            f.write(f"Number of triplets found: {self.found_triplets}\n")
-            if len(self.all_truth_doublets) > 0:
-                f.write(f"Triplets selection efficiency: "
-                        f"{np.around(100 * self.found_correct_triplets / len(self.all_truth_triplets), 2)} %\n")
-            else:
-                f.write(f"Triplets efficiency not accessible from blinded sample")
