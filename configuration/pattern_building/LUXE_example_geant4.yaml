@@ -9,8 +9,8 @@ triplet:
   max scattering: 0.005
 
 binning:
-  num bins x: 64
-  num bins y: 4
+  num bins x: 128
+  num bins y: 8
 
 qubo parameters:
   b_ij conflict: 2.0

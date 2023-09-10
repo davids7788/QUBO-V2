@@ -94,6 +94,8 @@ class PatternBuilder:
             segment = segment_manager.get_segment_at_known_xyz_value(hit)
             if segment:
                 segment.data.append(hit)
+            else:
+                print('Segment not found. Please check location of hits or detector geometry file!')
 
         print(f'Number of signal hits found: {self.signal_hits}')
         print(f'Number of background hits found: {self.background_hits}')
@@ -125,7 +127,9 @@ class PatternBuilder:
         :return:
             list of DetectorHit objects
         """
+        # get the header of the key4hep_csv tracking file as list of strings
         key4hep_csv_format = get_key4hep_csv_format()
+
         detector_hits = []
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
