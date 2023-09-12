@@ -54,13 +54,13 @@ def from_simplified_simulation(simplified_sim_entry: list[str]) -> DetectorHit:
     fieldnames = get_simplified_simulation_csv_format()
 
     hit_dictionary = {}
-    hit_dictionary.update({'hit_ID': simplified_sim_entry[fieldnames.index('index')]})
-    hit_dictionary.update({'x': simplified_sim_entry[fieldnames.index('tx')]})
-    hit_dictionary.update({'y': simplified_sim_entry[fieldnames.index('ty')]})
-    hit_dictionary.update({'z': simplified_sim_entry[fieldnames.index('tz')]})
-    hit_dictionary.update({'layer_ID': None})
-    hit_dictionary.update({'module_ID': None})
-    hit_dictionary.update({'cell_ID': None})
+    hit_dictionary.update({'hit_ID': simplified_sim_entry[fieldnames.index('hit_ID')]})
+    hit_dictionary.update({'x': simplified_sim_entry[fieldnames.index('x')]})
+    hit_dictionary.update({'y': simplified_sim_entry[fieldnames.index('y')]})
+    hit_dictionary.update({'z': simplified_sim_entry[fieldnames.index('z')]})
+    hit_dictionary.update({'layer_ID': -1})
+    hit_dictionary.update({'module_ID': -1})
+    hit_dictionary.update({'cell_ID': -1})
     hit_dictionary.update({'particle_ID': simplified_sim_entry[fieldnames.index('particle_ID')]})
     hit_dictionary.update({'is_signal': True})
     # TODO: provide more detailed info to match key4hep tracking files
