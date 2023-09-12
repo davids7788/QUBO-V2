@@ -12,6 +12,7 @@ def get_simplified_simulation_csv_format() -> list[str]:
             'y',
             'z',
             'layer_ID',
+            'module_ID'
             'particle_ID',
             'particle_energy']
 
@@ -58,12 +59,20 @@ def from_simplified_simulation(simplified_sim_entry: list[str]) -> DetectorHit:
     hit_dictionary.update({'x': simplified_sim_entry[fieldnames.index('x')]})
     hit_dictionary.update({'y': simplified_sim_entry[fieldnames.index('y')]})
     hit_dictionary.update({'z': simplified_sim_entry[fieldnames.index('z')]})
-    hit_dictionary.update({'layer_ID': -1})
-    hit_dictionary.update({'module_ID': -1})
-    hit_dictionary.update({'cell_ID': -1})
+
+    # old versions don't have layer_ID and module_ID matching key4hep sample --> rework
+    try:
+        hit_dictionary.update({'layer_ID': simplified_sim_entry[fieldnames.index('layer_ID')]})
+    except IndexError:
+        hit_dictionary.update({'layer_ID': -1})
+    try:
+        hit_dictionary.update({'module_ID': simplified_sim_entry[fieldnames.index('module_ID')]})
+    except IndexError:
+        hit_dictionary.update({'module_ID': -1})
+
+    hit_dictionary.update({'cell_ID': get_cell_id_simplified_simulation(simplified_sim_entry)})
     hit_dictionary.update({'particle_ID': simplified_sim_entry[fieldnames.index('particle_ID')]})
     hit_dictionary.update({'is_signal': True})
-    # TODO: provide more detailed info to match key4hep tracking files
 
     # create detector hit object
     hit = DetectorHit(hit_dictionary)
@@ -90,7 +99,7 @@ def from_key4hep_csv(key4hep_csv_entry: list[str]) -> DetectorHit:
     hit_dictionary.update({'module_ID': key4hep_csv_entry[fieldnames.index('module_id')]})
     hit_dictionary.update({'cell_ID': int(get_cell_id_key4hep(key4hep_csv_entry), base=2)})
     hit_dictionary.update({'particle_ID': key4hep_csv_entry[fieldnames.index('particle_id')]})
-    hit_dictionary.update({'is_signal': True})  # TODO: provide info of key4hep.csv file
+    hit_dictionary.update({'is_signal': True})
 
     # create detector hit object
     hit = DetectorHit(hit_dictionary)
@@ -107,3 +116,14 @@ def get_cell_id_key4hep(csv_entry: list[str]) -> str:
     """
     return f'{bin(int(csv_entry[get_key4hep_csv_format().index("module_id")])).zfill(3)[2:]}' \
            f'{bin(int(csv_entry[get_key4hep_csv_format().index("layer_id")])).zfill(3)[2:]}10'
+
+
+def get_cell_id_simplified_simulation(csv_entry: list[str]) -> str:
+    """Returns the cell id, used for ACTS Kalman Filter for LUXE inside key4hep environment for.
+    :param csv_entry: list of str with information about particle hit in detector
+
+    :return
+        concatenated string of module and stave to identify region where hit stems from
+    """
+    return f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("module_ID")])).zfill(3)[2:]}' \
+           f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("layer_ID")])).zfill(3)[2:]}10'
