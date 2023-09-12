@@ -1,15 +1,15 @@
 ---
 doublet:
-  dx/x0: 0.54
-  dx/x0 eps: 0.04
+  dx/x0: 0.527
+  dx/x0 eps: 0.1
   dy/x0: 0.0
-  dy/x0 eps: 0.05
+  dy/x0 eps: 0.1
 
 triplet:
-  max scattering: 0.005
+  max scattering: 0.02
 
 binning:
-  num bins x: 128
+  num bins x: 32
   num bins y: 8
 
 qubo parameters:

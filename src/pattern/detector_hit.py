@@ -1,56 +1,53 @@
 class DetectorHit:
     """Class for storing information about particle-detector interactions.
     """
-    fieldnames = ['hit_ID',
-                  'x',
-                  'y',
-                  'z',
-                  'layer_ID',
-                  'module_id',
-                  'cell_ID',
-                  'particle_ID',
-                  'is_signal',
-                  'particle_energy',
-                  'time']
 
     def __init__(self,
-                 detector_hit: list[str]):
-        """Set fields according to the information provided by the list of values
-        :param detector_hit: list of values matching the definitions of the fieldnames provided in the
-        fieldnames_matching method.
+                 detector_hit: dict):
+        """Set fields according to the information provided by the given dictionary
+        :param detector_hit: dictionary with information about a detector hit
         """
-        self.hit_id = DetectorHit.fieldnames_matching(detector_hit, 'hit_ID')
-        self.x = DetectorHit.fieldnames_matching(detector_hit, 'x')
-        self.y = DetectorHit.fieldnames_matching(detector_hit, 'y')
-        self.z = DetectorHit.fieldnames_matching(detector_hit, 'z')
-        self.layer_id = DetectorHit.fieldnames_matching(detector_hit, 'layer_ID')
-        self.module_id = DetectorHit.fieldnames_matching(detector_hit, 'module_ID')
-        self.cell_id = DetectorHit.fieldnames_matching(detector_hit, 'cell_ID')
-        self.particle_id = DetectorHit.fieldnames_matching(detector_hit, 'particle_ID')
-        self.is_signal = DetectorHit.fieldnames_matching(detector_hit, 'is_signal')
-        self.particle_energy = DetectorHit.fieldnames_matching(detector_hit, 'particle_energy')
-        try:
-            self.time = DetectorHit.fieldnames_matching(detector_hit, 'time')
-        except IndexError:
-            self.time = 0
+        self.hit_dictionary = detector_hit
 
-    @staticmethod
-    def fieldnames_matching(detector_hit, info):
-        """Returns the variable in the correct format
-        :param detector_hit: list of str values with information about the detector hit
-        :param info: specify value that will be set
+        self.hit_id = None
+        self.x = None
+        self.y = None
+        self.z = None
+        self.layer_id = None
+        self.module_id = None
+        self.cell_id = None
+        self.particle_id = None
+        self.is_signal = None
+        self.particle_energy = None
 
-        :return:
-            value in specified datatype
+        self.fill_fields()
+
+    def fill_fields(self) -> None:
+        """Fills the fields with the dictionary with information from the hit_dictionary.
         """
 
-        if info not in DetectorHit.fieldnames:
-            return None
-        elif info in ['hit_ID', 'layer_ID', 'module_id', 'particle_info']:
-            return detector_hit[DetectorHit.fieldnames.index(info)]
-        elif info in ['is_signal']:
-            return bool(detector_hit[DetectorHit.fieldnames.index(info)])
-        elif info in ['particle_ID', 'cell_ID']:
-            return int(detector_hit[DetectorHit.fieldnames.index(info)])
-        else:
-            return float(detector_hit[DetectorHit.fieldnames.index(info)])
+        for key, value in self.hit_dictionary.items():
+            if key == 'hit_ID':
+                self.hit_id = str(value)
+            elif key == 'x':
+                self.x = float(value)
+            elif key == 'y':
+                self.y = float(value)
+            elif key == 'z':
+                self.z = float(value)
+            elif key == 'layer_ID':
+                self.layer_id = int(value)
+            elif key == 'module_ID':
+                self.module_id = int(value)
+            elif key == 'cell_ID':
+                self.cell_id = int(value)
+            elif key == 'particle_ID':
+                self.particle_id = int(value)
+            elif key == 'is_signal':
+                self.is_signal = bool(value)
+            elif key == 'particle_energy':
+                self.particle_energy = float(value)
+            else:
+                print(f'key: {key} not found!')
+                print('Exiting...')
+                exit()

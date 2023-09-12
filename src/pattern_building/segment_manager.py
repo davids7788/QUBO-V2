@@ -1,5 +1,4 @@
 import csv
-import numpy as np
 
 from math_functions.geometry import x0_at_z_ref
 from pattern_building.segment import DetectorSegment
@@ -102,8 +101,8 @@ class SegmentManager:
                                                   min_x + (j + 1) * segment_size_x,
                                                   min_y + k * segment_size_y,
                                                   min_y + (k + 1) * segment_size_y,
-                                                  self.z_position_to_layer[layer_number] - 0.5e-3,
-                                                  self.z_position_to_layer[layer_number] + 0.5e-3)
+                                                  self.z_position_to_layer[layer_number] - 0.5e-5,  # 50 mu
+                                                  self.z_position_to_layer[layer_number] + 0.5e-5)  # 50 mu
 
                     self.segment_storage[layer_number].append(new_segment)
 
@@ -215,7 +214,7 @@ class SegmentManager:
         return self.segment_mapping[name]
 
     def get_segment_at_known_xyz_value(self,
-                                       hit: DetectorHit) -> DetectorSegment:
+                                       hit: DetectorHit) -> DetectorSegment | None:
         """Finds the correct segment of a hit, given via x,y,z value.
         :param hit: DetectorHit object
 

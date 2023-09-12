@@ -20,7 +20,6 @@ class Multiplet:
         self.particle_id = []
         self.is_signal = []
         self.particle_energy = []
-        self.time = []
 
         self.chi_squared = None
         self.p_value = None
@@ -40,7 +39,6 @@ class Multiplet:
         self.particle_id.append(hit.particle_id)
         self.is_signal.append(hit.is_signal)
         self.particle_energy.append(hit.particle_energy)
-        self.time.append(hit.time)
 
     @staticmethod
     @jit(nopython=True)

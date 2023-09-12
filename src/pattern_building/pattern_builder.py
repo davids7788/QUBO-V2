@@ -3,10 +3,10 @@ import time
 
 import numpy as np
 
-from math_functions.checks import is_valid_doublet, is_valid_triplet, dxy_x0_check
+from math_functions.checks import is_valid_doublet, is_valid_triplet
 
 from utility.time_tracking import hms_string
-from utility.convert_tracking_data_format import from_key4hep_csv, get_key4hep_csv_format
+from utility.convert_tracking_data_format import from_key4hep_csv, from_simplified_simulation
 from pattern.detector_hit import DetectorHit
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
@@ -115,7 +115,8 @@ class PatternBuilder:
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                detector_hits.append(DetectorHit(row))
+                hit = from_simplified_simulation(row)
+                detector_hits.append(hit)
 
         return detector_hits
 
@@ -127,16 +128,14 @@ class PatternBuilder:
         :return:
             list of DetectorHit objects
         """
-        # get the header of the key4hep_csv tracking file as list of strings
-        key4hep_csv_format = get_key4hep_csv_format()
-
         detector_hits = []
         with open(tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                detector_hits.append(DetectorHit(from_key4hep_csv(row, key4hep_csv_format)))
+                hit = from_key4hep_csv(row)
+                detector_hits.append(hit)
 
         return detector_hits
 

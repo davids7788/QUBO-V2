@@ -1,10 +1,8 @@
 import mpl_toolkits.mplot3d.art3d as art3d
 import numpy as np
 import matplotlib.pyplot as plt
-import errno
 import os
 
-from scipy.optimize import curve_fit
 from scipy.stats import norm
 from matplotlib.patches import Rectangle
 

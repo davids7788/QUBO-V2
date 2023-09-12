@@ -1,9 +1,9 @@
 import csv
 import numpy as np
-import os
 
 from pattern.detector_hit import DetectorHit
 from pattern.multiplet import Multiplet
+from utility.convert_tracking_data_format import from_key4hep_csv, from_simplified_simulation
 
 
 class GenMultiplet:
@@ -68,54 +68,12 @@ class GenMultiplet:
     def gen_multiplets_key4hep_csv(self) -> None:
         """Creates all signal multiplets from the specified key4hep simulation tracking data file
         """
-        fieldnames_key4hep_csv = ['particle_id',
-                                  'geometry_id',
-                                  'system_id',
-                                  'layer_id',
-                                  'side_id',
-                                  'module_id',
-                                  'sensor_id',
-                                  'tx',
-                                  'ty',
-                                  'tz',
-                                  'tt',
-                                  'tpx',
-                                  'tpy',
-                                  'tpz',
-                                  'te',
-                                  'deltapx',
-                                  'deltapy',
-                                  'deltapz',
-                                  'deltae',
-                                  'index']
-
-        def get_cell_id(row_for_cell_id: list[str]) -> str:
-            """Returns the cell id, used for ACTS Kalman Filter for LUXE inside key4hep environment for.
-            :param row_for_cell_id: list of str with information about particle hit in detector
-
-            :return
-                concatenated string of module and stave to identify region where hit stems from"""
-            return f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("module_id")])).zfill(3)[2:]}' \
-                   f'{bin(int(row_for_cell_id[fieldnames_key4hep_csv.index("layer_id")])).zfill(3)[2:]}10'
-
         with open(self.tracking_data_file, 'r') as file:
             csv_reader = csv.reader(file)
             _ = next(csv_reader)  # access header, csv files should consist of one line of header
 
             for row in csv_reader:
-                # information needs to be trimmed to adjust for the DetectorHit class model
-                row_trimmed = [row[fieldnames_key4hep_csv.index('index')],                           # hit_id
-                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tx')]), 3),   # x-coordinate
-                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('ty')]), 3),   # y-coordinate
-                               np.round(1e-3 * float(row[fieldnames_key4hep_csv.index('tz')]), 3),   # z-coordinate
-                               row[fieldnames_key4hep_csv.index('layer_id')],        # layer_id
-                               row[fieldnames_key4hep_csv.index('module_id')],       # module_id
-                               int(get_cell_id(row), base=2),                        # cell_id for ACTS tracking
-                               row[fieldnames_key4hep_csv.index('particle_id')],     # particle_id
-                               True,                                                 # not provided in key4hep csv
-                               row[fieldnames_key4hep_csv.index('te')],              # energy of particle
-                               row[fieldnames_key4hep_csv.index('tt')]]              # time of particle
-                hit = DetectorHit(row_trimmed)
+                hit = from_key4hep_csv(row)
 
                 # add to multiplet dictionary
                 self.add_hit_to_multiplet_dict(hit)
@@ -134,7 +92,7 @@ class GenMultiplet:
 
             for row in csv_reader_tracking_file:
                 # Create new DetectorHit object
-                hit = DetectorHit(row)
+                hit = from_simplified_simulation(row)
 
                 # add to multiplet dictionary
                 self.add_hit_to_multiplet_dict(hit)
