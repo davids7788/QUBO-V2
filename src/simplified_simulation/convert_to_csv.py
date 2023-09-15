@@ -28,7 +28,7 @@ def convert_to_csv_true(path_to_file):
 
     hit_id = 0
     with open(f"{folder}/true/{file_name}.csv", 'w', newline='') as csvfile:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'particle_ID', 'particle_energy']
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'is_signal', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
@@ -41,6 +41,7 @@ def convert_to_csv_true(path_to_file):
                                  'z': hit[2],
                                  'layer_ID': layer,
                                  'module_ID': module,
+                                 'is_signal': True,
                                  'particle_ID': particle,
                                  'particle_energy': norm(data["Particle momentum history log"][particle][key])})
                 hit_id += 1
@@ -69,7 +70,7 @@ def convert_to_csv_smeared(path_to_file):
 
     hit_id = 0
     with open(f"{folder}/smeared/{file_name}.csv", 'w', newline='') as csvfile:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'particle_ID', 'particle_energy', 'time']
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'is_signal', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
@@ -88,6 +89,7 @@ def convert_to_csv_smeared(path_to_file):
                                  'z': hit[2],
                                  'layer_ID': layer,
                                  'module_ID': module,
+                                 'is_signal': True,
                                  'particle_ID': particle,
                                  'particle_energy': norm(data["Particle momentum history log"][particle][key])})
                 hit_id += 1
@@ -405,7 +407,7 @@ def convert_to_csv_pixel(path_to_file):
         # writing csv files to make the data set compatible with the ML track challenge
     hit_id = 0
     with open(f'{folder}/pixel/single_pixel_hits_{file_name}.csv', 'w', newline='') as csv_file:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_id', 'particle_ID', 'particle_energy']
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'is_signal', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for key, hit in zip(single_hits_pixel_for_tracking.keys(), single_hits_pixel_for_tracking.values()):
@@ -416,6 +418,7 @@ def convert_to_csv_pixel(path_to_file):
                              'z': hit[2],
                              'layer_ID': layer,
                              'module_ID': module,
+                             'is_signal': True,
                              'particle_ID': key.split("_")[1],
                              'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]]
                                                      [key.split("_")[0]])})
@@ -423,7 +426,7 @@ def convert_to_csv_pixel(path_to_file):
 
     hit_id = 0
     with open(f'{folder}/pixel/multi_pixel_hits_{file_name}.csv', 'w', newline='') as csv_file:
-        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'particle_ID', 'particle_energy']
+        fieldnames = ['hit_ID', 'x', 'y', 'z', 'layer_ID', 'module_ID', 'is_signal', 'particle_ID', 'particle_energy']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         for key, hit in zip(multi_hits_pixel_for_tracking.keys(), multi_hits_pixel_for_tracking.values()):
@@ -434,6 +437,7 @@ def convert_to_csv_pixel(path_to_file):
                              'z': hit[2],
                              'layer_ID': layer,
                              'module_ID': module,
+                             'is_signal': True,
                              'particle_ID': key.split("_")[1],
                              'particle_energy': norm(data["Particle momentum history log"][key.split("_")[1]]
                                                      [key.split("_")[0]])})
