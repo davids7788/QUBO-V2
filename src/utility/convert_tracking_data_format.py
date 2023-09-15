@@ -12,7 +12,8 @@ def get_simplified_simulation_csv_format() -> list[str]:
             'y',
             'z',
             'layer_ID',
-            'module_ID'
+            'module_ID',
+            'is_signal',
             'particle_ID',
             'particle_energy']
 
@@ -69,7 +70,7 @@ def from_simplified_simulation(simplified_sim_entry: list[str]) -> DetectorHit:
         hit_dictionary.update({'module_ID': simplified_sim_entry[fieldnames.index('module_ID')]})
     except IndexError:
         hit_dictionary.update({'module_ID': -1})
-
+    hit_dictionary.update({'is_signal': simplified_sim_entry[fieldnames.index('is_signal')]})
     hit_dictionary.update({'cell_ID': get_cell_id_simplified_simulation(simplified_sim_entry)})
     hit_dictionary.update({'particle_ID': simplified_sim_entry[fieldnames.index('particle_ID')]})
     hit_dictionary.update({'is_signal': True})
