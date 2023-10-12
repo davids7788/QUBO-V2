@@ -1,10 +1,10 @@
 import numpy as np
 
-from numba import jit
+#from numba import jit
 from math import atan2
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def x0_at_z_ref(x_end: float,
                 x_start: float,
                 z_end: float,
@@ -24,7 +24,7 @@ def x0_at_z_ref(x_end: float,
     return x_end - dx * abs(z_end - z_ref) / dz
 
 
-@jit(nopython=True)
+# @jit(nopython=True)
 def xyz_angle(xy_1: float,
               xy_2: float,
               z_1: float,

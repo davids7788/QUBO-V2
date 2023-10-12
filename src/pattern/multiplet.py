@@ -1,7 +1,7 @@
 from pattern.triplet import DetectorHit
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
-from numba import jit
+#from numba import jit
 
 
 class Multiplet:
@@ -41,7 +41,7 @@ class Multiplet:
         self.particle_energy.append(hit.particle_energy)
 
     @staticmethod
-    @jit(nopython=True)
+    #@jit(nopython=True)
     def lin_func(x: float,
                  a: float,
                  b: float) -> float:

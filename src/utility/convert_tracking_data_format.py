@@ -93,9 +93,9 @@ def from_key4hep_csv(key4hep_csv_entry: list[str]) -> DetectorHit:
 
     hit_dictionary = {}
     hit_dictionary.update({'hit_ID': key4hep_csv_entry[fieldnames.index('index')]})
-    hit_dictionary.update({'x': np.round(1e-3 * float(key4hep_csv_entry[fieldnames.index('tx')]), 3)})
-    hit_dictionary.update({'y': np.round(1e-3 * float(key4hep_csv_entry[fieldnames.index('ty')]), 3)})
-    hit_dictionary.update({'z': np.round(1e-3 * float(key4hep_csv_entry[fieldnames.index('tz')]), 3)})
+    hit_dictionary.update({'x': np.around(1e-3 * float(key4hep_csv_entry[fieldnames.index('tx')]), 8)})
+    hit_dictionary.update({'y': np.around(1e-3 * float(key4hep_csv_entry[fieldnames.index('ty')]), 8)})
+    hit_dictionary.update({'z': np.around(1e-3 * float(key4hep_csv_entry[fieldnames.index('tz')]), 8)})
     hit_dictionary.update({'layer_ID': key4hep_csv_entry[fieldnames.index('layer_id')]})
     hit_dictionary.update({'module_ID': key4hep_csv_entry[fieldnames.index('module_id')]})
     hit_dictionary.update({'cell_ID': int(get_cell_id_key4hep(key4hep_csv_entry), base=2)})
@@ -115,8 +115,8 @@ def get_cell_id_key4hep(csv_entry: list[str]) -> str:
     :return
         concatenated string of module and stave to identify region where hit stems from
     """
-    return f'{bin(int(csv_entry[get_key4hep_csv_format().index("module_id")])).zfill(3)[2:]}' \
-           f'{bin(int(csv_entry[get_key4hep_csv_format().index("layer_id")])).zfill(3)[2:]}10'
+    return f'{bin(int(csv_entry[get_key4hep_csv_format().index("module_id")]))[2:].zfill(3)}' \
+           f'{bin(int(csv_entry[get_key4hep_csv_format().index("layer_id")]))[2:].zfill(3)}10'
 
 
 def get_cell_id_simplified_simulation(csv_entry: list[str]) -> str:
@@ -126,5 +126,5 @@ def get_cell_id_simplified_simulation(csv_entry: list[str]) -> str:
     :return
         concatenated string of module and stave to identify region where hit stems from
     """
-    return f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("module_ID")])).zfill(3)[2:]}' \
-           f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("layer_ID")])).zfill(3)[2:]}10'
+    return f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("module_ID")]))[2:].zfill(3)}' \
+           f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("layer_ID")]))[2:].zfill(3)}10'
