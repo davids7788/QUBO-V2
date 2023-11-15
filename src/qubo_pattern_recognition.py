@@ -43,19 +43,18 @@ tracking_data = parser_args.tracking_data
 with open(config_file, 'r') as f:
     configuration = yaml.safe_load(f)
 
-geometry_file = configuration['detector geometry']
-tracking_data_format = configuration['tracking data format']
-sample_composition = configuration['sample composition']
+geometry_file = configuration['tracking data']['detector geometry']
+tracking_data_format = configuration['tracking data']['tracking data format']
+sample_composition = configuration['tracking data']['sample composition']
 
 
 # creating a new folder which is named as the config_file, folder is stored inside the specified target_folder
-new_folder = f'{tracking_data}_qubo'
-print(new_folder)
+qubo_preparation_folder = f'{tracking_data}_qubo'
 
-if Path(new_folder).is_dir():
+if Path(qubo_preparation_folder).is_dir():
     pass
 else:
-    os.mkdir(new_folder)
+    os.mkdir(qubo_preparation_folder)
 
 # start of program
 print("\n-----------------------------------")
@@ -93,12 +92,12 @@ else:
 
     gen_multiplets.make_gen_multiplets(tracking_data_format)
     gen_multiplets.information_about_tracking_data()
-    gen_multiplets.save_multiplets(save_to_folder=new_folder)
+    gen_multiplets.save_multiplets(save_to_folder=qubo_preparation_folder)
 
 
 # set qubo parameters
 print("Calculate triplet coefficients a_i and b_ij...")
-qubo_coefficients = QuboCoefficients(configuration, new_folder)
+qubo_coefficients = QuboCoefficients(configuration, qubo_preparation_folder)
 qubo_coefficients.set_triplet_coefficients(s_manager)
 
 # rescale parameters
@@ -106,4 +105,66 @@ qubo_coefficients.coefficient_rescaling()
 
 print("-----------------------------------\n")
 print("QUBO preparation finished successfully!\n")
-        
+
+
+print("-----------------------------------\n")
+
+file_extension = f'{configuration["qubo"]["optimisation strategy"].replace(" ", "_")}_' \
+                 f'{configuration["solver"]["algorithm"].replace(" ","_")}_' \
+                 f'{configuration["qubo"]["num qubits"]}'
+qubo_folder = qubo_preparation_folder + "/" + file_extension
+
+if Path(qubo_folder).is_dir():
+    pass
+else:
+    os.mkdir(qubo_folder)
+                 
+# Create logger
+qubo_logger = QuboLogging()
+
+# Create ansatz object and set parameters from config file
+if configuration["ansatz"]["layout"] is None:
+    ansatz = None
+else:
+    ansatz = Ansatz(config=config_file)
+
+# If not "hamiltonian driven" additional parameters are set
+if configuration["ansatz"]["layout"] == "TwoLocal":
+    ansatz.set_two_local()
+elif configuration["ansatz"]["layout"] is None:
+    if configuration["solver"]["algorithm"] == "QAOA":
+        pass
+    elif configuration["solver"]["algorithm"] is not None:
+        if configuration["solver"]["algorithm"] != "Numpy Eigensolver":
+            ansatz.set_no_entanglements()
+
+# Create Solver object and set parameters from config file
+if configuration["solver"]["algorithm"] != "Numpy Eigensolver" and configuration["solver"]["algorithm"] is not None:
+    solver = Solver(configuration)
+else:
+    solver = None
+
+# Create and configure solving process
+qubo_processor = QuboProcessing(qubo_preparation_folder + "/triplet_list.npy",
+                                config=configuration,
+                                solver=solver,
+                                ansatz=ansatz,
+                                qubo_logging=qubo_logger,
+                                save_folder=qubo_folder,
+                                verbose=1)
+qubo_processor.qubo_processing()        
+reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
+                            qubo_folder)
+
+
+gen_prefix = f"{qubo_folder}/reco_xplet_list.npy".split("/")[-3].split("-")[0]
+gen_xplet = f'{qubo_preparation_folder}/{tracking_data.split("/")[-1].split(".")[0]}_gen_xplet_list'
+
+try:
+    track_reconstruction_efficiency_simplified_LUXE(f"{qubo_folder}/reco_xplet_list_ambiguity_solved.npy",
+                                                    f"{gen_xplet}.npy")
+except FileNotFoundError:
+    print("\n No track reconstruction efficiency available in blinded samples!")
+
+print("-----------------------------------\n")
+print("QUBO solved successfully!\n")

@@ -42,7 +42,10 @@ class DetectorHit:
             elif key == 'cell_ID':
                 self.cell_id = int(value)
             elif key == 'particle_ID':
-                self.particle_id = int(value)
+                if value is not None:
+                    self.particle_id = int(value)
+                else:
+                    self.particle_id = None
             elif key == 'is_signal':
                 self.is_signal = bool(value)
             elif key == 'particle_energy':

@@ -117,9 +117,9 @@ def reco_xplets_simplified_LUXE(triplets,
         for track in reco_track_candidates:
             if not select_triplets_with_max_overlap(track, 4 - i):
                 selected_tracks.append(track)
-        reco_ambiguity_solved = selected_tracks
+        reco_ambiguity_solved = [t for t in selected_tracks if len(t.hit_id) > 3]
 
-    print(f"Number of reco Xplets after ambiguity solving: {len(reco_ambiguity_solved)}\n"
-          f"Saving ambiguity solved Xplets to file {save_folder}/reco_xplet_list_ambiguity_solved.npy")
+    print(f"Number of reco multiplets after ambiguity solving: {len(reco_ambiguity_solved)}\n"
+          f"Saving multiplets")
 
     np.save(f"{save_folder}/reco_xplet_list_ambiguity_solved", reco_ambiguity_solved)

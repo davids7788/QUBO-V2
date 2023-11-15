@@ -1,15 +1,14 @@
 ---
-detector geometry: '/afs/desy.de/user/s/spatarod/QUBO-V2/geometry/LUXE_key4hep.csv'
-
-tracking data format: 'key4hep slcio'
-
-sample composition: 'signal only' 
+tracking data:
+    detector geometry: '/afs/desy.de/user/s/spatarod/QUBO-V2/geometry/LUXE_key4hep.csv'
+    tracking data format: 'key4hep slcio'
+    sample composition: 'signal only'
 
 doublet:
   dx/x0: 0.527
-  dx/x0 eps: 0.1
+  dx/x0 eps: 0.07
   dy/x0: 0.0
-  dy/x0 eps: 0.1
+  dy/x0 eps: 0.02
 
 triplet:
   max scattering: 0.02
@@ -19,7 +18,7 @@ binning:
   num bins y: 8
 
 qubo parameters:
-  b_ij conflict: 2.0
+  b_ij conflict: 3.0
   b_ij match: "default"
   a_i: "default"
 
@@ -28,5 +27,38 @@ scale range parameters:
   quality: [-0.1, 0.1]
   interaction: [-1.0, -0.9]
 
+ansatz:
+  layout: null
+  circuit depth: null
+  rotation blocks: null
+  entanglement blocks: null
+  entanglement: null
+  skip final rotation layer: null
+  skip unentangled qubits: null
+
+solver:
+  algorithm: "Numpy Eigensolver"
+  backend: null
+  optimiser: null
+  maxiter: null
+  maxfev: null
+  seed: null
+  shots: null
+  optimisation level: null
+
+qubo:
+  optimisation strategy: "connection list"
+  hamiltonian rescaling: null
+  initial binary vector: "zeros"
+  search depth: 1
+  num qubits: 7
+  error mitigation algorithm: null
+  compare to eigensolver: null
+
+bit flip optimisation:
+  iterations: null
+  reverse: null
+
 track:
   minimum track length: 4
+  

@@ -131,7 +131,11 @@ def load_tracking_data_from_slcio(tracking_data_file: str) -> list[DetectorHit]:
         decoder = UTIL.BitField64(encoding)
         
         for i, tracker_hit in enumerate(tracker_hits):
-            rel_object = relation.getRelatedToObjects(tracker_hit)[0].getMCParticle()
+ 
+            if relation.getRelatedToObjects(tracker_hit)[0].isProducedBySecondary():
+                rel_object = None
+            else:
+                rel_object = relation.getRelatedToObjects(tracker_hit)[0].getMCParticle()
             cell_id = int(tracker_hit.getCellID0())
             decoder.setValue(cell_id)
             layer = int(decoder['layer'].value())
@@ -139,11 +143,7 @@ def load_tracking_data_from_slcio(tracking_data_file: str) -> list[DetectorHit]:
             position = [float(1e-3 * tracker_hit.getPosition()[0]), 
                         float(1e-3 * tracker_hit.getPosition()[1]),
                         np.around(1e-3 * float(tracker_hit.getPosition()[2]), 4)]
-            momentum = [float(rel_object.getMomentum()[0]), 
-                        float(rel_object.getMomentum()[1]),
-                        float(rel_object.getMomentum()[2])]       
-            
-            pdg = int(rel_object.getPDG())
+
  
             if rel_object:
                 particle_id = id(rel_object)
@@ -173,6 +173,7 @@ def from_slcio(hit_id: str,
     """Converts row entry of a key4hep slcio tracking data file
     
     :param simplified_sim_entry one row from a key4hep .slcio tracking file
+    
 
     :return
         DetectorHit object
