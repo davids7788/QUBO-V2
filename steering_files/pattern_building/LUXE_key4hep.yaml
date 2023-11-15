@@ -1,4 +1,10 @@
 ---
+detector geometry: '/afs/desy.de/user/s/spatarod/QUBO-V2/geometry/LUXE_key4hep.csv'
+
+tracking data format: 'key4hep slcio'
+
+sample composition: 'signal only' 
+
 doublet:
   dx/x0: 0.527
   dx/x0 eps: 0.1

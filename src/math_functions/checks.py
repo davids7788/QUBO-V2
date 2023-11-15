@@ -29,7 +29,7 @@ def dxy_x0_check(xy1: float,
     return True
 
 
-@jit(npython=True)
+@jit(nopython=True)
 def jit_is_in_segment(x: float,
                       y: float,
                       z: float,

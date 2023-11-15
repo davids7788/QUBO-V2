@@ -8,7 +8,7 @@ from pattern.multiplet import Multiplet
  
 
 file = '/nfs/dust/luxe/user/spatarod/key4hepcsv/p0xi3BX0000/' \
-       'event000000000-simhits-LUXE_example_geant4/_eigensolver_7q_connection_list'
+       'event000000000-simhits-LUXE_example_geant4/_eigensolver_7q_impact_list_reverse'
     
 reco_raw = 'reco_xplet_list.npy'
 reco_ambiguity_solved = 'reco_xplet_list_ambiguity_solved.npy'
@@ -32,11 +32,8 @@ for i, xplet in enumerate(xplets):
         param.setValue(EVENT.LCIO.CellIDEncoding, string_encoding)
         col.addElement(hit)
             
-                    
-
-
     evt.setEventNumber(i)
-    evt.addCollection(col, 'SiHits')
+    evt.addCollection(col, 'SiTrackerHits')
     wrt.writeEvent(evt)
     
 wrt.close()

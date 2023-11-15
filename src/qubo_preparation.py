@@ -24,46 +24,23 @@ parser.add_argument('--tracking_data',
                     default=None,
                     help='Tracking data csv file')
 
-parser.add_argument('--geometry_file',
-                    action='store',
-                    type=str,
-                    default=None,
-                    help='LUXE geometry csv file')
-
-parser.add_argument('--target_folder',
-                    action='store',
-                    type=str,
-                    default=None,
-                    help='Folder to store results')
-
-parser.add_argument('--sample_composition',
-                    action='store',
-                    type=str,
-                    default=None,
-                    help='signal, signal+background, blinded')
-
-parser.add_argument('--simulation_tool',
-                    action='store',
-                    type=str,
-                    default=None,
-                    help='simplified_simulation, key4hep_csv')
-
 # set variables from inputs
 parser_args = parser.parse_args()
 config_file = parser_args.config_file
 tracking_data = parser_args.tracking_data
-geometry_file = parser_args.geometry_file
-target_folder = parser_args.target_folder
-sample_composition = parser_args.sample_composition
-simulation_tool = parser_args.simulation_tool
 
 # loading arguments, creating folder
 with open(config_file, 'r') as f:
     configuration = yaml.safe_load(f)
 
+geometry_file = configuration['detector geometry']
+tracking_data_format = configuration['tracking data format']
+sample_composition = configuration['sample composition']
+
+
 # creating a new folder which is named as the config_file, folder is stored inside the specified target_folder
-new_folder = target_folder + "/" + tracking_data.split("/")[-1].split(".csv")[0] + "-" + \
-             ".".join(config_file.split("/")[-1].split(".")[0:-1])
+new_folder = f'{tracking_data}_qubo'
+print(new_folder)
 
 if Path(new_folder).is_dir():
     pass
@@ -82,7 +59,9 @@ s_manager.segment_mapping_LUXE()
 
 # setting up pattern builder object and loading data from specified file
 pattern_builder = PatternBuilder(configuration)
-pattern_builder.load_tracking_data(tracking_data, s_manager, simulation_tool)
+pattern_builder.load_tracking_data(tracking_data, 
+                                   s_manager, 
+                                   tracking_data_format)
 
 if sample_composition == 'blinded':
     print("Truth information about particle tracks is not available in blinded sample!\n")
@@ -101,15 +80,10 @@ else:
     print("Create multiplets on generator level with truth information...\n")
     gen_multiplets = GenMultiplet(tracking_data_file=tracking_data,
                                   min_track_length=configuration['track']['minimum track length'])
-    if simulation_tool == 'simplified_simulation':
-        gen_multiplets.gen_multiplets_simplified_LUXE()
-    elif simulation_tool == 'key4hep':
-        if '.csv' in tracking_data:
-            gen_multiplets.gen_multiplets_key4hep_csv()
-        else:
-            pass   # slcio implementation
+
+    gen_multiplets.make_gen_multiplets(tracking_data_format)
     gen_multiplets.information_about_tracking_data()
-    gen_multiplets.save_multiplets(save_to_folder=target_folder)
+    gen_multiplets.save_multiplets(save_to_folder=new_folder)
 
 
 # set qubo parameters

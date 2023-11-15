@@ -3,7 +3,7 @@ import numpy as np
 
 from pattern.detector_hit import DetectorHit
 from pattern.multiplet import Multiplet
-from utility.convert_tracking_data_format import from_key4hep_csv, from_simplified_simulation
+from utility.data_format_handler import load_data
 
 
 class GenMultiplet:
@@ -65,37 +65,16 @@ class GenMultiplet:
             else:
                 self.multiplets_dict.update({hit.particle_id: [hit]})
 
-    def gen_multiplets_key4hep_csv(self) -> None:
-        """Creates all signal multiplets from the specified key4hep simulation tracking data file
-        """
-        with open(self.tracking_data_file, 'r') as file:
-            csv_reader = csv.reader(file)
-            _ = next(csv_reader)  # access header, csv files should consist of one line of header
-
-            for row in csv_reader:
-                hit = from_key4hep_csv(row)
-
-                # add to multiplet dictionary
-                self.add_hit_to_multiplet_dict(hit)
-
-        # create multiplets from sorted particle dictionary
-        self.create_multiplets()
-
-    def gen_multiplets_simplified_LUXE(self) -> None:
+    def make_gen_multiplets(self,
+                            tracking_data_format) -> None:
         """Creates all signal multiplets from the specified simplified simulation tracking data file.
-        Assumes, that the structure of the csv file from the simplified simulation matches the DetectorHit class model.
+        :param tracking_data_format: format of the tracking data
+                                     --> 'key4hep slcio', 'key4hep csv', 'simplified simulation csv'
         """
-
-        with open(self.tracking_data_file, 'r') as file:
-            csv_reader_tracking_file = csv.reader(file)
-            _ = next(csv_reader_tracking_file)
-
-            for row in csv_reader_tracking_file:
-                # Create new DetectorHit object
-                hit = from_simplified_simulation(row)
-
-                # add to multiplet dictionary
-                self.add_hit_to_multiplet_dict(hit)
+        hits = load_data(self.tracking_data_file, tracking_data_format)
+        for hit in hits:
+            # add to multiplet dictionary
+            self.add_hit_to_multiplet_dict(hit)
 
         # create multiplets from sorted particle dictionary
         self.create_multiplets()

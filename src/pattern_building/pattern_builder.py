@@ -6,7 +6,7 @@ import numpy as np
 from math_functions.checks import is_valid_doublet, is_valid_triplet
 
 from utility.time_tracking import hms_string
-from utility.convert_tracking_data_format import from_key4hep_csv, from_simplified_simulation
+from utility.data_format_handler import load_data
 from pattern.detector_hit import DetectorHit
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
@@ -56,28 +56,17 @@ class PatternBuilder:
     def load_tracking_data(self,
                            tracking_data_file: str,
                            segment_manager: SegmentManager,
-                           simulation_tool: str) -> None:
+                           tracking_data_format: str) -> None:
         """Loads tracking data from a file and stores and places the data in the corresponding segments.
         :param tracking_data_file: LUXE tracking data file
         :param segment_manager: SegmentManager object
-        :param simulation_tool: simplified_simulation_csv or key4hep_csv
+        :param tracking_data_format: format of tracking data file
         """
         print('\n-----------------------------------\n')
         print(f"Using tracking data file {tracking_data_file.split('/')[-1]}\n"
               f"Placing data in segments ...\n")
 
-        list_of_hits = None   # Initialising variable for list of detector hits
-        if simulation_tool == 'simplified_simulation':
-            list_of_hits = PatternBuilder.load_tracking_data_from_simplified_simulation_csv(tracking_data_file)
-        elif simulation_tool == 'key4hep':
-            if '.csv' in tracking_data_file:
-                list_of_hits = PatternBuilder.load_tracking_data_from_key4hep_csv(tracking_data_file)
-            else:
-                pass   # TODO: slcio implementation
-        else:
-            print('Loading data from given file format not implemented yet!')
-            print('Exiting...')
-            exit()
+        list_of_hits = load_data(tracking_data_file, tracking_data_format)
 
         for hit in list_of_hits:
             if hit.is_signal:
@@ -100,44 +89,6 @@ class PatternBuilder:
         print(f'Number of signal hits found: {self.signal_hits}')
         print(f'Number of background hits found: {self.background_hits}')
         print(f'Number of blinded hits found: {self.blinded_hits}')
-
-    @staticmethod
-    def load_tracking_data_from_simplified_simulation_csv(tracking_data_file: str) -> list[DetectorHit]:
-        """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
-        :param tracking_data_file: .csv tracking data file
-
-        :return:
-            list of DetectorHit objects
-        """
-        detector_hits = []
-        with open(tracking_data_file, 'r') as file:
-            csv_reader = csv.reader(file)
-            _ = next(csv_reader)  # access header, csv files should consist of one line of header
-
-            for row in csv_reader:
-                hit = from_simplified_simulation(row)
-                detector_hits.append(hit)
-
-        return detector_hits
-
-    @staticmethod
-    def load_tracking_data_from_key4hep_csv(tracking_data_file: str) -> list[DetectorHit]:
-        """Loads tracking data from .csv file and returns a list of DetectorHit objects created from the file entries.
-        :param tracking_data_file: .csv tracking data file
-
-        :return:
-            list of DetectorHit objects
-        """
-        detector_hits = []
-        with open(tracking_data_file, 'r') as file:
-            csv_reader = csv.reader(file)
-            _ = next(csv_reader)  # access header, csv files should consist of one line of header
-
-            for row in csv_reader:
-                hit = from_key4hep_csv(row)
-                detector_hits.append(hit)
-
-        return detector_hits
 
     def fill_signal_particle_dictionary(self,
                                         hit: DetectorHit) -> None:
