@@ -1,9 +1,10 @@
 import numpy as np
 import csv
 from pattern.detector_hit import DetectorHit
+from pattern.multiplet import Multiplet
 
 try:
-    from pyLCIO import IOIMPL, UTIL, EVENT
+    from pyLCIO import IMPL, IOIMPL, UTIL, EVENT
 except ImportError:
     print('pyLCIO not available in the environment!')
 
@@ -144,14 +145,12 @@ def load_tracking_data_from_slcio(tracking_data_file: str) -> list[DetectorHit]:
                         float(1e-3 * tracker_hit.getPosition()[1]),
                         np.around(1e-3 * float(tracker_hit.getPosition()[2]), 4)]
 
- 
             if rel_object:
                 particle_id = id(rel_object)
                 is_signal = True
             else:
                 particle_id = None
                 is_signal = False
-                                           
 
             hit = from_slcio(i,
                              position,
@@ -283,3 +282,75 @@ def get_cell_id_simplified_simulation(csv_entry: list[str]) -> str:
     """
     return f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("module_ID")]))[2:].zfill(3)}' \
            f'{bin(int(csv_entry[get_simplified_simulation_csv_format().index("layer_ID")]))[2:].zfill(3)}10'
+
+
+def write_tracks_to_slcio_file(input_slcio_file: str,
+                               multiplets: list[Multiplet],
+                               qubo_folder) -> None:
+    """Writes the multiplets as additional collection into an existing slcio file.
+    :param input_slcio_file: file into which the multiplets are written as tracks
+    :param multiplets: listo of multiplet objects
+    """
+    output_slcio_file = f'{qubo_folder}/reco_tracks.slcio'
+    print(output_slcio_file)
+
+    # Open existing LCIO file for reading
+    reader = IOIMPL.LCFactory.getInstance().createLCReader()
+    reader.open(input_slcio_file)
+
+    # Open a new LCIO file for writing
+    writer = IOIMPL.LCFactory.getInstance().createLCWriter()
+    writer.open(output_slcio_file, EVENT.LCIO.WRITE_NEW)
+
+    event = reader.readNextEvent()
+
+    # Access or modify existing collections in the event if needed
+    # ...
+
+    # Create a new event in the output file
+    new_event = IMPL.LCEventImpl()
+
+    # Loop through collections in the event
+    for collection_name in event.getCollectionNames():
+        collection = event.getCollection(collection_name)
+
+        # Copy the collection to the new event
+        new_collection = IMPL.LCCollectionVec(collection.getTypeName())
+        if collection_name == 'SiTrackerHits':
+            string_encoding = 'system:1,side:1,layer:3,module:5,sensor:0,x:32:-16,y:-16'
+            # new_collection.parameters = collection.getParameters()
+            param = new_collection.parameters()
+            param.setValue(EVENT.LCIO.CellIDEncoding, string_encoding)
+
+        # Copy hits from the original collection to the new collection
+        for i in range(collection.getNumberOfElements()):
+            new_collection.addElement(collection.getElementAt(i))
+
+        # Add the new collection to the new event
+        new_event.addCollection(new_collection, collection_name)
+
+    # Add the new collection
+    tcol = IMPL.LCCollectionVec(EVENT.LCIO.TRACK)
+    trkFlag = IMPL.LCFlagImpl(0)
+    trkFlag.setBit(EVENT.LCIO.TRBIT_HITS)
+    tcol.setFlag(trkFlag.getFlag())
+
+    tracker_hits = new_event.getCollection('SiTrackerHits')
+
+    for i, multiplet in enumerate(multiplets):
+        trk = IMPL.TrackImpl()
+        for hit_id in multiplet.hit_id:
+            trk.addHit(tracker_hits.getElementAt(int(hit_id)))
+        tcol.addElement(trk)
+
+    # Write the new event to the output file
+    new_event.setEventNumber(0)
+    new_event.addCollection(tcol, 'TrackCandidates')
+
+    writer.writeEvent(new_event)
+
+    reader.close()
+    writer.close()
+
+
+

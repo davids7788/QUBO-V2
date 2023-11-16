@@ -5,20 +5,20 @@ tracking data:
     sample composition: 'signal only'
 
 doublet:
-  dx/x0: 0.527
-  dx/x0 eps: 0.07
+  dx/x0: 0.5277
+  dx/x0 eps: 0.015
   dy/x0: 0.0
-  dy/x0 eps: 0.02
+  dy/x0 eps: 0.01
 
 triplet:
   max scattering: 0.02
 
 binning:
-  num bins x: 32
+  num bins x: 64
   num bins y: 8
 
 qubo parameters:
-  b_ij conflict: 3.0
+  b_ij conflict: 2
   b_ij match: "default"
   a_i: "default"
 

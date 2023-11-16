@@ -16,7 +16,7 @@ from qubo.ansatz import Ansatz
 from qubo.solver import Solver
 
 from track_reconstruction.gen_multiplets import GenMultiplet
-from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
+from track_reconstruction.create_reco_xplets import make_reco_multiplets
 from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
 parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',

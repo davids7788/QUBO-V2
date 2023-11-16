@@ -3,10 +3,13 @@ import numpy as np
 from pattern.multiplet import Multiplet
 from pattern.triplet import Triplet
 
+from utility.data_format_handler import write_tracks_to_slcio_file
 
-def reco_xplets_simplified_LUXE(triplets,
-                                save_folder,
-                                fit="chi squared lin track"):
+
+def make_reco_multiplets(triplets,
+                         save_folder,
+                         tracking_data,
+                         fit="chi squared lin track"):
     """Creates xplets from the kept triplets.
     :param fit: 
             "chi squared lin track: assuming a linear track and fitting  a chi squared assuming f(z) = x_i, f(z) = y_j
@@ -76,6 +79,12 @@ def reco_xplets_simplified_LUXE(triplets,
 
     print(f"Number of combinatorial reco Xplets: {len(reco_track_candidates)}\n"
           f"Saving combinatorial Xplets to file {save_folder}/reco_xplet_list")
+
+    if '.slcio' in tracking_data:
+        write_tracks_to_slcio_file(tracking_data,
+                                   reco_track_candidates,
+                                   save_folder)
+
     np.save(f"{save_folder}/reco_xplet_list", reco_track_candidates)
 
     hit_to_xplet_map = {}

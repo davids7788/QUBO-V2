@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 
-from math_functions.checks import is_valid_doublet, is_valid_triplet
+from math_functions.checks import is_valid_doublet, is_valid_triplet, x0_at_z_ref
 
 from utility.time_tracking import hms_string
 from utility.data_format_handler import load_data
@@ -167,6 +167,7 @@ class PatternBuilder:
         """Creates the doublets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
+        preselection = []
         num_layers = len(segment_manager.segment_storage.keys())
         for layer in range(num_layers - 1):
             for segment in segment_manager.segment_storage[layer]:

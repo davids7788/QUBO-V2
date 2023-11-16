@@ -16,7 +16,7 @@ from qubo.ansatz import Ansatz
 from qubo.solver import Solver
 
 from track_reconstruction.gen_multiplets import GenMultiplet
-from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
+from track_reconstruction.create_reco_xplets import make_reco_multiplets
 from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
 parser = argparse.ArgumentParser(description='QUBO pattern_building Simplified LUXE',
@@ -153,8 +153,9 @@ qubo_processor = QuboProcessing(qubo_preparation_folder + "/triplet_list.npy",
                                 save_folder=qubo_folder,
                                 verbose=1)
 qubo_processor.qubo_processing()        
-reco_xplets_simplified_LUXE(qubo_processor.get_kept_triplets(),
-                            qubo_folder)
+make_reco_multiplets(qubo_processor.get_kept_triplets(),
+                     qubo_folder,
+                     tracking_data)
 
 
 gen_prefix = f"{qubo_folder}/reco_xplet_list.npy".split("/")[-3].split("-")[0]

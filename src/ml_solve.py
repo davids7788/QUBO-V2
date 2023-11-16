@@ -14,7 +14,7 @@ from tensorflow.keras.layers import Dense, BatchNormalization
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras import backend
-from track_reconstruction.create_reco_xplets import reco_xplets_simplified_LUXE
+from track_reconstruction.create_reco_xplets import make_reco_multiplets
 from track_reconstruction.track_reconstruction_efficiency import track_reconstruction_efficiency_simplified_LUXE
 
 from sklearn.metrics import roc_curve, auc
@@ -349,7 +349,7 @@ for triplets, prediction in zip(test_triplets_complete, predictions[:, 1]):
     if prediction > 0.1:
         kept_triplets.append(triplets)
 
-reco_xplets_simplified_LUXE(kept_triplets, new_folder, fit="chi squared lin track")
+make_reco_multiplets(kept_triplets, new_folder, fit="chi squared lin track")
 # track_reconstruction_efficiency_simplified_LUXE(f"{new_folder}/reco_xplet_list.npy",
 #                                                 "../../qubo_ml_datasets/xi_5/e0gpc_5.0_0000_sl_gen_xplet_list.npy")
 
