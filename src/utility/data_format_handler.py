@@ -5,6 +5,7 @@ from pattern.multiplet import Multiplet
 
 try:
     from pyLCIO import IMPL, IOIMPL, UTIL, EVENT
+    from cppyy.gbl import std
 except ImportError:
     print('pyLCIO not available in the environment!')
 
@@ -316,11 +317,7 @@ def write_tracks_to_slcio_file(input_slcio_file: str,
 
         # Copy the collection to the new event
         new_collection = IMPL.LCCollectionVec(collection.getTypeName())
-        if collection_name == 'SiTrackerHits':
-            string_encoding = 'system:1,side:1,layer:3,module:5,sensor:0,x:32:-16,y:-16'
-            # new_collection.parameters = collection.getParameters()
-            param = new_collection.parameters()
-            param.setValue(EVENT.LCIO.CellIDEncoding, string_encoding)
+        copy_params(new_collection, collection)
 
         # Copy hits from the original collection to the new collection
         for i in range(collection.getNumberOfElements()):
@@ -353,4 +350,20 @@ def write_tracks_to_slcio_file(input_slcio_file: str,
     writer.close()
 
 
+def copy_params(newColl, oldColl):
+    """Copy all parameters from the old collection to the new collection
+
+    Loops over the 4 known parameter types to get all keys for each type and
+    then copies the values over key by key. Takes advantage of the fact that
+    LCParameters store things internally in a map<string, vector<T>> for the
+    different parameter types, so that we don't have to differentiate between
+    single and multiple value cases
+    """
+    for typ in ("Int", "Float", "Double", "String"):
+        keys = std.vector["string"]()
+        keys = getattr(oldColl.getParameters(), f"get{typ}Keys")(keys)
+        for key in keys:
+            values = std.vector[typ.lower()]()
+            values = getattr(oldColl.getParameters(), f"get{typ}Vals")(key, values)
+            newColl.parameters().setValues(key, values)
 

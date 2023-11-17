@@ -167,7 +167,6 @@ class PatternBuilder:
         """Creates the doublets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
-        preselection = []
         num_layers = len(segment_manager.segment_storage.keys())
         for layer in range(num_layers - 1):
             for segment in segment_manager.segment_storage[layer]:
