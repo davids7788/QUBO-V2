@@ -5,7 +5,7 @@ from pattern.triplet import Triplet
 from pattern.doublet import Doublet
 from utility.time_tracking import hms_string
 from math_functions.geometry import angle_based_measure
-from pattern_building.segment_manager import SegmentManager
+from pattern_building.segment_manager import LUXESegmentManager
 
 
 class QuboCoefficients:
@@ -54,7 +54,7 @@ class QuboCoefficients:
             self.quality_mode = 'constant'
 
     def set_triplet_coefficients(self,
-                                 segment_manager: SegmentManager) -> None:
+                                 segment_manager: LUXESegmentManager) -> None:
         """Sets the triplet coefficients according to the configuration files. If a (re-)normalization was
         set it is also applied. If the process is successful a message and the target folder location containing the
         triplet list is displayed.

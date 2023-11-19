@@ -21,8 +21,6 @@ class GenMultiplet:
         self.tracking_data_file = tracking_data_file
         self.output_name = ".".join(tracking_data_file.split("/")[-1].split(".")[0:-1])
 
-        self.num_signal_hits = 0
-        self.num_background_hits = 0
         self.min_track_length = min_track_length
 
     def save_multiplets(self,
@@ -59,7 +57,6 @@ class GenMultiplet:
 
         # signal hit
         else:
-            self.num_signal_hits += 1
             if hit.particle_id in self.multiplets_dict.keys():
                 self.multiplets_dict[hit.particle_id].append(hit)
             else:
@@ -78,9 +75,3 @@ class GenMultiplet:
 
         # create multiplets from sorted particle dictionary
         self.create_multiplets()
-
-    def information_about_tracking_data(self):
-        """Prints information about signal and background hits.
-        """
-        print(f'Number of signal hits: {self.num_signal_hits}')
-        print(f'Number of background hits: {self.num_background_hits}\n')

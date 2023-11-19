@@ -5,7 +5,7 @@ from pattern_building.segment import DetectorSegment
 from pattern.detector_hit import DetectorHit
 
 
-class SegmentManager:
+class LUXESegmentManager:
     """Managing segmentation algorithm for the given detector geometry.
     """
     def __init__(self,
@@ -22,10 +22,11 @@ class SegmentManager:
               f'dy/x0: {self.mapping_criteria["dy/x0"]}\n'
               f'dy/x0 eps : {self.mapping_criteria["dy/x0 eps"]}\n')
 
-        self.binning = [configuration['binning']['num bins x'], configuration['binning']['num bins y']]
+        self.binning = [configuration['binning']['num bins x'],
+                        configuration['binning']['num bins y']]
         print(f'Segmentation binning:\n'
-              f'num bins x: {configuration["binning"]["num bins x"]}\n'
-              f'num bins y: {configuration["binning"]["num bins y"]}\n')
+              f'num bins x: {self.binning[0]}\n'
+              f'num bins y: {self.binning[1]}\n')
 
         # list containing coordinate information about detector layers
         self.detector_chips = []
@@ -40,30 +41,27 @@ class SegmentManager:
 
         print(f"Using geometry file {detector_geometry.split('/')[-1]} for segmentation algorithm")
 
-        # z-position -> layer number, sets are automatically ordered in python -> values ordered from lowest to highest
+        # here the first layer is the one with the lowest z position, in the usual geometry file, this is different!
         self.z_position_to_layer = list(set([chip[4] for chip in self.detector_chips]))
         self.z_position_to_layer.sort()
 
         # check setup
         if len(self.z_position_to_layer) == 4:
             self.setup = "simplified"
+            self.chips_per_layer = 1
             print(f'--> simplified geometry setup...\n')
         elif len(self.z_position_to_layer) == 8:
             self.setup = "full"
+            self.chips_per_layer = 9
             print(f'--> full geometry setup...\n')
         else:
             print("--> on valid LUXE setup set!")
             exit()
 
-        # Segmentation is done on the chips level
-        if self.setup == 'full':
-            self.chips_per_layer = 9
-        if self.setup == 'simplified':
-            self.chips_per_layer = 1
-
         # <segment> (key): [<target_segment_0>, <target_segment_1>, ...] (value)
         self.segment_mapping = {}
         self.segment_storage = {}
+
         # organising segment objects, subdicts ordered by construction in the following way:
         # <layer> (key):
         # [<segment_x0_y0>, <segment_x0_y1>, ..., <segment_x0_yn>
@@ -81,6 +79,7 @@ class SegmentManager:
             y_vals = [chip[2] for chip in self.detector_chips if chip[4] == stave] + \
                      [chip[3] for chip in self.detector_chips if chip[4] == stave]
 
+            # extract spatial covering in x,y of the chips in the detector
             min_x, max_x, min_y, max_y = min(x_vals), max(x_vals), min(y_vals), max(y_vals)
             self.layer_ranges.update({layer_number: [min_x, max_x, min_y, max_y]})
 
@@ -101,8 +100,8 @@ class SegmentManager:
                                                   min_x + (j + 1) * segment_size_x,
                                                   min_y + k * segment_size_y,
                                                   min_y + (k + 1) * segment_size_y,
-                                                  self.z_position_to_layer[layer_number] - 0.5e-5,  # 50 mu
-                                                  self.z_position_to_layer[layer_number] + 0.5e-5)  # 50 mu
+                                                  self.z_position_to_layer[layer_number] - 0.1e-4,  # 100 mu
+                                                  self.z_position_to_layer[layer_number] + 0.1e-4)  # 100 mu
 
                     self.segment_storage[layer_number].append(new_segment)
 
@@ -112,7 +111,7 @@ class SegmentManager:
         target  segment is stored inside the segment mapping attribute.
         """
         for index, z_position in enumerate(self.z_position_to_layer):
-            print(f'Mapping segments of layer {index} to target segments')
+            print(f'Finding target segments of segments from layer {index}')
             if index > len(self.z_position_to_layer) - 2:
                 continue
             for segment in self.segment_storage[index]:
@@ -139,7 +138,7 @@ class SegmentManager:
                                    target_y: list[float]) -> float:
         """Calculating the minimum difference in y of two segments depending on their location on the detector.
         :param source_y: y edge coordinates of source segment
-        :param target_y: y edge coordinates of source segment
+        :param target_y: y edge coordinates of target segment
         :return
             minimum distance of segments in y
         """
@@ -158,50 +157,45 @@ class SegmentManager:
         :param target_segment: segment considered as a target
 
         :return:
-            True if compatible, else false
+            True if compatible, else False
         """
-
         # exclude heavy scattering in x-direction
         if target_segment.x_end < source_segment.x_start:
             return False
 
-        min_dy = SegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
-                                                           [target_segment.y_start, target_segment.y_end])
+        min_dy = LUXESegmentManager.get_min_dy_of_two_segments([source_segment.y_start, source_segment.y_end],
+                                                               [target_segment.y_start, target_segment.y_end])
 
-        # max x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
+        # max x_0 on reference layer
         x0_max = x0_at_z_ref(target_segment.x_start,
                              source_segment.x_end,
-                             (target_segment.z_end + target_segment.z_start) / 2,
-                             (source_segment.z_end + source_segment.z_start) / 2,
+                             target_segment.z_start,
+                             source_segment.z_start,
                              self.z_position_to_layer[0])
 
         #  exclude heavy scattering in y-direction
-        if min_dy / x0_max / ((target_segment.z_start + target_segment.z_end) / 2 -
-                              (source_segment.z_start + source_segment.z_end) / 2) > \
-                self.mapping_criteria["dy/x0 eps"]:
+        if min_dy / x0_max / (target_segment.z_start - source_segment.z_start) > self.mapping_criteria["dy/x0 eps"]:
             return False
 
         # min x_0 on reference segment, only points on existing detector parts make sense, strictly positive value
         x0_min = x0_at_z_ref(target_segment.x_end,
                              source_segment.x_start,
-                             (target_segment.z_end + target_segment.z_start) / 2,
-                             (source_segment.z_end + source_segment.z_start) / 2,
+                             target_segment.z_start,
+                             source_segment.z_start,
                              self.z_position_to_layer[0])
 
         max_dx = target_segment.x_end - source_segment.x_start
         min_dx = max([target_segment.x_start - source_segment.x_end, 0])
 
-        if max_dx / x0_min / ((target_segment.z_start + target_segment.z_end) / 2 -
-                              (source_segment.z_start + source_segment.z_end) / 2) < \
-                self.mapping_criteria["dx/x0"] - self.mapping_criteria["dx/x0 eps"]:
+        max_dx_x0 = abs(max_dx / x0_min / (target_segment.z_start - source_segment.z_start))
+        min_dx_x0 = abs(min_dx / x0_max / (target_segment.z_start - source_segment.z_start))
+
+        if min_dx_x0 > self.mapping_criteria["dx/x0"] + self.mapping_criteria["dx/x0 eps"]:
+            return False
+        if max_dx_x0 < self.mapping_criteria["dx/x0"] - self.mapping_criteria["dx/x0 eps"]:
             return False
 
-        elif min_dx / x0_max / ((target_segment.z_start + target_segment.z_end) / 2 -
-                                (source_segment.z_start + source_segment.z_end) / 2) > \
-                self.mapping_criteria["dx/x0"] + self.mapping_criteria["dx/x0 eps"]:
-            return False
-        else:
-            return True
+        return True
 
     def target_segments(self,
                         name: str) -> list[DetectorSegment]:

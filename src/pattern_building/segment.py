@@ -1,6 +1,3 @@
-from math_functions.checks import jit_is_in_segment
-
-
 class DetectorSegment:
     """Class for handling parts (segments) of the detector.
     """
@@ -40,25 +37,3 @@ class DetectorSegment:
 
         # triplet list, first hit of the triplet is considered to be inside the segment
         self.triplet_data = []
-
-    def is_in_segment(self,
-                      x: float,
-                      y: float,
-                      z: float) -> bool:
-        """Checks if position x is inside the segment
-        :param x: position in x [m]
-        :param y: position in y [m]
-        :param z: position in z [m]
-
-        :return:
-            True if coordinate coordinates in segment, else False
-        """
-        return jit_is_in_segment(x,
-                                 y,
-                                 z,
-                                 self.x_start,
-                                 self.x_end,
-                                 self.y_start,
-                                 self.y_end,
-                                 self.z_start,
-                                 self.z_end)

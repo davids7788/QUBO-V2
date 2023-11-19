@@ -5,22 +5,22 @@ tracking data:
     sample composition: 'signal only'
 
 doublet:
-  dx/x0: 0.5277
+  dx/x0: 0.5278
   dx/x0 eps: 0.015
   dy/x0: 0.0
   dy/x0 eps: 0.015
 
 triplet:
-  max scattering: 0.002
+  max scattering: 0.0015
 
 binning:
-  num bins x: 4
-  num bins y: 4
+  num bins x: 128
+  num bins y: 8
 
 qubo parameters:
   b_ij conflict: 2
-  b_ij match: "default"
-  a_i: "default"
+  b_ij match: 'default'
+  a_i: 'default'
 
 scale range parameters:
   z_scores: True
@@ -37,7 +37,7 @@ ansatz:
   skip unentangled qubits: null
 
 solver:
-  algorithm: "Numpy Eigensolver"
+  algorithm: 'Numpy Eigensolver'
   backend: null
   optimiser: null
   maxiter: null
@@ -47,11 +47,11 @@ solver:
   optimisation level: null
 
 qubo:
-  optimisation strategy: "connection list"
+  optimisation strategy: 'connection list'
   hamiltonian rescaling: null
-  initial binary vector: "zeros"
+  initial binary vector: 'zeros'
   search depth: 1
-  num qubits: 7
+  num qubits: 16
   error mitigation algorithm: null
   compare to eigensolver: null
 

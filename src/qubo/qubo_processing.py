@@ -12,6 +12,8 @@ from qubo.hamiltonian import Hamiltonian
 from qubo.ansatz import Ansatz
 from qubo.qubo_logging import QuboLogging
 
+from utility.time_tracking import hms_string
+
 algorithm_globals.massive = True
 
 

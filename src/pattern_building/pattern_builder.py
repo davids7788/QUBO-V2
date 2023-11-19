@@ -1,4 +1,3 @@
-import csv
 import time
 
 import numpy as np
@@ -10,7 +9,7 @@ from utility.data_format_handler import load_data
 from pattern.detector_hit import DetectorHit
 from pattern.doublet import Doublet
 from pattern.triplet import Triplet
-from pattern_building.segment_manager import SegmentManager
+from pattern_building.segment_manager import LUXESegmentManager
 
 
 class PatternBuilder:
@@ -55,7 +54,7 @@ class PatternBuilder:
 
     def load_tracking_data(self,
                            tracking_data_file: str,
-                           segment_manager: SegmentManager,
+                           segment_manager: LUXESegmentManager,
                            tracking_data_format: str) -> None:
         """Loads tracking data from a file and stores and places the data in the corresponding segments.
         :param tracking_data_file: LUXE tracking data file
@@ -163,7 +162,7 @@ class PatternBuilder:
             print(f"Number of complete signal tracks: {self.num_signal_tracks}\n")
 
     def create_doublet_list(self,
-                            segment_manager: SegmentManager) -> None:
+                            segment_manager: LUXESegmentManager) -> None:
         """Creates the doublets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
@@ -190,7 +189,7 @@ class PatternBuilder:
                                 self.found_correct_doublets += 1
 
     def create_triplet_list(self,
-                            segment_manager: SegmentManager) -> None:
+                            segment_manager: LUXESegmentManager) -> None:
         """Creates the doublets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """
@@ -221,7 +220,7 @@ class PatternBuilder:
                                 self.found_correct_triplets += 1
 
     def create_multiplets(self,
-                          segment_manager: SegmentManager) -> None:
+                          segment_manager: LUXESegmentManager) -> None:
         """Creates multiplets. For LUXE detector model only.
         :param segment_manager: SegmentManager object with already set segments and mapping
         """

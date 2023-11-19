@@ -4,7 +4,8 @@ class DetectorHit:
 
     def __init__(self,
                  detector_hit: dict):
-        """Set fields according to the information provided by the given dictionary
+        """Set fields according to the information provided.
+
         :param detector_hit: dictionary with information about a detector hit
         """
         self.hit_dictionary = detector_hit
@@ -25,7 +26,6 @@ class DetectorHit:
     def fill_fields(self) -> None:
         """Fills the fields with the dictionary with information from the hit_dictionary.
         """
-
         for key, value in self.hit_dictionary.items():
             if key == 'hit_ID':
                 self.hit_id = str(value)

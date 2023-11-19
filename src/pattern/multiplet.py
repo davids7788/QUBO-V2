@@ -1,7 +1,7 @@
 from pattern.triplet import DetectorHit
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
-#from numba import jit
+from numba import jit
 
 
 class Multiplet:
@@ -27,6 +27,7 @@ class Multiplet:
     def add_hit(self,
                 hit: DetectorHit) -> None:
         """Adds a hit to the multiplet structure.
+
         :param hit: detector hit
         """
         self.hit_id.append(hit.hit_id)
@@ -41,11 +42,12 @@ class Multiplet:
         self.particle_energy.append(hit.particle_energy)
 
     @staticmethod
-    #@jit(nopython=True)
+    @jit(nopython=True)
     def lin_func(x: float,
                  a: float,
                  b: float) -> float:
-        """Linear function with slope a and bias b
+        """Linear function with slope a and bias b.
+
         :param x: data points
         :param a: slope
         :param b: bias
@@ -58,7 +60,8 @@ class Multiplet:
     def fit_lin_track(self,
                       detector_resolution: float = 5e-6) -> None:
         """Sets a chi squared and p-value for the track assuming a linear fit in xz and yz direction.
-        :param detector_resolution: resolution of the detector to calculate the reduced chi-squared [m]
+
+        :param detector_resolution: resolution of the detector [m]
         """
 
         # fit x(z) and y(z)

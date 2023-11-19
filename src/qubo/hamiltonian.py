@@ -91,7 +91,7 @@ class Hamiltonian:
         """
         qubo = QuadraticProgram()
         for i in range(len(self.triplet_slice)):
-            qubo.binary_var(name='x' + str(i))
+            qubo.binary_var(name=f'x{i}')
         qubo.minimize(linear=self.linear_term(), quadratic=self.quadratic_term())
         return qubo
 

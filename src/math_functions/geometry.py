@@ -1,21 +1,23 @@
 import numpy as np
 
-#from numba import jit
-from math import atan2
+from numba import jit
+from math import atan2, sqrt
 
 
-# @jit(nopython=True)
+@jit(nopython=True)
 def x0_at_z_ref(x_end: float,
                 x_start: float,
                 z_end: float,
                 z_start: float,
                 z_ref: float) -> float:
     """Function for calculation x position of a doublet at a z-reference value.
+
     :param x_end: x-position of second hit
     :param x_start: x-position of first hit
     :param z_end: z-position of second hit
     :param z_start: z-position of first hit
     :param z_ref: z-value reference layer
+
     :return:
         x_position at the reference layer
     """
@@ -24,7 +26,7 @@ def x0_at_z_ref(x_end: float,
     return x_end - dx * abs(z_end - z_ref) / dz
 
 
-# @jit(nopython=True)
+@jit(nopython=True)
 def xyz_angle(xy_1: float,
               xy_2: float,
               z_1: float,
@@ -40,11 +42,15 @@ def xyz_angle(xy_1: float,
     """
     return atan2((xy_2 - xy_1), (z_2 - z_1))
 
-
 def angle_based_measure(detector_hits: list[list[float, float, float]]) -> float:
     """Returns a measure of how well the triplets match using angle information, assuming a linear track
+
+    :param detector_hits list of positions of detector hits [[x0, y0, z0],
+                                                             [x1, y1, z1],
+                                                             [x2, y2, z2]]
+
     :return
-        max_diff_xz angle * max_diff_yz_angle
+        sqrt(max_diff_xz angle**2 + max_diff_yz_angle**2)
     """
     x = detector_hits[0]
     y = detector_hits[1]
