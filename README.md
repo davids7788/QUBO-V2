@@ -1,6 +1,6 @@
 #  Workflow 
 
-This framework provides a chain of scripts for track reconstruction at [LUXE](https://arxiv.org/abs/2102.02032).
+This framework provides a chain of scripts for positron track reconstruction at [LUXE](https://arxiv.org/abs/2102.02032).
 
 ## Simplified Simulation
 A simplified simulation is employed to compute the path of positrons through a dipole magnet and the interaction with 
